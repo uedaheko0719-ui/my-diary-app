@@ -183,16 +183,42 @@ def css():
         f"""
         <style>
           :root {{
-            --paper:#f8f3e7;
-            --panel:#fffaf0;
-            --line:#ded3c0;
+            --paper:#f8efd9;
+            --panel:#fbf6eb;
+            --line:#c8bda7;
             --ink:#263027;
             --muted:#7a7d74;
             --green:#35a868;
             --red:#c94a3a;
+            --blue:#c9e2f5;
+            --pink:#f5caca;
+            --today:#ffe9a9;
           }}
           .stApp {{ background:var(--paper); color:var(--ink); }}
           .block-container {{ max-width:1220px; padding-top:72px; }}
+          .app-chrome {{
+            margin:-54px -16px 26px; background:#efe7d4; border-bottom:1px solid #ddd6c7;
+            min-height:76px;
+          }}
+          .chrome-top {{
+            display:flex; align-items:center; justify-content:space-between; gap:14px;
+            padding:8px 16px;
+          }}
+          .chrome-tabs {{ display:flex; align-items:stretch; gap:10px; }}
+          .chrome-tab {{
+            min-width:150px; padding:16px 24px; border:2px outset #eee6d6;
+            background:#e8dfcb; color:#111; text-decoration:none; font-size:17px; font-weight:700;
+          }}
+          .chrome-tab.active {{ background:#fffaf0; }}
+          .chrome-close {{ background:#eecfd0; padding:16px; border-left:1px solid #e1b8ba; }}
+          .chrome-tools {{ display:flex; align-items:center; gap:22px; }}
+          .chrome-subtabs {{
+            display:flex; align-items:center; height:32px; background:#f3f3f3; border-top:1px solid #e1e1e1;
+          }}
+          .chrome-subtab {{
+            padding:6px 12px; border-right:1px solid #ddd; color:#111; text-decoration:none; background:#f9f9f9;
+          }}
+          .chrome-subtab.active {{ background:#fff; font-weight:700; }}
           .month-wrap {{ max-width:980px; margin:0 auto; }}
           .month-nav {{
             display:grid; grid-template-columns:54px 1fr 54px; align-items:center;
@@ -201,53 +227,62 @@ def css():
           .month-title {{ font-size:26px; font-weight:700; text-align:center; }}
           .month-arrow {{
             display:flex; align-items:center; justify-content:center; height:44px;
-            border:1px solid var(--line); background:var(--panel); border-radius:7px;
+            border:2px outset #eee6d6; background:#efe7d4; border-radius:0;
             text-decoration:none; color:var(--ink); font-size:24px; transition:background .12s ease, transform .12s ease;
           }}
           .month-arrow:hover {{ background:#fff; transform:translateY(-1px); }}
           .calendar-grid {{
-            display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:7px;
+            display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:8px;
           }}
-          .week-label {{ color:var(--muted); font-weight:700; text-align:center; padding-bottom:2px; font-size:13px; }}
+          .week-label {{ color:#000; font-weight:800; text-align:center; padding-bottom:20px; font-size:20px; }}
           div.stButton > button {{
-            border-radius:6px; border:1px solid var(--line); background:var(--panel);
-            color:var(--ink); min-height:42px; transition:background .12s ease, transform .12s ease, border-color .12s ease;
+            border-radius:0; border:2px outset #eee6d6; background:#efe7d4;
+            color:#000; min-height:42px; transition:background .12s ease, transform .08s ease, border-color .12s ease;
+            font-weight:700;
           }}
           div.stButton > button:hover {{
             background:#fff; border-color:#96b79f; transform:translateY(-1px);
           }}
+          div.stButton > button:active {{
+            border-style:inset; transform:translateY(1px);
+          }}
           .calendar-cell {{
-            display:block; min-height:92px; border:1px solid var(--line); background:var(--panel);
-            border-radius:6px; padding:9px; font-size:17px; font-weight:700;
+            display:flex; align-items:center; justify-content:center; gap:5px;
+            min-height:92px; border:2px outset #f1eadb; background:#fbf6eb;
+            border-radius:0; padding:9px; font-size:20px; font-weight:500;
             text-decoration:none; color:var(--ink); transition:background .12s ease, transform .12s ease, border-color .12s ease;
           }}
           .calendar-cell:hover {{
             background:#fff; border-color:#99b8a1; transform:translateY(-1px);
           }}
           .calendar-cell.today {{
-            border-color:#c94a3a; border-left:6px solid var(--red); background:#fffdf8;
+            border-color:#bfa24e; background:var(--today); font-weight:900;
           }}
-          .calendar-cell.has-content::after {{
-            content:""; display:block; width:7px; height:7px; border-radius:99px;
-            background:var(--green); margin-top:8px;
+          .calendar-cell.sat {{ background:var(--blue); }}
+          .calendar-cell.sun {{ background:var(--pink); }}
+          .calendar-cell.today.sat, .calendar-cell.today.sun {{ background:var(--today); }}
+          .content-mark {{
+            width:13px; height:18px; border:1px solid #333; display:inline-block;
+            background:repeating-linear-gradient(45deg, #333 0, #333 2px, #4aa3df 2px, #4aa3df 4px, #f2df66 4px, #f2df66 6px);
+            box-shadow:2px 2px 0 #222;
           }}
           .calendar-cell.empty {{ opacity:.15; pointer-events:none; }}
           .calendar-date {{ display:block; }}
           .calendar-today-label {{ display:block; color:var(--red); font-size:11px; margin-top:4px; }}
           .day-top {{
-            display:flex; align-items:center; justify-content:space-between;
-            gap:12px; padding-bottom:12px; margin-bottom:12px; border-bottom:1px solid var(--line);
+            display:flex; align-items:center; justify-content:center;
+            gap:12px; padding-bottom:4px; margin-bottom:8px;
           }}
-          .day-title {{ font-size:24px; font-weight:700; }}
+          .day-title {{ font-size:34px; font-weight:900; text-align:center; color:#000; }}
           .right-tools {{ display:flex; align-items:center; gap:12px; }}
           .battery-wrap {{ display:flex; align-items:center; gap:8px; }}
           .battery {{
-            width:150px; height:24px; border:2px solid #27352d; border-radius:4px;
+            width:210px; height:24px; border:3px solid #27352d; border-radius:0;
             background:white; padding:3px; position:relative;
           }}
           .battery:after {{
             content:""; position:absolute; right:-10px; top:4px; width:7px; height:12px;
-            border:2px solid #27352d; border-left:0; border-radius:0 3px 3px 0;
+            border:3px solid #27352d; border-left:0; border-radius:0;
           }}
           .battery-fill {{
             height:100%; width:{int(st.session_state.token * 100)}%; background:var(--green);
@@ -260,16 +295,48 @@ def css():
             100% {{ filter:brightness(1); }}
           }}
           .battery-label {{ min-width:42px; font-size:12px; font-weight:800; }}
-          .tool-row {{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }}
+          .tool-row {{ display:flex; gap:14px; margin:20px 0 14px; flex-wrap:wrap; }}
+          .schedule-title {{ font-size:27px; font-weight:900; margin:16px 0 12px; color:#000; }}
+          .st-key-notes-btn button {{ background:#e8f2ff !important; font-size:20px; min-height:58px; }}
+          .st-key-meal-btn button {{ background:#fff4e4 !important; font-size:20px; min-height:58px; }}
+          .st-key-now-btn button {{ background:#e8f6ea !important; font-size:20px; min-height:58px; }}
+          .st-key-settings-btn button {{ font-size:17px; }}
+          .st-key-monthly-matrix button {{ font-size:16px; }}
           .panel-box {{
-            border:1px solid var(--line); background:var(--panel); border-radius:8px;
+            border:1px solid var(--line); background:var(--panel); border-radius:0;
             padding:14px; margin:10px 0 16px;
           }}
+          .day-progress {{
+            position:relative; height:150px; margin:22px 0 20px; overflow:visible;
+          }}
+          .progress-line {{
+            position:absolute; left:0; right:0; top:66px; height:10px; background:#d8d8d8;
+          }}
+          .progress-fill {{
+            position:absolute; left:0; top:66px; height:10px; background:#4a90e2; border-radius:8px;
+          }}
+          .tick {{
+            position:absolute; top:45px; width:3px; height:36px; background:#5c5c5c;
+          }}
+          .tick.major {{ top:26px; height:55px; }}
+          .tick-label {{
+            position:absolute; top:0; transform:translateX(-50%); font-size:22px; font-weight:900; color:#000;
+          }}
+          .hour-zone {{
+            position:absolute; top:40px; height:76px;
+          }}
+          .hour-zone:hover .timeline-pop {{ display:block; }}
+          .timeline-pop {{
+            display:none; position:absolute; top:62px; left:50%; transform:translateX(-50%);
+            width:190px; min-height:82px; background:#fffbe6; border:2px solid #111;
+            padding:12px; z-index:50; font-size:16px; white-space:pre-wrap; color:#000;
+          }}
+          .timeline-pop b {{ display:block; margin-bottom:12px; font-weight:500; }}
           .slot {{
             display:grid; grid-template-columns:190px 1fr; gap:12px; align-items:start;
             padding:10px 0; border-bottom:1px solid rgba(222,211,192,.75);
           }}
-          .slot.now {{ border-left:6px solid var(--green); padding-left:10px; background:#fffdf8; }}
+          .slot.now {{ border-left:7px solid var(--red); padding-left:10px; background:#fffdf8; }}
           .slot-time {{
             font-weight:700; color:#3d463f; padding-top:8px; position:relative; cursor:default;
           }}
@@ -285,16 +352,26 @@ def css():
             border:1px solid var(--line); border-radius:7px; background:var(--panel); font-size:22px;
           }}
           .quadrant-grid {{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }}
-          .quadrant-box {{ border:1px solid var(--line); background:#fffdf8; border-radius:8px; padding:12px; min-height:150px; }}
+          .quadrant-box {{ border:1px solid #999; background:#fffdf8; border-radius:0; padding:12px; min-height:170px; }}
           .quadrant-title {{ font-weight:800; margin-bottom:8px; }}
           .task-pill {{ border:1px solid #d8cbb6; background:#fff; border-radius:6px; padding:8px; margin:6px 0; }}
           textarea {{ border-radius:7px !important; }}
           @media (max-width: 760px) {{
             .block-container {{ padding-top:88px; padding-left:8px; padding-right:8px; }}
+            .app-chrome {{ margin:-62px -8px 18px; }}
+            .chrome-top {{ padding:6px; gap:6px; }}
+            .chrome-tabs {{ gap:4px; overflow-x:auto; }}
+            .chrome-tab {{ min-width:110px; padding:11px 10px; font-size:13px; }}
+            .chrome-tools {{ gap:8px; }}
+            .battery {{ width:116px; }}
             .calendar-grid {{ gap:4px; }}
-            .calendar-cell {{ min-height:58px; padding:6px; font-size:14px; }}
+            .calendar-cell {{ min-height:54px; padding:4px; font-size:14px; }}
+            .content-mark {{ width:9px; height:13px; box-shadow:1px 1px 0 #222; }}
             .week-label {{ font-size:11px; }}
             .month-title {{ font-size:21px; }}
+            .day-progress {{ height:118px; }}
+            .tick-label {{ font-size:15px; }}
+            .timeline-pop {{ width:150px; font-size:13px; }}
             .slot {{ grid-template-columns:1fr; }}
             .day-top {{ align-items:flex-start; flex-direction:column; }}
             .quadrant-grid {{ grid-template-columns:1fr; }}
@@ -386,12 +463,17 @@ def render_month():
             classes = ["calendar-cell"]
             if current == today:
                 classes.append("today")
+            if current.weekday() == 5:
+                classes.append("sat")
+            if current.weekday() == 6:
+                classes.append("sun")
             if has_content:
                 classes.append("has-content")
             today_label = '<span class="calendar-today-label">Today</span>' if current == today else ""
+            content_mark = '<span class="content-mark"></span>' if has_content else ""
             html.append(
                 f'<a class="{" ".join(classes)}" href="?day={current.isoformat()}">'
-                f'<span class="calendar-date">{day_num}</span>{today_label}</a>'
+                f'<span class="calendar-date">{day_num}</span>{content_mark}{today_label}</a>'
             )
     html.append("</div>")
     st.markdown("".join(html), unsafe_allow_html=True)
@@ -399,17 +481,37 @@ def render_month():
 
 
 def render_day_header(selected: date):
-    pct = int(st.session_state.token * 100)
-    battery_class = "battery-wrap flash" if st.session_state.flash_battery else "battery-wrap"
     st.markdown(
         f"""
         <div class="day-top">
           <div class="day-title">{selected:%Y-%m-%d} · {selected.strftime('%A')}</div>
-          <div class="right-tools">
-            <div class="{battery_class}">
-              <div class="battery"><div class="battery-fill"></div></div>
-              <div class="battery-label">{pct}%</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_day_chrome(selected: date):
+    pct = int(st.session_state.token * 100)
+    battery_class = "battery-wrap flash" if st.session_state.flash_battery else "battery-wrap"
+    st.markdown(
+        f"""
+        <div class="app-chrome">
+          <div class="chrome-top">
+            <div class="chrome-tabs">
+              <a class="chrome-tab" href="?month={selected.year:04d}-{selected.month:02d}">Month Calendar</a>
+              <div class="chrome-tab active">{selected:%m-%d} Diary <span class="chrome-close">×</span></div>
             </div>
+            <div class="chrome-tools">
+              <div class="{battery_class}">
+                <div class="battery"><div class="battery-fill"></div></div>
+                <div class="battery-label">{pct}%</div>
+              </div>
+            </div>
+          </div>
+          <div class="chrome-subtabs">
+            <a class="chrome-subtab" href="?month={selected.year:04d}-{selected.month:02d}">Month Calendar</a>
+            <div class="chrome-subtab active">{selected:%m-%d} Diary&nbsp;&nbsp;×</div>
           </div>
         </div>
         """,
@@ -435,6 +537,37 @@ def render_settings(selected: date):
         save_token(selected)
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
+
+
+def render_day_progress(selected: date):
+    _note, _diet, _quadrant, time_map, _ui, _extras = read_day(selected)
+    current = now()
+    if selected == current.date():
+        pct = ((current.hour * 60) + current.minute) / (24 * 60) * 100
+    elif selected < current.date():
+        pct = 100
+    else:
+        pct = 0
+
+    html = ['<div class="day-progress">']
+    html.append('<div class="progress-line"></div>')
+    html.append(f'<div class="progress-fill" style="width:{pct:.2f}%"></div>')
+    for hour in range(24):
+        left = hour / 24 * 100
+        major = hour in {0, 6, 12, 18}
+        html.append(f'<div class="tick {"major" if major else ""}" style="left:{left:.2f}%"></div>')
+        if major:
+            html.append(f'<div class="tick-label" style="left:{left:.2f}%">{hour:02d}</div>')
+
+        slot = f"{natural_time(hour)} - {natural_time(hour + 1)}"
+        text = escape(time_map.get(slot, "").strip() or "No task")
+        pop_time = f"{hour:02d}:00 ~ {(hour + 1) % 24:02d}:00"
+        html.append(
+            f'<div class="hour-zone" style="left:{left:.2f}%; width:{100/24:.4f}%">'
+            f'<div class="timeline-pop"><b>{pop_time}</b>{text}</div></div>'
+        )
+    html.append("</div>")
+    st.markdown("".join(html), unsafe_allow_html=True)
 
 
 def render_text_panel(selected: date, panel: str):
@@ -510,9 +643,10 @@ def render_schedule(selected: date):
 
     for slot in slots:
         cls = "slot now" if slot == active_slot else "slot"
+        slot_id = ' id="now-slot"' if slot == active_slot else ""
         task_hint = time_map.get(slot, "").strip() or "No task in this time block."
         st.markdown(
-            f'<div class="{cls}"><div class="slot-time">{escape(slot)}'
+            f'<div class="{cls}"{slot_id}><div class="slot-time">{escape(slot)}'
             f'<div class="slot-task">{escape(task_hint)}</div></div><div>',
             unsafe_allow_html=True,
         )
@@ -537,45 +671,43 @@ def render_schedule(selected: date):
 
 def render_day():
     selected = st.session_state.selected_day
-    back_col, header_col = st.columns([0.08, 0.92])
-    with back_col:
-        if st.button("←", key="back-month", use_container_width=True):
-            st.session_state.view = "month"
-            st.session_state.view_year = selected.year
-            st.session_state.view_month = selected.month
-            add_token(st.session_state.click_token)
-            st.rerun()
-    with header_col:
-        render_day_header(selected)
-    st.session_state.flash_battery = False
-
-    settings_col, spacer_col = st.columns([0.18, 0.82])
-    with settings_col:
-        if st.button("Battery Settings", use_container_width=True):
+    render_day_chrome(selected)
+    spacer_top, settings_top = st.columns([0.84, 0.16])
+    with settings_top:
+        if st.button("Settings ▸", key="settings-btn", use_container_width=True):
             st.session_state.settings_open = not st.session_state.settings_open
             add_token(st.session_state.click_token)
             st.rerun()
+    render_day_header(selected)
+    st.session_state.flash_battery = False
+
+    if st.button("Monthly Matrix", key="monthly-matrix", use_container_width=False):
+        st.session_state.panel = "" if st.session_state.panel == "quadrant" else "quadrant"
+        add_token(st.session_state.click_token)
+        st.rerun()
+
+    render_day_progress(selected)
 
     if st.session_state.settings_open:
         render_settings(selected)
 
-    c1, c2, c3 = st.columns([1, 1, 1])
-    if c1.button("Note", use_container_width=True):
+    c1, c2, c3, c4 = st.columns([1.2, 0.92, 1.0, 2.8])
+    if c1.button("Today's Notes", key="notes-btn", use_container_width=True):
         st.session_state.panel = "" if st.session_state.panel == "note" else "note"
         add_token(st.session_state.click_token)
         st.rerun()
-    if c2.button("Meal", use_container_width=True):
+    if c2.button("Meal Plan", key="meal-btn", use_container_width=True):
         st.session_state.panel = "" if st.session_state.panel == "diet" else "diet"
         add_token(st.session_state.click_token)
         st.rerun()
-    if c3.button("象限", use_container_width=True):
-        st.session_state.panel = "" if st.session_state.panel == "quadrant" else "quadrant"
+    if c3.button("Go to Now", key="now-btn", use_container_width=True):
         add_token(st.session_state.click_token)
         st.rerun()
 
     if st.session_state.panel:
         render_text_panel(selected, st.session_state.panel)
 
+    st.markdown('<div class="schedule-title">▦ Daily Schedule (7:00 AM - next day 7:00 AM)</div>', unsafe_allow_html=True)
     render_schedule(selected)
 
 
