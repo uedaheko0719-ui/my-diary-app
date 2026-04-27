@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import calendar
 import json
-import os
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -19,7 +18,7 @@ SECTION_UI = "界面设置"
 SECTION_TIME = "时间表"
 
 
-def now_display() -> datetime:
+def app_now() -> datetime:
     return datetime.now(ZoneInfo(st.session_state.get("tz", "Asia/Shanghai")))
 
 
@@ -27,47 +26,62 @@ def note_path(day: date) -> Path:
     return NOTES_DIR / f"{day:%Y-%m-%d}.txt"
 
 
-def read_all_sections(path: Path) -> dict[str, list[str]]:
+def month_plan_path(year: int, month: int) -> Path:
+    return NOTES_DIR / f"{year:04d}-{month:02d}-long_plan.json"
+
+
+def read_sections(path: Path) -> dict[str, list[str]]:
     sections: dict[str, list[str]] = {}
-    mode = None
+    current: str | None = None
     if not path.exists():
         return sections
+
     for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
         line = raw.rstrip("\n")
         if line.startswith("【") and line.endswith("】"):
-            mode = line[1:-1]
-            sections.setdefault(mode, [])
-        elif mode is not None:
-            sections.setdefault(mode, []).append(line)
+            current = line[1:-1]
+            sections.setdefault(current, [])
+        elif current is not None:
+            sections.setdefault(current, []).append(line)
     return sections
 
 
 def read_day(day: date):
-    sections = read_all_sections(note_path(day))
+    sections = read_sections(note_path(day))
     note = "\n".join(sections.get(SECTION_NOTE, [])).strip()
     diet = "\n".join(sections.get(SECTION_DIET, [])).strip()
-    time_map = {}
-    ui = {}
+    time_map: dict[str, str] = {}
+    ui: dict[str, str] = {}
+
     for line in sections.get(SECTION_TIME, []):
         if "::" in line:
-            k, v = line.split("::", 1)
-            time_map[k] = v
+            slot, text = line.split("::", 1)
+            time_map[slot] = text
+
     for line in sections.get(SECTION_UI, []):
         if "::" in line:
-            k, v = line.split("::", 1)
-            ui[k.strip()] = v.strip()
+            key, value = line.split("::", 1)
+            ui[key.strip()] = value.strip()
+
     extras = {
-        k: v
-        for k, v in sections.items()
-        if k not in {SECTION_NOTE, SECTION_DIET, SECTION_UI, SECTION_TIME}
+        key: value
+        for key, value in sections.items()
+        if key not in {SECTION_NOTE, SECTION_DIET, SECTION_TIME, SECTION_UI}
     }
     return note, diet, time_map, ui, extras
 
 
-def write_day(day: date, note: str, diet: str, time_map: dict[str, str], ui: dict[str, str] | None = None, extras=None):
+def write_day(
+    day: date,
+    note: str,
+    diet: str,
+    time_map: dict[str, str],
+    ui: dict[str, str] | None = None,
+    extras: dict[str, list[str]] | None = None,
+):
     ui = ui or {}
     extras = extras or {}
-    out = [
+    lines = [
         f"【{SECTION_NOTE}】",
         note.strip(),
         "",
@@ -76,66 +90,35 @@ def write_day(day: date, note: str, diet: str, time_map: dict[str, str], ui: dic
         "",
         f"【{SECTION_UI}】",
     ]
-    out.extend(f"{k}::{v}" for k, v in ui.items())
-    out.extend(["", f"【{SECTION_TIME}】"])
+    lines.extend(f"{key}::{value}" for key, value in ui.items() if str(value).strip())
+    lines.extend(["", f"【{SECTION_TIME}】"])
     for slot, text in time_map.items():
         if str(text).strip():
-            out.append(f"{slot}::{str(text).strip()}")
-    for name, lines in extras.items():
-        out.extend(["", f"【{name}】"])
-        out.extend(str(x).rstrip("\n") for x in lines)
-    note_path(day).write_text("\n".join(out).rstrip() + "\n", encoding="utf-8")
+            lines.append(f"{slot}::{str(text).strip()}")
+
+    for name, extra_lines in extras.items():
+        lines.extend(["", f"【{name}】"])
+        lines.extend(str(item).rstrip("\n") for item in extra_lines)
+
+    note_path(day).write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
 
-def generate_time_slots() -> list[str]:
-    def natural_time(hour: int) -> str:
-        if hour == 0:
-            return "12:00 AM"
-        if hour < 12:
-            return f"{hour}:00 AM"
-        if hour == 12:
-            return "12:00 PM"
-        return f"{hour - 12}:00 PM"
-
-    return [
-        f"{natural_time((7 + i) % 24)} - {natural_time((8 + i) % 24)}"
-        for i in range(24)
-    ]
+def natural_time(hour: int) -> str:
+    hour %= 24
+    if hour == 0:
+        return "12:00 AM"
+    if hour < 12:
+        return f"{hour}:00 AM"
+    if hour == 12:
+        return "12:00 PM"
+    return f"{hour - 12}:00 PM"
 
 
-def recent_diet_history(anchor: date, days=30):
-    items = []
-    for offset in range(1, days + 1):
-        d = anchor - timedelta(days=offset)
-        _note, diet, _time, _ui, _extras = read_day(d)
-        if diet:
-            items.append((d, diet))
-    return items
+def time_slots() -> list[str]:
+    return [f"{natural_time(7 + i)} - {natural_time(8 + i)}" for i in range(24)]
 
 
-def token_charge(amount: float):
-    st.session_state.token = min(1.0, st.session_state.get("token", 0.0) + amount)
-
-
-def render_battery():
-    pct = int(st.session_state.get("token", 0.0) * 100)
-    st.markdown(
-        f"""
-        <div class="battery-wrap">
-          <div class="battery"><div class="battery-fill" style="width:{pct}%"></div></div>
-          <div class="battery-cap"></div>
-          <span class="battery-label">TOKEN {pct}%</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def month_plan_path(year: int, month: int) -> Path:
-    return NOTES_DIR / f"{year:04d}-{month:02d}-long_plan.json"
-
-
-def load_month_plan(year: int, month: int):
+def load_month_plan(year: int, month: int) -> list[dict]:
     path = month_plan_path(year, month)
     if not path.exists():
         return []
@@ -146,193 +129,391 @@ def load_month_plan(year: int, month: int):
         return []
 
 
-def save_month_plan(year: int, month: int, blocks):
-    month_plan_path(year, month).write_text(json.dumps(blocks, ensure_ascii=False, indent=2), encoding="utf-8")
+def save_month_plan(year: int, month: int, blocks: list[dict]):
+    month_plan_path(year, month).write_text(
+        json.dumps(blocks, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
 
 
-def sync_plan_to_days(year: int, month: int, blocks):
-    slots = generate_time_slots()
-    days_in_month = calendar.monthrange(year, month)[1]
+def add_token(amount: float):
+    st.session_state.token = min(1.0, max(0.0, st.session_state.get("token", 0.0) + amount))
+    st.session_state.battery_flash = True
+
+
+def save_token_to_day(day: date):
+    note, diet, time_map, ui, extras = read_day(day)
+    ui["TOKEN_LEVEL"] = f"{st.session_state.get('token', 0.0) * 16:.4f}"
+    write_day(day, note, diet, time_map, ui, extras)
+
+
+def sync_long_plan(year: int, month: int, blocks: list[dict]):
+    slots = time_slots()
+    last_day = calendar.monthrange(year, month)[1]
     for block in blocks:
         text = str(block.get("text", "")).strip()
         if not text:
             continue
-        start_day = max(1, min(days_in_month, int(block.get("day", 1))))
+        start = max(1, min(last_day, int(block.get("day", 1))))
         span = max(1, int(block.get("span", 1)))
         hour = max(0, min(23, int(block.get("hour", 22))))
         slot = slots[(hour - 7) % 24]
-        for dd in range(start_day, min(days_in_month, start_day + span - 1) + 1):
-            current = date(year, month, dd)
+
+        for day_num in range(start, min(last_day, start + span - 1) + 1):
+            current = date(year, month, day_num)
             note, diet, time_map, ui, extras = read_day(current)
             existing = time_map.get(slot, "").strip()
-            if text not in existing.split("\n"):
-                time_map[slot] = f"{existing}\n{text}".strip() if existing else text
+            parts = [item.strip() for item in existing.split("\n") if item.strip()]
+            if text not in parts:
+                parts.append(text)
+            time_map[slot] = "\n".join(parts)
             write_day(current, note, diet, time_map, ui, extras)
 
 
-st.set_page_config(page_title="My Diary", layout="wide")
+def init_state():
+    today = app_now().date()
+    defaults = {
+        "selected_day": today,
+        "view_year": today.year,
+        "view_month": today.month,
+        "tz": "Asia/Shanghai",
+        "token": 0.0,
+        "battery_flash": False,
+    }
+    for key, value in defaults.items():
+        st.session_state.setdefault(key, value)
 
-st.markdown(
-    """
-    <style>
-      .block-container { padding-top: 1.2rem; }
-      .battery-wrap { display:flex; align-items:center; gap:4px; justify-content:flex-end; }
-      .battery { width:170px; height:22px; border:2px solid #223129; background:#fff; position:relative; }
-      .battery-fill { height:100%; background:#39d98a; transition:width .15s ease; }
-      .battery-cap { width:7px; height:12px; border:2px solid #223129; border-left:0; }
-      .battery-label { font-size:12px; font-weight:700; margin-left:8px; color:#223129; }
-      .calendar-day button { width:100%; min-height:3.2rem; }
-      .time-now { border-left:6px solid #c94a3a; padding-left:.5rem; }
-      .history-card { border:1px solid #ddd0b8; padding:.75rem; margin:.5rem 0; background:#fffaf0; }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-if "tz" not in st.session_state:
-    st.session_state.tz = "Asia/Shanghai"
-if "selected_day" not in st.session_state:
-    st.session_state.selected_day = now_display().date()
-if "view_year" not in st.session_state:
-    today = now_display().date()
-    st.session_state.view_year = today.year
-    st.session_state.view_month = today.month
-if "token" not in st.session_state:
-    _n, _d, _t, ui, _e = read_day(st.session_state.selected_day)
-    st.session_state.token = min(1.0, float(ui.get("TOKEN_LEVEL", "0") or 0) / 16.0)
+    if "token_loaded" not in st.session_state:
+        _note, _diet, _time, ui, _extras = read_day(st.session_state.selected_day)
+        try:
+            st.session_state.token = min(1.0, float(ui.get("TOKEN_LEVEL", "0")) / 16.0)
+        except ValueError:
+            st.session_state.token = 0.0
+        st.session_state.token_loaded = True
 
 
-top_l, top_r = st.columns([3, 2])
-with top_l:
-    st.title("My Diary")
-with top_r:
-    render_battery()
+def render_css():
+    flash = " battery-flash" if st.session_state.get("battery_flash") else ""
+    st.markdown(
+        f"""
+        <style>
+          :root {{
+            --paper:#f8f3e7;
+            --ink:#253027;
+            --muted:#6f756f;
+            --line:#ddd2bf;
+            --accent:#278b57;
+            --danger:#c94a3a;
+          }}
+          .stApp {{ background:var(--paper); color:var(--ink); }}
+          .block-container {{ padding-top:1rem; max-width:1320px; }}
+          button[kind="secondary"], .stButton>button {{
+            border-radius:6px !important;
+            border:1px solid var(--line) !important;
+            background:#fffaf0 !important;
+            transition:transform .12s ease, border-color .12s ease, background .12s ease;
+          }}
+          button[kind="secondary"]:hover, .stButton>button:hover {{
+            transform:translateY(-1px);
+            border-color:#9fbca9 !important;
+            background:#ffffff !important;
+          }}
+          .browser-bar {{
+            display:flex; align-items:center; justify-content:space-between;
+            gap:16px; border-bottom:1px solid var(--line); padding:4px 0 12px;
+            margin-bottom:10px;
+          }}
+          .app-title {{ font-size:28px; font-weight:700; letter-spacing:0; }}
+          .battery-wrap {{ display:flex; align-items:center; gap:8px; justify-content:flex-end; }}
+          .battery {{
+            width:150px; height:24px; padding:3px; border:2px solid #28352c;
+            background:#fff; position:relative; border-radius:4px;
+          }}
+          .battery:after {{
+            content:""; position:absolute; width:7px; height:12px; right:-10px; top:4px;
+            border:2px solid #28352c; border-left:0; border-radius:0 3px 3px 0;
+          }}
+          .battery-fill {{
+            height:100%; width:{int(st.session_state.get("token", 0.0) * 100)}%;
+            background:#38b86f; border-radius:2px; transition:width .16s ease;
+          }}
+          .battery-flash .battery-fill {{ animation:batteryPulse .28s ease; }}
+          @keyframes batteryPulse {{
+            0% {{ filter:brightness(1); }}
+            50% {{ filter:brightness(1.8); }}
+            100% {{ filter:brightness(1); }}
+          }}
+          .battery-label {{ font-size:12px; font-weight:700; color:#304137; min-width:72px; }}
+          .day-card {{
+            background:#fffaf0; border:1px solid var(--line); border-radius:8px;
+            padding:12px; min-height:92px;
+          }}
+          .day-card.today {{ border-left:5px solid var(--danger); }}
+          .now-row {{
+            border-left:5px solid var(--danger); padding-left:10px;
+            background:#fffdf7; border-radius:5px;
+          }}
+          .history-card {{
+            background:#fffaf0; border:1px solid var(--line); border-radius:8px;
+            padding:12px; margin:8px 0;
+          }}
+          .plan-block {{
+            background:#e9f5eb; border-left:5px solid #38b86f;
+            padding:10px 12px; border-radius:7px; margin:7px 0;
+          }}
+          .small-muted {{ color:var(--muted); font-size:13px; }}
+          textarea {{ border-radius:7px !important; }}
+        </style>
+        <div class="browser-bar">
+          <div class="app-title">My Diary</div>
+          <div class="battery-wrap{flash}">
+            <div class="battery"><div class="battery-fill"></div></div>
+            <div class="battery-label">TOKEN {int(st.session_state.get("token", 0.0) * 100)}%</div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.session_state.battery_flash = False
 
-with st.sidebar:
-    st.subheader("Settings")
-    if st.button("Switch Beijing / NYC"):
-        st.session_state.tz = "America/New_York" if st.session_state.tz == "Asia/Shanghai" else "Asia/Shanghai"
-        st.rerun()
-    st.caption(f"Timezone: {'Beijing' if st.session_state.tz == 'Asia/Shanghai' else 'NYC'}")
-    click_token = st.number_input("Click token", value=0.01, min_value=0.0, max_value=1.0, step=0.001, format="%.3f")
-    type_token = st.number_input("Type token / char", value=0.001, min_value=0.0, max_value=0.05, step=0.0005, format="%.4f")
-    important_token = st.number_input("Important task token", value=0.1, min_value=0.0, max_value=4.0, step=0.01)
-    progress_token = st.number_input("Full plan token", value=0.5, min_value=0.0, max_value=1.0, step=0.05)
 
-
-tabs = st.tabs(["Month", "Day", "Meal History", "Long Plan"])
-
-with tabs[0]:
-    c1, c2, c3 = st.columns([1, 2, 1])
+def render_month():
+    c1, c2, c3 = st.columns([1, 3, 1])
     with c1:
-        if st.button("Previous"):
+        if st.button("Previous Month", use_container_width=True):
             base = date(st.session_state.view_year, st.session_state.view_month, 15) - timedelta(days=31)
             st.session_state.view_year, st.session_state.view_month = base.year, base.month
+            add_token(0.01)
             st.rerun()
     with c2:
-        st.header(f"{calendar.month_name[st.session_state.view_month]} {st.session_state.view_year}")
+        st.subheader(f"{calendar.month_name[st.session_state.view_month]} {st.session_state.view_year}")
     with c3:
-        if st.button("Next"):
+        if st.button("Next Month", use_container_width=True):
             base = date(st.session_state.view_year, st.session_state.view_month, 15) + timedelta(days=31)
             st.session_state.view_year, st.session_state.view_month = base.year, base.month
+            add_token(0.01)
             st.rerun()
 
-    weeks = calendar.monthcalendar(st.session_state.view_year, st.session_state.view_month)
-    st.write("Mon Tue Wed Thu Fri Sat Sun")
-    for week in weeks:
+    st.caption("Click a date to open its day page.")
+    headers = st.columns(7)
+    for col, name in zip(headers, ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]):
+        col.markdown(f"**{name}**")
+
+    today = app_now().date()
+    for week in calendar.monthcalendar(st.session_state.view_year, st.session_state.view_month):
         cols = st.columns(7)
         for idx, day_num in enumerate(week):
             with cols[idx]:
                 if day_num == 0:
                     st.write("")
-                else:
-                    d = date(st.session_state.view_year, st.session_state.view_month, day_num)
-                    marker = "📘" if note_path(d).exists() and note_path(d).stat().st_size > 40 else ""
-                    if st.button(f"{day_num} {marker}", key=f"cal-{d}"):
-                        st.session_state.selected_day = d
-                        token_charge(click_token)
-                        st.rerun()
+                    continue
+                current = date(st.session_state.view_year, st.session_state.view_month, day_num)
+                note, diet, time_map, _ui, _extras = read_day(current)
+                marks = []
+                if note:
+                    marks.append("note")
+                if diet:
+                    marks.append("meal")
+                if any(value.strip() for value in time_map.values()):
+                    marks.append("plan")
+                cls = "day-card today" if current == today else "day-card"
+                st.markdown(
+                    f"<div class='{cls}'><b>{day_num}</b><br><span class='small-muted'>{' / '.join(marks) or '&nbsp;'}</span></div>",
+                    unsafe_allow_html=True,
+                )
+                if st.button("Open", key=f"open-{current}", use_container_width=True):
+                    st.session_state.selected_day = current
+                    add_token(0.01)
+                    st.rerun()
 
-with tabs[1]:
+
+def render_day():
     selected = st.session_state.selected_day
     note, diet, time_map, ui, extras = read_day(selected)
-    st.header(f"{selected:%Y-%m-%d} {selected.strftime('%A')}")
+    st.subheader(f"{selected:%Y-%m-%d}  {selected.strftime('%A')}")
 
-    note_tab, diet_tab, schedule_tab = st.tabs(["Notes", "Meal Plan", "Schedule"])
-    with note_tab:
-        new_note = st.text_area("Today notes", note, height=220)
-        if new_note != note:
-            token_charge(max(0, len(new_note) - len(note)) * type_token)
-            write_day(selected, new_note, diet, time_map, ui, extras)
+    c1, c2, c3 = st.columns([1, 1, 2])
+    with c1:
+        if st.button("Yesterday", use_container_width=True):
+            st.session_state.selected_day = selected - timedelta(days=1)
+            add_token(0.01)
             st.rerun()
-    with diet_tab:
-        new_diet = st.text_area("Today meal plan", diet, height=180)
-        if new_diet != diet:
-            token_charge(max(0, len(new_diet) - len(diet)) * type_token)
-            write_day(selected, note, new_diet, time_map, ui, extras)
+    with c2:
+        if st.button("Tomorrow", use_container_width=True):
+            st.session_state.selected_day = selected + timedelta(days=1)
+            add_token(0.01)
             st.rerun()
-    with schedule_tab:
-        slots = generate_time_slots()
-        now = now_display()
-        current_slot = None
-        start = datetime(selected.year, selected.month, selected.day, 7, tzinfo=ZoneInfo(st.session_state.tz))
-        if now.date() == selected and now.hour < 7:
-            start -= timedelta(days=1)
-        if start <= now < start + timedelta(hours=24):
-            current_slot = int((now - start).total_seconds() // 3600)
+    with c3:
+        picked = st.date_input("Jump to date", value=selected)
+        if picked != selected:
+            st.session_state.selected_day = picked
+            add_token(0.01)
+            st.rerun()
 
-        new_time_map = dict(time_map)
-        for i, slot in enumerate(slots):
-            label = f"**{slot}**"
-            if i == current_slot:
-                st.markdown(f'<div class="time-now">{label}</div>', unsafe_allow_html=True)
+    day_tabs = st.tabs(["Schedule", "Meal Plan", "Diary Note", "Token Settings"])
+
+    with day_tabs[0]:
+        slots = time_slots()
+        now = app_now()
+        current_slot = f"{natural_time(now.hour)} - {natural_time(now.hour + 1)}"
+        new_time_map: dict[str, str] = {}
+        filled = 0
+        for slot in slots:
+            row_class = "now-row" if selected == now.date() and slot == current_slot else ""
+            if row_class:
+                remaining = 100 - int(now.minute / 60 * 100)
+                st.markdown(f"<div class='{row_class}'><b>{slot}</b> · {remaining}% left this hour</div>", unsafe_allow_html=True)
             else:
-                st.markdown(label)
-            val = st.text_area(slot, time_map.get(slot, ""), height=80, label_visibility="collapsed", key=f"time-{selected}-{slot}")
-            if val != time_map.get(slot, ""):
-                new_time_map[slot] = val
-        if st.button("Save schedule"):
-            filled_before = sum(1 for x in time_map.values() if x.strip())
-            filled_after = sum(1 for x in new_time_map.values() if x.strip())
-            token_charge(max(0, filled_after - filled_before) * (progress_token / 24.0))
+                st.markdown(f"**{slot}**")
+            value = st.text_area(
+                label=f"Plan for {slot}",
+                value=time_map.get(slot, ""),
+                height=72,
+                label_visibility="collapsed",
+                key=f"time-{selected}-{slot}",
+            )
+            if value.strip():
+                filled += 1
+            new_time_map[slot] = value
+
+        if st.button("Save Schedule", use_container_width=True):
+            progress_bonus = 0.5 * min(1.0, filled / 24)
+            add_token(progress_bonus)
+            ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
             write_day(selected, note, diet, new_time_map, ui, extras)
-            st.success("Saved.")
+            st.success("Schedule saved.")
+            st.rerun()
 
-with tabs[2]:
-    st.header("Past 30 Days Meal History")
-    for d, text in recent_diet_history(st.session_state.selected_day, 30):
-        st.markdown(f'<div class="history-card"><b>{d:%Y-%m-%d} {d:%A}</b><br>{text.replace(chr(10), "<br>")}</div>', unsafe_allow_html=True)
+    with day_tabs[1]:
+        new_diet = st.text_area("Meal Plan", value=diet, height=260, key=f"diet-{selected}")
+        if st.button("Save Meal Plan", use_container_width=True):
+            add_token(max(0.01, len(new_diet) * 0.001))
+            ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+            write_day(selected, note, new_diet, time_map, ui, extras)
+            st.success("Meal plan saved.")
+            st.rerun()
 
-with tabs[3]:
+    with day_tabs[2]:
+        new_note = st.text_area("Diary Note", value=note, height=340, key=f"note-{selected}")
+        if st.button("Save Diary Note", use_container_width=True):
+            add_token(max(0.01, len(new_note) * 0.001))
+            ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+            write_day(selected, new_note, diet, time_map, ui, extras)
+            st.success("Diary note saved.")
+            st.rerun()
+
+    with day_tabs[3]:
+        st.write("Token battery rewards planning, typing, and action.")
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            if st.button("+ Click token", use_container_width=True):
+                add_token(0.01)
+                save_token_to_day(selected)
+                st.rerun()
+        with c2:
+            if st.button("+ Important task", use_container_width=True):
+                add_token(0.1)
+                save_token_to_day(selected)
+                st.rerun()
+        with c3:
+            if st.button("Reset token", use_container_width=True):
+                st.session_state.token = 0.0
+                save_token_to_day(selected)
+                st.rerun()
+
+
+def render_meal_history():
+    st.subheader("Meal History")
+    anchor = st.session_state.selected_day
+    count = 0
+    for offset in range(0, 30):
+        current = anchor - timedelta(days=offset)
+        _note, diet, _time, _ui, _extras = read_day(current)
+        if not diet:
+            continue
+        count += 1
+        st.markdown(
+            f"<div class='history-card'><b>{current:%Y-%m-%d}</b><br>{diet.replace(chr(10), '<br>')}</div>",
+            unsafe_allow_html=True,
+        )
+    if count == 0:
+        st.info("No meal history in the last 30 days.")
+
+
+def render_long_plan():
     year = st.session_state.view_year
     month = st.session_state.view_month
-    st.header(f"Long Plan: {calendar.month_name[month]} {year}")
+    st.subheader(f"Long Plan · {calendar.month_name[month]} {year}")
+    st.caption("This is the web-safe version of the desktop drag planner. Add blocks here, then sync them into daily 10 PM style schedule rows.")
+
     blocks = load_month_plan(year, month)
-    days_in_month = calendar.monthrange(year, month)[1]
-    with st.form("add_long_plan"):
-        text = st.text_input("Task, e.g. sleep early")
-        col_a, col_b, col_c = st.columns(3)
-        with col_a:
-            start_day = st.number_input("Start day", 1, days_in_month, 1)
-        with col_b:
-            hour = st.number_input("Hour (0-23)", 0, 23, 22)
-        with col_c:
-            span = st.number_input("Span days", 1, days_in_month, days_in_month)
-        submitted = st.form_submit_button("Add block")
-        if submitted and text.strip():
-            blocks.append({"id": str(int(datetime.now().timestamp() * 1000)), "text": text.strip(), "day": int(start_day), "hour": int(hour), "span": int(span)})
+    last_day = calendar.monthrange(year, month)[1]
+
+    with st.form("add-long-plan", clear_on_submit=True):
+        task = st.text_input("Task", placeholder="Early sleep")
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            start_day = st.number_input("Start day", 1, last_day, min(app_now().day, last_day))
+        with c2:
+            hour = st.number_input("Hour", 0, 23, 22)
+        with c3:
+            span = st.number_input("Span days", 1, last_day, 7)
+        submitted = st.form_submit_button("Add Block", use_container_width=True)
+        if submitted and task.strip():
+            blocks.append({"text": task.strip(), "day": int(start_day), "hour": int(hour), "span": int(span)})
             save_month_plan(year, month, blocks)
+            add_token(0.05)
             st.rerun()
 
-    if blocks:
-        st.dataframe(blocks, use_container_width=True)
-        if st.button("Sync to Days"):
-            sync_plan_to_days(year, month, blocks)
-            token_charge(progress_token)
-            st.success("Synced to daily schedules.")
-        if st.button("Clear Long Plan"):
-            save_month_plan(year, month, [])
-            st.rerun()
+    if not blocks:
+        st.info("No long-plan blocks yet.")
     else:
-        st.info("No long plan blocks yet.")
+        for idx, block in enumerate(blocks):
+            end_day = min(last_day, int(block.get("day", 1)) + int(block.get("span", 1)) - 1)
+            st.markdown(
+                f"<div class='plan-block'><b>{block.get('text', '')}</b><br>"
+                f"Day {block.get('day', 1)} to {end_day}, {int(block.get('hour', 22)):02d}:00</div>",
+                unsafe_allow_html=True,
+            )
+            if st.button("Delete", key=f"delete-block-{idx}"):
+                blocks.pop(idx)
+                save_month_plan(year, month, blocks)
+                st.rerun()
 
+    if st.button("Sync Long Plan to Daily Schedule", use_container_width=True):
+        sync_long_plan(year, month, blocks)
+        add_token(0.1)
+        st.success("Synced into daily schedule.")
+        st.rerun()
+
+
+def main():
+    st.set_page_config(page_title="My Diary", layout="wide")
+    init_state()
+    render_css()
+
+    with st.sidebar:
+        st.subheader("Settings")
+        tz_label = "Beijing" if st.session_state.tz == "Asia/Shanghai" else "NYC"
+        st.caption(f"Current timezone: {tz_label}")
+        if st.button("Switch Beijing / NYC", use_container_width=True):
+            st.session_state.tz = "America/New_York" if st.session_state.tz == "Asia/Shanghai" else "Asia/Shanghai"
+            add_token(0.01)
+            st.rerun()
+        st.divider()
+        st.write(f"Now: {app_now():%Y-%m-%d %H:%M}")
+        st.write(f"Selected: {st.session_state.selected_day:%Y-%m-%d}")
+
+    tabs = st.tabs(["Month Calendar", "Day Page", "Meal History", "Long Plan"])
+    with tabs[0]:
+        render_month()
+    with tabs[1]:
+        render_day()
+    with tabs[2]:
+        render_meal_history()
+    with tabs[3]:
+        render_long_plan()
+
+
+if __name__ == "__main__":
+    main()
