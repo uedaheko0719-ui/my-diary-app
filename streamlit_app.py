@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import calendar
-import json
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -16,23 +15,20 @@ SECTION_NOTE = "文字笔记"
 SECTION_DIET = "饮食规划"
 SECTION_UI = "界面设置"
 SECTION_TIME = "时间表"
+SECTION_QUADRANT = "四象限"
 
 
-def app_now() -> datetime:
-    return datetime.now(ZoneInfo(st.session_state.get("tz", "Asia/Shanghai")))
+def now() -> datetime:
+    return datetime.now(ZoneInfo("Asia/Shanghai"))
 
 
 def note_path(day: date) -> Path:
     return NOTES_DIR / f"{day:%Y-%m-%d}.txt"
 
 
-def month_plan_path(year: int, month: int) -> Path:
-    return NOTES_DIR / f"{year:04d}-{month:02d}-long_plan.json"
-
-
 def read_sections(path: Path) -> dict[str, list[str]]:
     sections: dict[str, list[str]] = {}
-    current: str | None = None
+    current = None
     if not path.exists():
         return sections
 
@@ -50,31 +46,33 @@ def read_day(day: date):
     sections = read_sections(note_path(day))
     note = "\n".join(sections.get(SECTION_NOTE, [])).strip()
     diet = "\n".join(sections.get(SECTION_DIET, [])).strip()
-    time_map: dict[str, str] = {}
+    quadrant = "\n".join(sections.get(SECTION_QUADRANT, [])).strip()
     ui: dict[str, str] = {}
-
-    for line in sections.get(SECTION_TIME, []):
-        if "::" in line:
-            slot, text = line.split("::", 1)
-            time_map[slot] = text
+    time_map: dict[str, str] = {}
 
     for line in sections.get(SECTION_UI, []):
         if "::" in line:
             key, value = line.split("::", 1)
             ui[key.strip()] = value.strip()
 
+    for line in sections.get(SECTION_TIME, []):
+        if "::" in line:
+            slot, value = line.split("::", 1)
+            time_map[slot] = value
+
     extras = {
         key: value
         for key, value in sections.items()
-        if key not in {SECTION_NOTE, SECTION_DIET, SECTION_TIME, SECTION_UI}
+        if key not in {SECTION_NOTE, SECTION_DIET, SECTION_UI, SECTION_TIME, SECTION_QUADRANT}
     }
-    return note, diet, time_map, ui, extras
+    return note, diet, quadrant, time_map, ui, extras
 
 
 def write_day(
     day: date,
     note: str,
     diet: str,
+    quadrant: str,
     time_map: dict[str, str],
     ui: dict[str, str] | None = None,
     extras: dict[str, list[str]] | None = None,
@@ -92,9 +90,10 @@ def write_day(
     ]
     lines.extend(f"{key}::{value}" for key, value in ui.items() if str(value).strip())
     lines.extend(["", f"【{SECTION_TIME}】"])
-    for slot, text in time_map.items():
-        if str(text).strip():
-            lines.append(f"{slot}::{str(text).strip()}")
+    for slot, value in time_map.items():
+        if value.strip():
+            lines.append(f"{slot}::{value.strip()}")
+    lines.extend(["", f"【{SECTION_QUADRANT}】", quadrant.strip()])
 
     for name, extra_lines in extras.items():
         lines.extend(["", f"【{name}】"])
@@ -118,493 +117,299 @@ def time_slots() -> list[str]:
     return [f"{natural_time(7 + i)} - {natural_time(8 + i)}" for i in range(24)]
 
 
-def load_month_plan(year: int, month: int) -> list[dict]:
-    path = month_plan_path(year, month)
-    if not path.exists():
-        return []
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-        return data if isinstance(data, list) else []
-    except Exception:
-        return []
-
-
-def save_month_plan(year: int, month: int, blocks: list[dict]):
-    month_plan_path(year, month).write_text(
-        json.dumps(blocks, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+def current_slot() -> str:
+    current = now()
+    return f"{natural_time(current.hour)} - {natural_time(current.hour + 1)}"
 
 
 def add_token(amount: float):
-    st.session_state.token = min(1.0, max(0.0, st.session_state.get("token", 0.0) + amount))
-    st.session_state.battery_flash = True
-
-
-def save_token_to_day(day: date):
-    note, diet, time_map, ui, extras = read_day(day)
-    ui["TOKEN_LEVEL"] = f"{st.session_state.get('token', 0.0) * 16:.4f}"
-    write_day(day, note, diet, time_map, ui, extras)
-
-
-def sync_long_plan(year: int, month: int, blocks: list[dict]):
-    slots = time_slots()
-    last_day = calendar.monthrange(year, month)[1]
-    for block in blocks:
-        text = str(block.get("text", "")).strip()
-        if not text:
-            continue
-        start = max(1, min(last_day, int(block.get("day", 1))))
-        span = max(1, int(block.get("span", 1)))
-        hour = max(0, min(23, int(block.get("hour", 22))))
-        slot = slots[(hour - 7) % 24]
-
-        for day_num in range(start, min(last_day, start + span - 1) + 1):
-            current = date(year, month, day_num)
-            note, diet, time_map, ui, extras = read_day(current)
-            existing = time_map.get(slot, "").strip()
-            parts = [item.strip() for item in existing.split("\n") if item.strip()]
-            if text not in parts:
-                parts.append(text)
-            time_map[slot] = "\n".join(parts)
-            write_day(current, note, diet, time_map, ui, extras)
+    st.session_state.token = min(1.0, max(0.0, st.session_state.token + amount))
+    st.session_state.flash_battery = True
 
 
 def init_state():
-    today = app_now().date()
+    today = now().date()
     defaults = {
+        "view": "month",
         "selected_day": today,
-        "view_year": today.year,
-        "view_month": today.month,
-        "active_view": "month",
-        "day_panel": "schedule",
-        "tz": "Asia/Shanghai",
+        "panel": "",
+        "settings_open": False,
+        "quadrant_open": False,
         "token": 0.0,
-        "battery_flash": False,
+        "flash_battery": False,
+        "click_token": 0.01,
+        "type_token": 0.001,
+        "important_token": 0.1,
     }
     for key, value in defaults.items():
         st.session_state.setdefault(key, value)
 
-    if "token_loaded" not in st.session_state:
-        _note, _diet, _time, ui, _extras = read_day(st.session_state.selected_day)
+    if "loaded_token" not in st.session_state:
+        _note, _diet, _quad, _time_map, ui, _extras = read_day(today)
         try:
             st.session_state.token = min(1.0, float(ui.get("TOKEN_LEVEL", "0")) / 16.0)
         except ValueError:
             st.session_state.token = 0.0
-        st.session_state.token_loaded = True
+        st.session_state.loaded_token = True
 
 
-def render_css():
-    flash = " battery-flash" if st.session_state.get("battery_flash") else ""
+def css():
+    battery_class = "battery-wrap flash" if st.session_state.flash_battery else "battery-wrap"
     st.markdown(
         f"""
         <style>
           :root {{
             --paper:#f8f3e7;
-            --ink:#253027;
-            --muted:#6f756f;
-            --line:#ddd2bf;
-            --accent:#278b57;
-            --danger:#c94a3a;
+            --panel:#fffaf0;
+            --line:#ded3c0;
+            --ink:#263027;
+            --muted:#7a7d74;
+            --green:#35a868;
+            --red:#c94a3a;
           }}
           .stApp {{ background:var(--paper); color:var(--ink); }}
-          .block-container {{ padding-top:1rem; max-width:1320px; }}
-          button[kind="secondary"], .stButton>button {{
-            border-radius:6px !important;
-            border:1px solid var(--line) !important;
-            background:#fffaf0 !important;
-            transition:transform .12s ease, border-color .12s ease, background .12s ease;
+          .block-container {{ max-width:1220px; padding-top:18px; }}
+          .month-wrap {{ max-width:980px; margin:0 auto; }}
+          .month-title {{ font-size:26px; font-weight:700; text-align:center; margin:0 0 18px; }}
+          .week-label {{ color:var(--muted); font-weight:700; text-align:center; padding-bottom:8px; }}
+          div.stButton > button {{
+            border-radius:6px; border:1px solid var(--line); background:var(--panel);
+            color:var(--ink); min-height:42px; transition:background .12s ease, transform .12s ease, border-color .12s ease;
           }}
-          button[kind="secondary"]:hover, .stButton>button:hover {{
-            transform:translateY(-1px);
-            border-color:#9fbca9 !important;
-            background:#ffffff !important;
+          div.stButton > button:hover {{
+            background:#fff; border-color:#96b79f; transform:translateY(-1px);
           }}
-          .browser-bar {{
+          .calendar-cell {{
+            height:92px; border:1px solid var(--line); background:var(--panel);
+            border-radius:6px; padding:9px; font-size:17px; font-weight:700;
+          }}
+          .calendar-cell.today {{
+            border-left:6px solid var(--red); background:#fffdf8;
+          }}
+          .calendar-cell.empty {{ opacity:0; }}
+          .day-top {{
             display:flex; align-items:center; justify-content:space-between;
-            gap:16px; border-bottom:1px solid var(--line); padding:4px 0 12px;
-            margin-bottom:10px;
+            gap:12px; padding-bottom:12px; margin-bottom:12px; border-bottom:1px solid var(--line);
           }}
-          .app-title {{ font-size:28px; font-weight:700; letter-spacing:0; }}
-          .battery-wrap {{ display:flex; align-items:center; gap:8px; justify-content:flex-end; }}
+          .day-title {{ font-size:24px; font-weight:700; }}
+          .right-tools {{ display:flex; align-items:center; gap:12px; }}
+          .battery-wrap {{ display:flex; align-items:center; gap:8px; }}
           .battery {{
-            width:150px; height:24px; padding:3px; border:2px solid #28352c;
-            background:#fff; position:relative; border-radius:4px;
+            width:150px; height:24px; border:2px solid #27352d; border-radius:4px;
+            background:white; padding:3px; position:relative;
           }}
           .battery:after {{
-            content:""; position:absolute; width:7px; height:12px; right:-10px; top:4px;
-            border:2px solid #28352c; border-left:0; border-radius:0 3px 3px 0;
+            content:""; position:absolute; right:-10px; top:4px; width:7px; height:12px;
+            border:2px solid #27352d; border-left:0; border-radius:0 3px 3px 0;
           }}
           .battery-fill {{
-            height:100%; width:{int(st.session_state.get("token", 0.0) * 100)}%;
-            background:#38b86f; border-radius:2px; transition:width .16s ease;
+            height:100%; width:{int(st.session_state.token * 100)}%; background:var(--green);
+            border-radius:2px; transition:width .16s ease;
           }}
-          .battery-flash .battery-fill {{ animation:batteryPulse .28s ease; }}
-          @keyframes batteryPulse {{
+          .flash .battery-fill {{ animation:batteryFlash .25s ease; }}
+          @keyframes batteryFlash {{
             0% {{ filter:brightness(1); }}
-            50% {{ filter:brightness(1.8); }}
+            50% {{ filter:brightness(1.75); }}
             100% {{ filter:brightness(1); }}
           }}
-          .battery-label {{ font-size:12px; font-weight:700; color:#304137; min-width:72px; }}
-          .fake-tab-row {{
-            display:flex; gap:6px; align-items:flex-end; border-bottom:1px solid var(--line);
-            margin:0 0 18px; padding:0 0 0 2px; overflow-x:auto;
+          .battery-label {{ min-width:42px; font-size:12px; font-weight:800; }}
+          .tool-row {{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }}
+          .panel-box {{
+            border:1px solid var(--line); background:var(--panel); border-radius:8px;
+            padding:14px; margin:10px 0 16px;
           }}
-          .fake-tab {{
-            display:inline-flex; align-items:center; gap:10px; padding:9px 14px;
-            border:1px solid var(--line); border-bottom:0; border-radius:7px 7px 0 0;
-            background:#eee2cf; color:#4f514b; font-weight:700; font-size:14px;
+          .slot {{
+            display:grid; grid-template-columns:170px 1fr; gap:12px; align-items:start;
+            padding:10px 0; border-bottom:1px solid rgba(222,211,192,.75);
           }}
-          .fake-tab.active {{ background:#fffaf0; color:var(--ink); transform:translateY(1px); }}
-          .top-actions {{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }}
-          .day-card {{
-            background:#fffaf0; border:1px solid var(--line); border-radius:8px;
-            padding:12px; min-height:92px;
-          }}
-          .day-card.today {{ border-left:5px solid var(--danger); }}
-          .now-row {{
-            border-left:5px solid var(--danger); padding-left:10px;
-            background:#fffdf7; border-radius:5px;
-          }}
-          .history-card {{
-            background:#fffaf0; border:1px solid var(--line); border-radius:8px;
-            padding:12px; margin:8px 0;
-          }}
-          .plan-block {{
-            background:#e9f5eb; border-left:5px solid #38b86f;
-            padding:10px 12px; border-radius:7px; margin:7px 0;
-          }}
-          .small-muted {{ color:var(--muted); font-size:13px; }}
+          .slot.now {{ border-left:6px solid var(--green); padding-left:10px; background:#fffdf8; }}
+          .slot-time {{ font-weight:700; color:#3d463f; padding-top:8px; }}
           textarea {{ border-radius:7px !important; }}
+          @media (max-width: 760px) {{
+            .slot {{ grid-template-columns:1fr; }}
+            .day-top {{ align-items:flex-start; flex-direction:column; }}
+          }}
         </style>
-        <div class="browser-bar">
-          <div class="app-title">My Diary</div>
-          <div class="battery-wrap{flash}">
-            <div class="battery"><div class="battery-fill"></div></div>
-            <div class="battery-label">TOKEN {int(st.session_state.get("token", 0.0) * 100)}%</div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.session_state.flash_battery = False
+
+
+def save_token(day: date):
+    note, diet, quadrant, time_map, ui, extras = read_day(day)
+    ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+    write_day(day, note, diet, quadrant, time_map, ui, extras)
+
+
+def render_month():
+    today = now().date()
+    st.markdown('<div class="month-wrap">', unsafe_allow_html=True)
+    st.markdown(f'<div class="month-title">{today:%B %Y}</div>', unsafe_allow_html=True)
+
+    for col, label in zip(st.columns(7), ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]):
+        col.markdown(f'<div class="week-label">{label}</div>', unsafe_allow_html=True)
+
+    for week in calendar.monthcalendar(today.year, today.month):
+        cols = st.columns(7)
+        for index, day_num in enumerate(week):
+            with cols[index]:
+                if day_num == 0:
+                    st.markdown('<div class="calendar-cell empty"></div>', unsafe_allow_html=True)
+                    continue
+                current = date(today.year, today.month, day_num)
+                label = f"| {day_num}" if current == today else str(day_num)
+                if st.button(label, key=f"open-{current}", use_container_width=True):
+                    st.session_state.selected_day = current
+                    st.session_state.view = "day"
+                    st.session_state.panel = ""
+                    add_token(st.session_state.click_token)
+                    st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+def render_day_header(selected: date):
+    pct = int(st.session_state.token * 100)
+    battery_class = "battery-wrap flash" if st.session_state.flash_battery else "battery-wrap"
+    st.markdown(
+        f"""
+        <div class="day-top">
+          <div class="day-title">{selected:%Y-%m-%d} · {selected.strftime('%A')}</div>
+          <div class="right-tools">
+            <div class="{battery_class}">
+              <div class="battery"><div class="battery-fill"></div></div>
+              <div class="battery-label">{pct}%</div>
+            </div>
           </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    st.session_state.battery_flash = False
 
 
-def switch_view(view: str, panel: str | None = None):
-    st.session_state.active_view = view
-    if panel:
-        st.session_state.day_panel = panel
-    add_token(0.01)
-    st.rerun()
+def render_settings(selected: date):
+    st.markdown('<div class="panel-box">', unsafe_allow_html=True)
+    st.subheader("Battery Settings")
+    c1, c2, c3 = st.columns(3)
+    st.session_state.click_token = c1.number_input(
+        "Click token", min_value=0.0, max_value=1.0, value=float(st.session_state.click_token), step=0.001, format="%.3f"
+    )
+    st.session_state.type_token = c2.number_input(
+        "Type token / char", min_value=0.0, max_value=0.05, value=float(st.session_state.type_token), step=0.001, format="%.3f"
+    )
+    st.session_state.important_token = c3.number_input(
+        "Important task token", min_value=0.0, max_value=1.0, value=float(st.session_state.important_token), step=0.01
+    )
+    if st.button("Reset Battery"):
+        st.session_state.token = 0.0
+        save_token(selected)
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
-def render_browser_tabs():
-    selected = st.session_state.selected_day
-    active = st.session_state.active_view
-    labels = [
-        ("month", "Month Calendar"),
-        ("day", f"{selected:%m-%d} Diary"),
-        ("meal_history", "Meal History"),
-        ("long_plan", f"{st.session_state.view_month:02d} Long Plan"),
-    ]
-    html = ['<div class="fake-tab-row">']
-    for key, title in labels:
-        cls = "fake-tab active" if key == active else "fake-tab"
-        html.append(f'<span class="{cls}">{title}</span>')
-    html.append("</div>")
-    st.markdown("".join(html), unsafe_allow_html=True)
-
-    cols = st.columns([1.1, 1.1, 1.1, 1.1, 4])
-    with cols[0]:
-        if st.button("Month Calendar", use_container_width=True):
-            switch_view("month")
-    with cols[1]:
-        if st.button("Day Page", use_container_width=True):
-            switch_view("day")
-    with cols[2]:
-        if st.button("Meal History", use_container_width=True):
-            switch_view("meal_history")
-    with cols[3]:
-        if st.button("Long Plan", use_container_width=True):
-            switch_view("long_plan")
-
-
-def render_month():
-    c1, c2, c3 = st.columns([1, 3, 1])
-    with c1:
-        if st.button("Previous Month", use_container_width=True):
-            base = date(st.session_state.view_year, st.session_state.view_month, 15) - timedelta(days=31)
-            st.session_state.view_year, st.session_state.view_month = base.year, base.month
-            add_token(0.01)
+def render_text_panel(selected: date, panel: str):
+    note, diet, quadrant, time_map, ui, extras = read_day(selected)
+    if panel == "note":
+        st.markdown('<div class="panel-box">', unsafe_allow_html=True)
+        value = st.text_area("Today's Notes", value=note, height=260)
+        if st.button("Save Notes", use_container_width=True):
+            add_token(max(st.session_state.click_token, len(value) * st.session_state.type_token))
+            ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+            write_day(selected, value, diet, quadrant, time_map, ui, extras)
             st.rerun()
-    with c2:
-        st.subheader(f"{calendar.month_name[st.session_state.view_month]} {st.session_state.view_year}")
-    with c3:
-        if st.button("Next Month", use_container_width=True):
-            base = date(st.session_state.view_year, st.session_state.view_month, 15) + timedelta(days=31)
-            st.session_state.view_year, st.session_state.view_month = base.year, base.month
-            add_token(0.01)
+        st.markdown("</div>", unsafe_allow_html=True)
+    elif panel == "diet":
+        st.markdown('<div class="panel-box">', unsafe_allow_html=True)
+        value = st.text_area("Meal Plan", value=diet, height=220)
+        if st.button("Save Meal Plan", use_container_width=True):
+            add_token(max(st.session_state.click_token, len(value) * st.session_state.type_token))
+            ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+            write_day(selected, note, value, quadrant, time_map, ui, extras)
             st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+    elif panel == "quadrant":
+        st.markdown('<div class="panel-box">', unsafe_allow_html=True)
+        value = st.text_area("Eisenhower Matrix", value=quadrant, height=220, placeholder="Important / Urgent...")
+        if st.button("Save Quadrant", use_container_width=True):
+            add_token(st.session_state.important_token)
+            ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+            write_day(selected, note, diet, value, time_map, ui, extras)
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.caption("Click a date to open its day page.")
-    headers = st.columns(7)
-    for col, name in zip(headers, ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]):
-        col.markdown(f"**{name}**")
 
-    today = app_now().date()
-    for week in calendar.monthcalendar(st.session_state.view_year, st.session_state.view_month):
-        cols = st.columns(7)
-        for idx, day_num in enumerate(week):
-            with cols[idx]:
-                if day_num == 0:
-                    st.write("")
-                    continue
-                current = date(st.session_state.view_year, st.session_state.view_month, day_num)
-                note, diet, time_map, _ui, _extras = read_day(current)
-                marks = []
-                if note:
-                    marks.append("note")
-                if diet:
-                    marks.append("meal")
-                if any(value.strip() for value in time_map.values()):
-                    marks.append("plan")
-                cls = "day-card today" if current == today else "day-card"
-                st.markdown(
-                    f"<div class='{cls}'><b>{day_num}</b><br><span class='small-muted'>{' / '.join(marks) or '&nbsp;'}</span></div>",
-                    unsafe_allow_html=True,
-                )
-                if st.button("Open", key=f"open-{current}", use_container_width=True):
-                    st.session_state.selected_day = current
-                    st.session_state.active_view = "day"
-                    st.session_state.day_panel = "schedule"
-                    add_token(0.01)
-                    st.rerun()
+def render_schedule(selected: date):
+    note, diet, quadrant, time_map, ui, extras = read_day(selected)
+    slots = time_slots()
+    active_slot = current_slot() if selected == now().date() else ""
+    changed: dict[str, str] = {}
+    filled = 0
+
+    for slot in slots:
+        cls = "slot now" if slot == active_slot else "slot"
+        st.markdown(f'<div class="{cls}"><div class="slot-time">{slot}</div><div>', unsafe_allow_html=True)
+        value = st.text_area(
+            f"{slot} plan",
+            value=time_map.get(slot, ""),
+            key=f"slot-{selected}-{slot}",
+            height=74,
+            label_visibility="collapsed",
+        )
+        st.markdown("</div></div>", unsafe_allow_html=True)
+        changed[slot] = value
+        if value.strip():
+            filled += 1
+
+    if st.button("Save Schedule", use_container_width=True):
+        add_token(0.5 * min(1.0, filled / 24))
+        ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+        write_day(selected, note, diet, quadrant, changed, ui, extras)
+        st.rerun()
 
 
 def render_day():
     selected = st.session_state.selected_day
-    note, diet, time_map, ui, extras = read_day(selected)
-    st.subheader(f"{selected:%Y-%m-%d}  {selected.strftime('%A')}")
+    render_day_header(selected)
 
-    c1, c2, c3, c4 = st.columns([1, 1, 1, 2])
-    with c1:
-        if st.button("Yesterday", use_container_width=True):
-            st.session_state.selected_day = selected - timedelta(days=1)
-            add_token(0.01)
-            st.rerun()
-    with c2:
-        if st.button("Tomorrow", use_container_width=True):
-            st.session_state.selected_day = selected + timedelta(days=1)
-            add_token(0.01)
-            st.rerun()
-    with c3:
-        if st.button("Back to Month", use_container_width=True):
-            st.session_state.active_view = "month"
-            add_token(0.01)
-            st.rerun()
-    with c4:
-        picked = st.date_input("Jump to date", value=selected)
-        if picked != selected:
-            st.session_state.selected_day = picked
-            add_token(0.01)
-            st.rerun()
-
-    panel_cols = st.columns([1, 1, 1, 1, 4])
-    with panel_cols[0]:
-        if st.button("Schedule", use_container_width=True):
-            st.session_state.day_panel = "schedule"
-            add_token(0.01)
-            st.rerun()
-    with panel_cols[1]:
-        if st.button("Meal Plan", use_container_width=True):
-            st.session_state.day_panel = "diet"
-            add_token(0.01)
-            st.rerun()
-    with panel_cols[2]:
-        if st.button("Today's Notes", use_container_width=True):
-            st.session_state.day_panel = "note"
-            add_token(0.01)
-            st.rerun()
-    with panel_cols[3]:
-        if st.button("Token", use_container_width=True):
-            st.session_state.day_panel = "token"
-            add_token(0.01)
-            st.rerun()
-
-    st.markdown(
-        f"<div class='fake-tab-row'>"
-        f"<span class='fake-tab {'active' if st.session_state.day_panel == 'schedule' else ''}'>Schedule</span>"
-        f"<span class='fake-tab {'active' if st.session_state.day_panel == 'diet' else ''}'>Meal Plan</span>"
-        f"<span class='fake-tab {'active' if st.session_state.day_panel == 'note' else ''}'>Today's Notes</span>"
-        f"<span class='fake-tab {'active' if st.session_state.day_panel == 'token' else ''}'>Token Settings</span>"
-        f"</div>",
-        unsafe_allow_html=True,
-    )
-
-    if st.session_state.day_panel == "schedule":
-        slots = time_slots()
-        now = app_now()
-        current_slot = f"{natural_time(now.hour)} - {natural_time(now.hour + 1)}"
-        new_time_map: dict[str, str] = {}
-        filled = 0
-        for slot in slots:
-            row_class = "now-row" if selected == now.date() and slot == current_slot else ""
-            if row_class:
-                remaining = 100 - int(now.minute / 60 * 100)
-                st.markdown(f"<div class='{row_class}'><b>{slot}</b> · {remaining}% left this hour</div>", unsafe_allow_html=True)
-            else:
-                st.markdown(f"**{slot}**")
-            value = st.text_area(
-                label=f"Plan for {slot}",
-                value=time_map.get(slot, ""),
-                height=72,
-                label_visibility="collapsed",
-                key=f"time-{selected}-{slot}",
-            )
-            if value.strip():
-                filled += 1
-            new_time_map[slot] = value
-
-        if st.button("Save Schedule", use_container_width=True):
-            progress_bonus = 0.5 * min(1.0, filled / 24)
-            add_token(progress_bonus)
-            ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
-            write_day(selected, note, diet, new_time_map, ui, extras)
-            st.success("Schedule saved.")
-            st.rerun()
-
-    elif st.session_state.day_panel == "diet":
-        new_diet = st.text_area("Meal Plan", value=diet, height=260, key=f"diet-{selected}")
-        if st.button("Save Meal Plan", use_container_width=True):
-            add_token(max(0.01, len(new_diet) * 0.001))
-            ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
-            write_day(selected, note, new_diet, time_map, ui, extras)
-            st.success("Meal plan saved.")
-            st.rerun()
-        st.divider()
-        render_meal_history()
-
-    elif st.session_state.day_panel == "note":
-        new_note = st.text_area("Diary Note", value=note, height=340, key=f"note-{selected}")
-        if st.button("Save Diary Note", use_container_width=True):
-            add_token(max(0.01, len(new_note) * 0.001))
-            ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
-            write_day(selected, new_note, diet, time_map, ui, extras)
-            st.success("Diary note saved.")
-            st.rerun()
-
-    else:
-        st.write("Token battery rewards planning, typing, and action.")
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            if st.button("+ Click token", use_container_width=True):
-                add_token(0.01)
-                save_token_to_day(selected)
-                st.rerun()
-        with c2:
-            if st.button("+ Important task", use_container_width=True):
-                add_token(0.1)
-                save_token_to_day(selected)
-                st.rerun()
-        with c3:
-            if st.button("Reset token", use_container_width=True):
-                st.session_state.token = 0.0
-                save_token_to_day(selected)
-                st.rerun()
-
-
-def render_meal_history():
-    st.subheader("Meal History")
-    anchor = st.session_state.selected_day
-    count = 0
-    for offset in range(0, 30):
-        current = anchor - timedelta(days=offset)
-        _note, diet, _time, _ui, _extras = read_day(current)
-        if not diet:
-            continue
-        count += 1
-        st.markdown(
-            f"<div class='history-card'><b>{current:%Y-%m-%d}</b><br>{diet.replace(chr(10), '<br>')}</div>",
-            unsafe_allow_html=True,
-        )
-    if count == 0:
-        st.info("No meal history in the last 30 days.")
-
-
-def render_long_plan():
-    year = st.session_state.view_year
-    month = st.session_state.view_month
-    st.subheader(f"Long Plan · {calendar.month_name[month]} {year}")
-    st.caption("This is the web-safe version of the desktop drag planner. Add blocks here, then sync them into daily 10 PM style schedule rows.")
-
-    blocks = load_month_plan(year, month)
-    last_day = calendar.monthrange(year, month)[1]
-
-    with st.form("add-long-plan", clear_on_submit=True):
-        task = st.text_input("Task", placeholder="Early sleep")
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            start_day = st.number_input("Start day", 1, last_day, min(app_now().day, last_day))
-        with c2:
-            hour = st.number_input("Hour", 0, 23, 22)
-        with c3:
-            span = st.number_input("Span days", 1, last_day, 7)
-        submitted = st.form_submit_button("Add Block", use_container_width=True)
-        if submitted and task.strip():
-            blocks.append({"text": task.strip(), "day": int(start_day), "hour": int(hour), "span": int(span)})
-            save_month_plan(year, month, blocks)
-            add_token(0.05)
-            st.rerun()
-
-    if not blocks:
-        st.info("No long-plan blocks yet.")
-    else:
-        for idx, block in enumerate(blocks):
-            end_day = min(last_day, int(block.get("day", 1)) + int(block.get("span", 1)) - 1)
-            st.markdown(
-                f"<div class='plan-block'><b>{block.get('text', '')}</b><br>"
-                f"Day {block.get('day', 1)} to {end_day}, {int(block.get('hour', 22)):02d}:00</div>",
-                unsafe_allow_html=True,
-            )
-            if st.button("Delete", key=f"delete-block-{idx}"):
-                blocks.pop(idx)
-                save_month_plan(year, month, blocks)
-                st.rerun()
-
-    if st.button("Sync Long Plan to Daily Schedule", use_container_width=True):
-        sync_long_plan(year, month, blocks)
-        add_token(0.1)
-        st.success("Synced into daily schedule.")
+    c1, c2, c3, c4, c5 = st.columns([1, 1, 1, 1, 1])
+    if c1.button("Month", use_container_width=True):
+        st.session_state.view = "month"
+        add_token(st.session_state.click_token)
         st.rerun()
+    if c2.button("Notes", use_container_width=True):
+        st.session_state.panel = "" if st.session_state.panel == "note" else "note"
+        add_token(st.session_state.click_token)
+        st.rerun()
+    if c3.button("Meal", use_container_width=True):
+        st.session_state.panel = "" if st.session_state.panel == "diet" else "diet"
+        add_token(st.session_state.click_token)
+        st.rerun()
+    if c4.button("Quadrant", use_container_width=True):
+        st.session_state.panel = "" if st.session_state.panel == "quadrant" else "quadrant"
+        add_token(st.session_state.click_token)
+        st.rerun()
+    if c5.button("Battery", use_container_width=True):
+        st.session_state.settings_open = not st.session_state.settings_open
+        add_token(st.session_state.click_token)
+        st.rerun()
+
+    if st.session_state.settings_open:
+        render_settings(selected)
+    if st.session_state.panel:
+        render_text_panel(selected, st.session_state.panel)
+
+    render_schedule(selected)
 
 
 def main():
     st.set_page_config(page_title="My Diary", layout="wide")
     init_state()
-    render_css()
+    css()
 
-    with st.sidebar:
-        st.subheader("Settings")
-        tz_label = "Beijing" if st.session_state.tz == "Asia/Shanghai" else "NYC"
-        st.caption(f"Current timezone: {tz_label}")
-        if st.button("Switch Beijing / NYC", use_container_width=True):
-            st.session_state.tz = "America/New_York" if st.session_state.tz == "Asia/Shanghai" else "Asia/Shanghai"
-            add_token(0.01)
-            st.rerun()
-        st.divider()
-        st.write(f"Now: {app_now():%Y-%m-%d %H:%M}")
-        st.write(f"Selected: {st.session_state.selected_day:%Y-%m-%d}")
-
-    render_browser_tabs()
-
-    if st.session_state.active_view == "month":
+    if st.session_state.view == "month":
         render_month()
-    elif st.session_state.active_view == "day":
-        render_day()
-    elif st.session_state.active_view == "meal_history":
-        render_meal_history()
     else:
-        render_long_plan()
+        render_day()
 
 
 if __name__ == "__main__":
