@@ -176,6 +176,8 @@ def init_state():
         "selected_day": today,
         "view_year": today.year,
         "view_month": today.month,
+        "active_view": "month",
+        "day_panel": "schedule",
         "tz": "Asia/Shanghai",
         "token": 0.0,
         "battery_flash": False,
@@ -244,6 +246,17 @@ def render_css():
             100% {{ filter:brightness(1); }}
           }}
           .battery-label {{ font-size:12px; font-weight:700; color:#304137; min-width:72px; }}
+          .fake-tab-row {{
+            display:flex; gap:6px; align-items:flex-end; border-bottom:1px solid var(--line);
+            margin:0 0 18px; padding:0 0 0 2px; overflow-x:auto;
+          }}
+          .fake-tab {{
+            display:inline-flex; align-items:center; gap:10px; padding:9px 14px;
+            border:1px solid var(--line); border-bottom:0; border-radius:7px 7px 0 0;
+            background:#eee2cf; color:#4f514b; font-weight:700; font-size:14px;
+          }}
+          .fake-tab.active {{ background:#fffaf0; color:var(--ink); transform:translateY(1px); }}
+          .top-actions {{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }}
           .day-card {{
             background:#fffaf0; border:1px solid var(--line); border-radius:8px;
             padding:12px; min-height:92px;
@@ -275,6 +288,45 @@ def render_css():
         unsafe_allow_html=True,
     )
     st.session_state.battery_flash = False
+
+
+def switch_view(view: str, panel: str | None = None):
+    st.session_state.active_view = view
+    if panel:
+        st.session_state.day_panel = panel
+    add_token(0.01)
+    st.rerun()
+
+
+def render_browser_tabs():
+    selected = st.session_state.selected_day
+    active = st.session_state.active_view
+    labels = [
+        ("month", "Month Calendar"),
+        ("day", f"{selected:%m-%d} Diary"),
+        ("meal_history", "Meal History"),
+        ("long_plan", f"{st.session_state.view_month:02d} Long Plan"),
+    ]
+    html = ['<div class="fake-tab-row">']
+    for key, title in labels:
+        cls = "fake-tab active" if key == active else "fake-tab"
+        html.append(f'<span class="{cls}">{title}</span>')
+    html.append("</div>")
+    st.markdown("".join(html), unsafe_allow_html=True)
+
+    cols = st.columns([1.1, 1.1, 1.1, 1.1, 4])
+    with cols[0]:
+        if st.button("Month Calendar", use_container_width=True):
+            switch_view("month")
+    with cols[1]:
+        if st.button("Day Page", use_container_width=True):
+            switch_view("day")
+    with cols[2]:
+        if st.button("Meal History", use_container_width=True):
+            switch_view("meal_history")
+    with cols[3]:
+        if st.button("Long Plan", use_container_width=True):
+            switch_view("long_plan")
 
 
 def render_month():
@@ -323,6 +375,8 @@ def render_month():
                 )
                 if st.button("Open", key=f"open-{current}", use_container_width=True):
                     st.session_state.selected_day = current
+                    st.session_state.active_view = "day"
+                    st.session_state.day_panel = "schedule"
                     add_token(0.01)
                     st.rerun()
 
@@ -332,7 +386,7 @@ def render_day():
     note, diet, time_map, ui, extras = read_day(selected)
     st.subheader(f"{selected:%Y-%m-%d}  {selected.strftime('%A')}")
 
-    c1, c2, c3 = st.columns([1, 1, 2])
+    c1, c2, c3, c4 = st.columns([1, 1, 1, 2])
     with c1:
         if st.button("Yesterday", use_container_width=True):
             st.session_state.selected_day = selected - timedelta(days=1)
@@ -344,15 +398,50 @@ def render_day():
             add_token(0.01)
             st.rerun()
     with c3:
+        if st.button("Back to Month", use_container_width=True):
+            st.session_state.active_view = "month"
+            add_token(0.01)
+            st.rerun()
+    with c4:
         picked = st.date_input("Jump to date", value=selected)
         if picked != selected:
             st.session_state.selected_day = picked
             add_token(0.01)
             st.rerun()
 
-    day_tabs = st.tabs(["Schedule", "Meal Plan", "Diary Note", "Token Settings"])
+    panel_cols = st.columns([1, 1, 1, 1, 4])
+    with panel_cols[0]:
+        if st.button("Schedule", use_container_width=True):
+            st.session_state.day_panel = "schedule"
+            add_token(0.01)
+            st.rerun()
+    with panel_cols[1]:
+        if st.button("Meal Plan", use_container_width=True):
+            st.session_state.day_panel = "diet"
+            add_token(0.01)
+            st.rerun()
+    with panel_cols[2]:
+        if st.button("Today's Notes", use_container_width=True):
+            st.session_state.day_panel = "note"
+            add_token(0.01)
+            st.rerun()
+    with panel_cols[3]:
+        if st.button("Token", use_container_width=True):
+            st.session_state.day_panel = "token"
+            add_token(0.01)
+            st.rerun()
 
-    with day_tabs[0]:
+    st.markdown(
+        f"<div class='fake-tab-row'>"
+        f"<span class='fake-tab {'active' if st.session_state.day_panel == 'schedule' else ''}'>Schedule</span>"
+        f"<span class='fake-tab {'active' if st.session_state.day_panel == 'diet' else ''}'>Meal Plan</span>"
+        f"<span class='fake-tab {'active' if st.session_state.day_panel == 'note' else ''}'>Today's Notes</span>"
+        f"<span class='fake-tab {'active' if st.session_state.day_panel == 'token' else ''}'>Token Settings</span>"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+    if st.session_state.day_panel == "schedule":
         slots = time_slots()
         now = app_now()
         current_slot = f"{natural_time(now.hour)} - {natural_time(now.hour + 1)}"
@@ -384,7 +473,7 @@ def render_day():
             st.success("Schedule saved.")
             st.rerun()
 
-    with day_tabs[1]:
+    elif st.session_state.day_panel == "diet":
         new_diet = st.text_area("Meal Plan", value=diet, height=260, key=f"diet-{selected}")
         if st.button("Save Meal Plan", use_container_width=True):
             add_token(max(0.01, len(new_diet) * 0.001))
@@ -392,8 +481,10 @@ def render_day():
             write_day(selected, note, new_diet, time_map, ui, extras)
             st.success("Meal plan saved.")
             st.rerun()
+        st.divider()
+        render_meal_history()
 
-    with day_tabs[2]:
+    elif st.session_state.day_panel == "note":
         new_note = st.text_area("Diary Note", value=note, height=340, key=f"note-{selected}")
         if st.button("Save Diary Note", use_container_width=True):
             add_token(max(0.01, len(new_note) * 0.001))
@@ -402,7 +493,7 @@ def render_day():
             st.success("Diary note saved.")
             st.rerun()
 
-    with day_tabs[3]:
+    else:
         st.write("Token battery rewards planning, typing, and action.")
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -504,14 +595,15 @@ def main():
         st.write(f"Now: {app_now():%Y-%m-%d %H:%M}")
         st.write(f"Selected: {st.session_state.selected_day:%Y-%m-%d}")
 
-    tabs = st.tabs(["Month Calendar", "Day Page", "Meal History", "Long Plan"])
-    with tabs[0]:
+    render_browser_tabs()
+
+    if st.session_state.active_view == "month":
         render_month()
-    with tabs[1]:
+    elif st.session_state.active_view == "day":
         render_day()
-    with tabs[2]:
+    elif st.session_state.active_view == "meal_history":
         render_meal_history()
-    with tabs[3]:
+    else:
         render_long_plan()
 
 
