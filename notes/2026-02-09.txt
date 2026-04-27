@@ -1,0 +1,19 @@
+【文字笔记】
+
+
+【饮食规划】
+每痘，早上chiopotle，中午一wan特别油的中餐，一点米饭，半碗特别甜的冰糖凉粉。unionsquare猪肉面条，蛋白粉奶昔，一盒寿司，一些鸡胸肉沙拉。
+
+【界面设置】
+ENERGY_MAX::16
+ENERGY_LEVEL::16.000
+ENERGY_TICK_MIN::15
+ENERGY_CONSUME::1
+ENERGY_RECOVER::1
+ENERGY_MODE::idle
+
+【时间表】
+晚上 6 点 ～ 晚上 7 点::写啥，开始复习
+晚上 7 点 ～ 晚上 8 点::复习
+晚上 8 点 ～ 晚上 9 点::吃饭
+晚上 9 点 ～ 晚上 10 点::去买菜，回家。

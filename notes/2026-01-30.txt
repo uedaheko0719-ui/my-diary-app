@@ -1,0 +1,20 @@
+【文字笔记】
+
+
+【饮食规划】
+寿司
+食堂土豆泥米饭哈密瓜
+两个包子
+烤肉米饭，不健康
+无
+
+【界面设置】
+ENERGY_MAX::16
+ENERGY_LEVEL::16.000
+ENERGY_TICK_MIN::15
+ENERGY_CONSUME::1
+ENERGY_RECOVER::1
+ENERGY_MODE::idle
+
+【时间表】
+早上 7 点 ～ 早上 8 点::1

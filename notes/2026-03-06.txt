@@ -1,0 +1,17 @@
+【文字笔记】
+se提前
+
+【饮食规划】
+
+
+【界面设置】
+ENERGY_MAX::16
+ENERGY_LEVEL::16.000
+ENERGY_TICK_MIN::15
+ENERGY_CONSUME::1
+ENERGY_RECOVER::1
+ENERGY_MODE::idle
+
+【时间表】
+早上 10 点 ～ 早上 11 点::下课，去office hour
+早上 11 点 ～ 中午 12 点::吃饭

@@ -1,0 +1,25 @@
+【文字笔记】
+今天要运动，但不能游泳，健身不太舒服，只能攀岩。
+给xixi写小作文。
+disability reading
+phi reading
+mims？
+学湖南话。
+研究语言学？
+有一个小长假，不要浪费，好好休息，明天恢复健身。
+
+【饮食规划】
+吃食堂，一个taco，一点鸡胸肉，很多生菜，一勺米饭，一杯橙汁，一些水果，一杯牛奶，一根香蕉。
+一盘子鸡肉和中东米饭。不多，7分保。
+
+【界面设置】
+ENERGY_MAX::16
+ENERGY_LEVEL::16.000
+ENERGY_TICK_MIN::15
+ENERGY_CONSUME::1
+ENERGY_RECOVER::1
+ENERGY_MODE::idle
+
+【时间表】
+中午 12 点 ～ 下午 1 点::出发去先吃饭
+下午 5 点 ～ 晚上 6 点::要出发去lic

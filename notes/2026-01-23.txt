@@ -1,0 +1,16 @@
+【文字笔记】
+今天把这个折腾好看，不错不错
+
+【饮食规划】
+
+
+【界面设置】
+ENERGY_MAX::16
+ENERGY_LEVEL::15.183
+ENERGY_TICK_MIN::1
+ENERGY_CONSUME::1
+ENERGY_RECOVER::1
+ENERGY_MODE::run
+
+【时间表】
+晚上 9 点 ～ 晚上 10 点::做鸡胸肉+西兰花，然后上床睡觉

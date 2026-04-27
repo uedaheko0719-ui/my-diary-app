@@ -1,0 +1,21 @@
+【文字笔记】
+
+
+【饮食规划】
+脸没有囊肿，没有痘
+早上一个牛肉6oz奶酪汉堡 一些蔬菜沙拉，一杯热巧克力
+吃六个寿司，一些米饭，一杯奶昔，蔬菜沙拉鸡胸肉
+面包*3
+
+【界面设置】
+ENERGY_MAX::16
+ENERGY_LEVEL::16.000
+ENERGY_TICK_MIN::15
+ENERGY_CONSUME::1
+ENERGY_RECOVER::1
+ENERGY_MODE::idle
+
+【时间表】
+下午 3 点 ～ 下午 4 点::写作业+去wholefood买牛奶牛肉土豆胡萝卜大葱西兰花苹果香蕉 pear去chinese买。
+下午 4 点 ～ 下午 5 点::去wholefood买牛奶牛肉土豆胡萝卜大葱西兰花苹果香蕉 pear去chinese买+吃饭
+下午 5 点 ～ 晚上 6 点::回宿舍收拾东西，写作业or攀岩

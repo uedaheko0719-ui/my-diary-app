@@ -1,0 +1,25 @@
+【文字笔记】
+
+
+【饮食规划】
+Apple
+
+【界面设置】
+ENERGY_MAX::16
+TOKEN_LEVEL::6.383
+ACTION_CHARGE::0.01
+IMPORTANT_TASK_CHARGE::0.1
+CHAR_CHARGE::0.001
+PLAN_FULL_CHARGE::8.0
+
+【时间表】
+7:00 AM - 8:00 AM::打字的话会长得更快呢。
+10:00 AM - 11:00 AM::brunch
+11:00 AM - 12:00 PM::Go to school.
+2:00 PM - 3:00 PM::去disability课
+
+【四象限完成记录】
+[02:16] Done (Monthly Matrix | Important and Urgent) eat
+[02:16] Done (Monthly Matrix | Important and Urgent) sleep
+[02:16] Done (Monthly Matrix | Important, Not Urgent) 买衣服买鞋
+[02:16] Done (Monthly Matrix | Important, Not Urgent) 打游戏

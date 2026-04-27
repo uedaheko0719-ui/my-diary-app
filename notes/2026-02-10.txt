@@ -1,0 +1,18 @@
+【文字笔记】
+
+
+【饮食规划】
+下午吃了俩taco，一点水果两片面包一杯牛奶。
+晚上吃
+
+【界面设置】
+ENERGY_MAX::16
+ENERGY_LEVEL::16.000
+ENERGY_TICK_MIN::15
+ENERGY_CONSUME::1
+ENERGY_RECOVER::1
+ENERGY_MODE::idle
+
+【时间表】
+晚上 6 点 ～ 晚上 7 点::到点了
+晚上 7 点 ～ 晚上 8 点::去吃饭
