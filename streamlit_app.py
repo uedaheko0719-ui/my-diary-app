@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import calendar
+import json
+from html import escape
 from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -131,10 +133,11 @@ def init_state():
     today = now().date()
     defaults = {
         "view": "month",
+        "view_year": today.year,
+        "view_month": today.month,
         "selected_day": today,
         "panel": "",
         "settings_open": False,
-        "quadrant_open": False,
         "token": 0.0,
         "flash_battery": False,
         "click_token": 0.01,
@@ -143,6 +146,27 @@ def init_state():
     }
     for key, value in defaults.items():
         st.session_state.setdefault(key, value)
+
+    params = st.query_params
+    if params.get("month"):
+        try:
+            year_text, month_text = params["month"].split("-", 1)
+            st.session_state.view_year = int(year_text)
+            st.session_state.view_month = int(month_text)
+            st.session_state.view = "month"
+            st.query_params.clear()
+        except ValueError:
+            st.query_params.clear()
+    if params.get("day"):
+        try:
+            picked = date.fromisoformat(params["day"])
+            st.session_state.selected_day = picked
+            st.session_state.view_year = picked.year
+            st.session_state.view_month = picked.month
+            st.session_state.view = "day"
+            st.query_params.clear()
+        except ValueError:
+            st.query_params.clear()
 
     if "loaded_token" not in st.session_state:
         _note, _diet, _quad, _time_map, ui, _extras = read_day(today)
@@ -168,10 +192,23 @@ def css():
             --red:#c94a3a;
           }}
           .stApp {{ background:var(--paper); color:var(--ink); }}
-          .block-container {{ max-width:1220px; padding-top:18px; }}
+          .block-container {{ max-width:1220px; padding-top:72px; }}
           .month-wrap {{ max-width:980px; margin:0 auto; }}
-          .month-title {{ font-size:26px; font-weight:700; text-align:center; margin:0 0 18px; }}
-          .week-label {{ color:var(--muted); font-weight:700; text-align:center; padding-bottom:8px; }}
+          .month-nav {{
+            display:grid; grid-template-columns:54px 1fr 54px; align-items:center;
+            gap:10px; margin-bottom:18px;
+          }}
+          .month-title {{ font-size:26px; font-weight:700; text-align:center; }}
+          .month-arrow {{
+            display:flex; align-items:center; justify-content:center; height:44px;
+            border:1px solid var(--line); background:var(--panel); border-radius:7px;
+            text-decoration:none; color:var(--ink); font-size:24px; transition:background .12s ease, transform .12s ease;
+          }}
+          .month-arrow:hover {{ background:#fff; transform:translateY(-1px); }}
+          .calendar-grid {{
+            display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:7px;
+          }}
+          .week-label {{ color:var(--muted); font-weight:700; text-align:center; padding-bottom:2px; font-size:13px; }}
           div.stButton > button {{
             border-radius:6px; border:1px solid var(--line); background:var(--panel);
             color:var(--ink); min-height:42px; transition:background .12s ease, transform .12s ease, border-color .12s ease;
@@ -180,13 +217,23 @@ def css():
             background:#fff; border-color:#96b79f; transform:translateY(-1px);
           }}
           .calendar-cell {{
-            height:92px; border:1px solid var(--line); background:var(--panel);
+            display:block; min-height:92px; border:1px solid var(--line); background:var(--panel);
             border-radius:6px; padding:9px; font-size:17px; font-weight:700;
+            text-decoration:none; color:var(--ink); transition:background .12s ease, transform .12s ease, border-color .12s ease;
+          }}
+          .calendar-cell:hover {{
+            background:#fff; border-color:#99b8a1; transform:translateY(-1px);
           }}
           .calendar-cell.today {{
-            border-left:6px solid var(--red); background:#fffdf8;
+            border-color:#c94a3a; border-left:6px solid var(--red); background:#fffdf8;
           }}
-          .calendar-cell.empty {{ opacity:0; }}
+          .calendar-cell.has-content::after {{
+            content:""; display:block; width:7px; height:7px; border-radius:99px;
+            background:var(--green); margin-top:8px;
+          }}
+          .calendar-cell.empty {{ opacity:.15; pointer-events:none; }}
+          .calendar-date {{ display:block; }}
+          .calendar-today-label {{ display:block; color:var(--red); font-size:11px; margin-top:4px; }}
           .day-top {{
             display:flex; align-items:center; justify-content:space-between;
             gap:12px; padding-bottom:12px; margin-bottom:12px; border-bottom:1px solid var(--line);
@@ -219,21 +266,43 @@ def css():
             padding:14px; margin:10px 0 16px;
           }}
           .slot {{
-            display:grid; grid-template-columns:170px 1fr; gap:12px; align-items:start;
+            display:grid; grid-template-columns:190px 1fr; gap:12px; align-items:start;
             padding:10px 0; border-bottom:1px solid rgba(222,211,192,.75);
           }}
           .slot.now {{ border-left:6px solid var(--green); padding-left:10px; background:#fffdf8; }}
-          .slot-time {{ font-weight:700; color:#3d463f; padding-top:8px; }}
+          .slot-time {{
+            font-weight:700; color:#3d463f; padding-top:8px; position:relative; cursor:default;
+          }}
+          .slot-task {{
+            position:absolute; z-index:20; left:0; top:32px; width:260px; max-width:70vw;
+            display:none; white-space:pre-wrap; border:1px solid var(--line);
+            background:#fff; border-radius:7px; padding:10px; color:var(--ink);
+            box-shadow:0 8px 22px rgba(47,42,34,.13); font-weight:500;
+          }}
+          .slot-time:hover .slot-task {{ display:block; }}
+          .back-arrow {{
+            display:inline-flex; align-items:center; justify-content:center; width:42px; height:38px;
+            border:1px solid var(--line); border-radius:7px; background:var(--panel); font-size:22px;
+          }}
+          .quadrant-grid {{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }}
+          .quadrant-box {{ border:1px solid var(--line); background:#fffdf8; border-radius:8px; padding:12px; min-height:150px; }}
+          .quadrant-title {{ font-weight:800; margin-bottom:8px; }}
+          .task-pill {{ border:1px solid #d8cbb6; background:#fff; border-radius:6px; padding:8px; margin:6px 0; }}
           textarea {{ border-radius:7px !important; }}
           @media (max-width: 760px) {{
+            .block-container {{ padding-top:88px; padding-left:8px; padding-right:8px; }}
+            .calendar-grid {{ gap:4px; }}
+            .calendar-cell {{ min-height:58px; padding:6px; font-size:14px; }}
+            .week-label {{ font-size:11px; }}
+            .month-title {{ font-size:21px; }}
             .slot {{ grid-template-columns:1fr; }}
             .day-top {{ align-items:flex-start; flex-direction:column; }}
+            .quadrant-grid {{ grid-template-columns:1fr; }}
           }}
         </style>
         """,
         unsafe_allow_html=True,
     )
-    st.session_state.flash_battery = False
 
 
 def save_token(day: date):
@@ -242,29 +311,90 @@ def save_token(day: date):
     write_day(day, note, diet, quadrant, time_map, ui, extras)
 
 
+def load_quadrant_tasks(raw: str) -> list[dict]:
+    if not raw.strip():
+        return []
+    try:
+        data = json.loads(raw)
+        if isinstance(data, list):
+            return [
+                {
+                    "text": str(item.get("text", "")).strip(),
+                    "important": bool(item.get("important")),
+                    "urgent": bool(item.get("urgent")),
+                }
+                for item in data
+                if str(item.get("text", "")).strip()
+            ]
+    except json.JSONDecodeError:
+        pass
+    return [{"text": line.strip(), "important": False, "urgent": False} for line in raw.splitlines() if line.strip()]
+
+
+def dump_quadrant_tasks(tasks: list[dict]) -> str:
+    return json.dumps(tasks, ensure_ascii=False, indent=2)
+
+
+def quadrant_name(task: dict) -> str:
+    important = bool(task.get("important"))
+    urgent = bool(task.get("urgent"))
+    if important and urgent:
+        return "Important and Urgent"
+    if important and not urgent:
+        return "Important, Not Urgent"
+    if urgent and not important:
+        return "Urgent, Not Important"
+    return "Not Important or Urgent"
+
+
 def render_month():
     today = now().date()
+    year = int(st.session_state.view_year)
+    month = int(st.session_state.view_month)
+    if month == 1:
+        prev_y, prev_m = year - 1, 12
+    else:
+        prev_y, prev_m = year, month - 1
+    if month == 12:
+        next_y, next_m = year + 1, 1
+    else:
+        next_y, next_m = year, month + 1
+
     st.markdown('<div class="month-wrap">', unsafe_allow_html=True)
-    st.markdown(f'<div class="month-title">{today:%B %Y}</div>', unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <div class="month-nav">
+          <a class="month-arrow" href="?month={prev_y:04d}-{prev_m:02d}">&lsaquo;</a>
+          <div class="month-title">{calendar.month_name[month]} {year}</div>
+          <a class="month-arrow" href="?month={next_y:04d}-{next_m:02d}">&rsaquo;</a>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    for col, label in zip(st.columns(7), ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]):
-        col.markdown(f'<div class="week-label">{label}</div>', unsafe_allow_html=True)
-
-    for week in calendar.monthcalendar(today.year, today.month):
-        cols = st.columns(7)
-        for index, day_num in enumerate(week):
-            with cols[index]:
-                if day_num == 0:
-                    st.markdown('<div class="calendar-cell empty"></div>', unsafe_allow_html=True)
-                    continue
-                current = date(today.year, today.month, day_num)
-                label = f"| {day_num}" if current == today else str(day_num)
-                if st.button(label, key=f"open-{current}", use_container_width=True):
-                    st.session_state.selected_day = current
-                    st.session_state.view = "day"
-                    st.session_state.panel = ""
-                    add_token(st.session_state.click_token)
-                    st.rerun()
+    html = ['<div class="calendar-grid">']
+    for label in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]:
+        html.append(f'<div class="week-label">{label}</div>')
+    for week in calendar.monthcalendar(year, month):
+        for day_num in week:
+            if day_num == 0:
+                html.append('<div class="calendar-cell empty"></div>')
+                continue
+            current = date(year, month, day_num)
+            note, diet, quadrant, time_map, _ui, _extras = read_day(current)
+            has_content = bool(note or diet or quadrant or any(value.strip() for value in time_map.values()))
+            classes = ["calendar-cell"]
+            if current == today:
+                classes.append("today")
+            if has_content:
+                classes.append("has-content")
+            today_label = '<span class="calendar-today-label">Today</span>' if current == today else ""
+            html.append(
+                f'<a class="{" ".join(classes)}" href="?day={current.isoformat()}">'
+                f'<span class="calendar-date">{day_num}</span>{today_label}</a>'
+            )
+    html.append("</div>")
+    st.markdown("".join(html), unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 
@@ -329,12 +459,45 @@ def render_text_panel(selected: date, panel: str):
         st.markdown("</div>", unsafe_allow_html=True)
     elif panel == "quadrant":
         st.markdown('<div class="panel-box">', unsafe_allow_html=True)
-        value = st.text_area("Eisenhower Matrix", value=quadrant, height=220, placeholder="Important / Urgent...")
-        if st.button("Save Quadrant", use_container_width=True):
+        st.subheader("Today's Eisenhower Matrix")
+        tasks = load_quadrant_tasks(quadrant)
+        with st.form(f"quadrant-form-{selected}", clear_on_submit=True):
+            task_text = st.text_input("Task", placeholder="Write one task")
+            col_a, col_b = st.columns(2)
+            important = col_a.toggle("Important")
+            urgent = col_b.toggle("Urgent")
+            submitted = st.form_submit_button("Add Task", use_container_width=True)
+        if submitted and task_text.strip():
+            tasks.append({"text": task_text.strip(), "important": important, "urgent": urgent})
             add_token(st.session_state.important_token)
             ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
-            write_day(selected, note, diet, value, time_map, ui, extras)
+            write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
             st.rerun()
+
+        groups = {
+            "Important and Urgent": [],
+            "Important, Not Urgent": [],
+            "Urgent, Not Important": [],
+            "Not Important or Urgent": [],
+        }
+        for index, task in enumerate(tasks):
+            groups[quadrant_name(task)].append((index, task))
+
+        st.markdown('<div class="quadrant-grid">', unsafe_allow_html=True)
+        for title, items in groups.items():
+            st.markdown(f'<div class="quadrant-box"><div class="quadrant-title">{escape(title)}</div>', unsafe_allow_html=True)
+            if not items:
+                st.caption("Empty")
+            for index, task in items:
+                st.markdown(f'<div class="task-pill">{escape(task["text"])}</div>', unsafe_allow_html=True)
+                if st.button("Done", key=f"done-{selected}-{index}", use_container_width=True):
+                    tasks.pop(index)
+                    add_token(st.session_state.important_token)
+                    ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+                    write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
+                    st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
 
@@ -347,7 +510,12 @@ def render_schedule(selected: date):
 
     for slot in slots:
         cls = "slot now" if slot == active_slot else "slot"
-        st.markdown(f'<div class="{cls}"><div class="slot-time">{slot}</div><div>', unsafe_allow_html=True)
+        task_hint = time_map.get(slot, "").strip() or "No task in this time block."
+        st.markdown(
+            f'<div class="{cls}"><div class="slot-time">{escape(slot)}'
+            f'<div class="slot-task">{escape(task_hint)}</div></div><div>',
+            unsafe_allow_html=True,
+        )
         value = st.text_area(
             f"{slot} plan",
             value=time_map.get(slot, ""),
@@ -369,32 +537,42 @@ def render_schedule(selected: date):
 
 def render_day():
     selected = st.session_state.selected_day
-    render_day_header(selected)
+    back_col, header_col = st.columns([0.08, 0.92])
+    with back_col:
+        if st.button("←", key="back-month", use_container_width=True):
+            st.session_state.view = "month"
+            st.session_state.view_year = selected.year
+            st.session_state.view_month = selected.month
+            add_token(st.session_state.click_token)
+            st.rerun()
+    with header_col:
+        render_day_header(selected)
+    st.session_state.flash_battery = False
 
-    c1, c2, c3, c4, c5 = st.columns([1, 1, 1, 1, 1])
-    if c1.button("Month", use_container_width=True):
-        st.session_state.view = "month"
-        add_token(st.session_state.click_token)
-        st.rerun()
-    if c2.button("Notes", use_container_width=True):
-        st.session_state.panel = "" if st.session_state.panel == "note" else "note"
-        add_token(st.session_state.click_token)
-        st.rerun()
-    if c3.button("Meal", use_container_width=True):
-        st.session_state.panel = "" if st.session_state.panel == "diet" else "diet"
-        add_token(st.session_state.click_token)
-        st.rerun()
-    if c4.button("Quadrant", use_container_width=True):
-        st.session_state.panel = "" if st.session_state.panel == "quadrant" else "quadrant"
-        add_token(st.session_state.click_token)
-        st.rerun()
-    if c5.button("Battery", use_container_width=True):
-        st.session_state.settings_open = not st.session_state.settings_open
-        add_token(st.session_state.click_token)
-        st.rerun()
+    settings_col, spacer_col = st.columns([0.18, 0.82])
+    with settings_col:
+        if st.button("Battery Settings", use_container_width=True):
+            st.session_state.settings_open = not st.session_state.settings_open
+            add_token(st.session_state.click_token)
+            st.rerun()
 
     if st.session_state.settings_open:
         render_settings(selected)
+
+    c1, c2, c3 = st.columns([1, 1, 1])
+    if c1.button("Note", use_container_width=True):
+        st.session_state.panel = "" if st.session_state.panel == "note" else "note"
+        add_token(st.session_state.click_token)
+        st.rerun()
+    if c2.button("Meal", use_container_width=True):
+        st.session_state.panel = "" if st.session_state.panel == "diet" else "diet"
+        add_token(st.session_state.click_token)
+        st.rerun()
+    if c3.button("象限", use_container_width=True):
+        st.session_state.panel = "" if st.session_state.panel == "quadrant" else "quadrant"
+        add_token(st.session_state.click_token)
+        st.rerun()
+
     if st.session_state.panel:
         render_text_panel(selected, st.session_state.panel)
 
