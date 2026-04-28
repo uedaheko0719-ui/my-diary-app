@@ -529,12 +529,12 @@ def css():
           }}
           .matrix-head {{ display:flex; align-items:center; justify-content:space-between; gap:12px; }}
           .matrix-title {{
-            font-size:16px; font-weight:800; color:#000; margin:0 0 8px;
+            font-size:15px; font-weight:800; color:#000; margin:0 0 6px;
             text-transform:lowercase; letter-spacing:0;
           }}
           .matrix-dialog [data-testid="stForm"] {{
-            background:#fffefa !important;
-            border:1px solid #d8cbb6 !important;
+            background:transparent !important;
+            border:1px solid rgba(216,203,182,.55) !important;
             padding:10px !important;
             border-radius:2px !important;
             margin-bottom:10px !important;
@@ -558,6 +558,21 @@ def css():
           }}
           .matrix-dialog [data-testid="stCaptionContainer"] {{
             color:#6f6a60 !important;
+          }}
+          [data-testid="stVerticalBlockBorderWrapper"] {{
+            background:#fff !important;
+            border:1px solid #d8cbb6 !important;
+            box-shadow:0 4px 14px rgba(60,50,35,.08) !important;
+            border-radius:2px !important;
+          }}
+          [data-testid="stVerticalBlockBorderWrapper"]:hover {{
+            border-color:#bba98d !important;
+            box-shadow:0 9px 22px rgba(60,50,35,.16) !important;
+            transform:translateY(-2px);
+          }}
+          [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMarkdownContainer"],
+          [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMarkdownContainer"] * {{
+            background:transparent !important;
           }}
           .quadrant-grid {{
             display:grid !important; grid-template-columns:repeat(2, minmax(0, 1fr)) !important; gap:12px;
@@ -631,7 +646,7 @@ def css():
             color:#000 !important;
           }}
           [data-testid="stForm"] {{
-            background:#fff !important;
+            background:transparent !important;
             border:1px solid #eadfce !important;
             padding:10px !important;
             border-radius:2px !important;
@@ -664,7 +679,7 @@ def css():
             .day-top {{ align-items:center; flex-direction:row; }}
             .quadrant-grid {{ grid-template-columns:repeat(2, minmax(0, 1fr)) !important; gap:6px; aspect-ratio:1 / 1.08; }}
             .matrix-dialog {{ width:100%; padding:9px; }}
-            .matrix-title {{ font-size:17px; }}
+            .matrix-title {{ font-size:14px; }}
             .quadrant-box {{ padding:7px; font-size:11px; }}
             .quadrant-title {{ font-size:12px; }}
             .task-pill {{ padding:5px; font-size:11px; }}
