@@ -124,6 +124,13 @@ def current_slot() -> str:
     return f"{natural_time(current.hour)} - {natural_time(current.hour + 1)}"
 
 
+def open_day(day: date):
+    st.session_state.selected_day = day
+    st.session_state.view_year = day.year
+    st.session_state.view_month = day.month
+    st.session_state.view = "day"
+
+
 def add_token(amount: float):
     if amount == 0:
         return
@@ -194,11 +201,7 @@ def init_state():
             st.query_params.clear()
 
     if "loaded_token" not in st.session_state:
-        _note, _diet, _quad, _time_map, ui, _extras = read_day(today)
-        try:
-            st.session_state.token = min(1.0, float(ui.get("TOKEN_LEVEL", "0")) / 16.0)
-        except ValueError:
-            st.session_state.token = 0.0
+        st.session_state.token = 0.0
         st.session_state.loaded_token = True
 
 
@@ -369,6 +372,28 @@ def css():
             box-shadow:1px 1px 0 #c8bda7;
           }}
           .calendar-cell.empty {{ opacity:.15; pointer-events:none; }}
+          .calendar-button-empty {{
+            min-height:88px;
+            border:1px solid transparent;
+            opacity:.15;
+          }}
+          [class*="st-key-day-cell-"] button {{
+            min-height:88px !important;
+            border:1px solid #eee4d3 !important;
+            background:#fffefa !important;
+            border-radius:0 !important;
+            font-size:18px !important;
+            font-weight:500 !important;
+            color:#000 !important;
+            white-space:pre-line !important;
+            padding:4px !important;
+          }}
+          [class*="st-key-day-cell-"] button:hover {{
+            background:#fff !important;
+            border-color:#bca98c !important;
+            transform:translateY(-2px) !important;
+            box-shadow:0 9px 20px rgba(60,50,35,.16) !important;
+          }}
           .calendar-date {{ display:block; }}
           .calendar-today-label {{ display:block; color:var(--red); font-size:11px; margin-top:4px; }}
           .day-top {{
@@ -397,9 +422,20 @@ def css():
             border:1px solid rgba(37,55,46,.14);
             transition:background .16s ease, filter .14s ease;
           }}
-          .flash .battery-cell {{ animation:batteryWhite .02s linear; }}
+          .flash .battery {{
+            animation:batteryShellFlash .42s ease-out;
+          }}
+          .flash .battery-cell {{
+            animation:batteryWhite .42s ease-out;
+          }}
+          @keyframes batteryShellFlash {{
+            0% {{ box-shadow:0 0 0 0 rgba(53,168,104,.0); filter:brightness(1); }}
+            35% {{ box-shadow:0 0 0 4px rgba(53,168,104,.35), 0 0 22px rgba(53,168,104,.42); filter:brightness(1.2); }}
+            100% {{ box-shadow:none; filter:brightness(1); }}
+          }}
           @keyframes batteryWhite {{
-            0% {{ background:#fff; }}
+            0% {{ filter:brightness(1); }}
+            35% {{ filter:brightness(1.65); }}
             100% {{ filter:brightness(1); }}
           }}
           .battery-label {{ min-width:32px; font-size:11px; font-weight:700; }}
@@ -589,6 +625,9 @@ def css():
             font-size:15px; font-weight:800; color:#000; margin:0 0 6px;
             text-transform:lowercase; letter-spacing:0;
           }}
+          .matrix-close-row {{
+            display:flex; justify-content:flex-end; margin:-28px 0 6px;
+          }}
           .matrix-dialog [data-testid="stForm"] {{
             background:transparent !important;
             border:1px solid rgba(216,203,182,.55) !important;
@@ -615,6 +654,18 @@ def css():
           }}
           .matrix-dialog [data-testid="stCaptionContainer"] {{
             color:#6f6a60 !important;
+          }}
+          .matrix-form-panel {{
+            border:1px solid rgba(216,203,182,.55);
+            padding:10px;
+            margin:8px 0 10px;
+            background:transparent;
+          }}
+          .matrix-flags {{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:8px;
+            margin:4px 0 8px;
           }}
           [data-testid="stVerticalBlockBorderWrapper"] {{
             background:#fff !important;
@@ -966,6 +1017,101 @@ def css():
             .calendar-today-label {{
               display:none !important;
             }}
+            .calendar-button-empty {{
+              min-height:0 !important;
+              aspect-ratio:1 / 1 !important;
+            }}
+            [class*="st-key-day-cell-"] button {{
+              min-height:0 !important;
+              aspect-ratio:1 / 1 !important;
+              font-size:10px !important;
+              padding:1px !important;
+              line-height:1.05 !important;
+            }}
+          }}
+          @media (max-width: 760px) {{
+            .block-container:has(.day-head) {{
+              width:100% !important;
+              min-width:0 !important;
+              max-width:100% !important;
+              padding:8px 10px 12px !important;
+              transform:none !important;
+              box-sizing:border-box !important;
+            }}
+            .block-container:has(.day-head) [data-testid="stHorizontalBlock"] {{
+              flex-wrap:nowrap !important;
+            }}
+            .block-container:has(.day-head) .simple-topbar {{
+              min-height:26px !important;
+              gap:6px !important;
+            }}
+            .block-container:has(.day-head) .month-link {{
+              min-height:24px !important;
+              padding:0 7px !important;
+              font-size:11px !important;
+            }}
+            .block-container:has(.day-head) .battery {{
+              width:116px !important;
+              height:16px !important;
+              gap:2px !important;
+              padding:2px !important;
+            }}
+            .block-container:has(.day-head) .battery:after {{
+              right:-6px !important;
+              top:4px !important;
+              width:4px !important;
+              height:8px !important;
+            }}
+            .block-container:has(.day-head) .battery-label {{
+              font-size:9px !important;
+              min-width:24px !important;
+            }}
+            .block-container:has(.day-head) .day-title {{
+              font-size:18px !important;
+              margin:5px 0 4px !important;
+              line-height:1.15 !important;
+              white-space:nowrap !important;
+            }}
+            .block-container:has(.day-head) .day-progress {{
+              height:44px !important;
+            }}
+            .block-container:has(.day-head) .time-battery {{
+              top:23px !important;
+              height:15px !important;
+              gap:1px !important;
+              padding:2px !important;
+            }}
+            .block-container:has(.day-head) .tick.major {{
+              top:18px !important;
+              height:24px !important;
+              opacity:.2 !important;
+            }}
+            .block-container:has(.day-head) .tick-label {{
+              font-size:10px !important;
+            }}
+            .block-container:has(.day-head) .day-actions {{
+              margin-top:12px !important;
+            }}
+            .block-container:has(.day-head) .st-key-notes-btn button,
+            .block-container:has(.day-head) .st-key-meal-btn button,
+            .block-container:has(.day-head) .st-key-monthly-matrix button {{
+              min-height:30px !important;
+              max-width:none !important;
+              font-size:11px !important;
+              padding:0 4px !important;
+            }}
+            .block-container:has(.day-head) .slot {{
+              grid-template-columns:92px minmax(0, 1fr) !important;
+              gap:6px !important;
+            }}
+            .block-container:has(.day-head) .schedule-time-cell {{
+              font-size:11px !important;
+              padding:12px 4px 0 6px !important;
+              min-height:62px !important;
+            }}
+            .block-container:has(.day-head) textarea {{
+              min-width:0 !important;
+            }}
           }}
         </style>
         """,
@@ -1104,7 +1250,7 @@ def render_month():
             today_label = '<span class="calendar-today-label">Today</span>' if current == today else ""
             content_mark = '<span class="content-mark"></span>' if has_content else ""
             html.append(
-                f'<a class="{" ".join(classes)}" href="?day={current.isoformat()}">'
+                f'<a class="{" ".join(classes)}" href="/?day={current.isoformat()}" target="_self">'
                 f'<span class="calendar-date">{day_num}</span>{content_mark}{today_label}</a>'
             )
     html.append("</div>")
@@ -1219,6 +1365,8 @@ def render_text_panel(selected: date, panel: str):
         )
         st.markdown("</div>", unsafe_allow_html=True)
     elif panel == "diet":
+        if not diet:
+            diet = "First meal:\n\nSecond meal:\n\nThird meal:"
         st.markdown('<div class="panel-box">', unsafe_allow_html=True)
         st.text_area(
             "Meal Plan",
@@ -1277,20 +1425,22 @@ def render_quadrant_dialog(selected: date):
     note, diet, quadrant, time_map, ui, extras = read_day(selected)
     tasks = load_quadrant_tasks(quadrant)
     st.markdown('<div class="matrix-dialog">', unsafe_allow_html=True)
-    head_cols = st.columns([0.9, 0.1])
-    with head_cols[0]:
-        st.markdown('<div class="matrix-title">monthly eisenhower matrix</div>', unsafe_allow_html=True)
-    with head_cols[1]:
-        if st.button("x", key="close-matrix", use_container_width=True):
-            st.session_state.matrix_open = False
-            st.rerun()
+    st.markdown('<div class="matrix-title">monthly eisenhower matrix</div>', unsafe_allow_html=True)
+    st.markdown('<div class="matrix-close-row">', unsafe_allow_html=True)
+    if st.button("x", key="close-matrix"):
+        st.session_state.matrix_open = False
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
     with st.form(f"quadrant-dialog-form-{selected}", clear_on_submit=True):
-        col_task, col_important, col_urgent, col_add = st.columns([2.2, 0.75, 0.75, 0.8])
-        task_text = col_task.text_input("Task", placeholder="Write one task")
-        important = col_important.checkbox("Important")
-        urgent = col_urgent.checkbox("Urgent")
-        submitted = col_add.form_submit_button("Add Task", use_container_width=True)
+        st.markdown('<div class="matrix-form-panel">', unsafe_allow_html=True)
+        task_text = st.text_input("Task", placeholder="Write one task")
+        st.markdown('<div class="matrix-flags">', unsafe_allow_html=True)
+        important = st.checkbox("Important")
+        urgent = st.checkbox("Urgent")
+        st.markdown('</div>', unsafe_allow_html=True)
+        submitted = st.form_submit_button("Add Task", use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
     if submitted and task_text.strip():
         tasks.append({"text": task_text.strip(), "important": important, "urgent": urgent})
         add_token(st.session_state.important_token)
@@ -1380,15 +1530,15 @@ def render_day():
 
     st.markdown('<div class="day-actions">', unsafe_allow_html=True)
     cols = st.columns([1, 1, 1])
-    if cols[0].button("Today's Notes", key="notes-btn", use_container_width=True):
-        set_panel("note")
-        st.rerun()
-    if cols[1].button("Meal Plan", key="meal-btn", use_container_width=True):
-        set_panel("diet")
-        st.rerun()
-    if cols[2].button("Monthly Matrix", key="monthly-matrix", use_container_width=True):
+    if cols[0].button("Monthly Matrix", key="monthly-matrix", use_container_width=True):
         st.session_state.matrix_open = True
         add_token(st.session_state.click_token)
+        st.rerun()
+    if cols[1].button("Today's Notes", key="notes-btn", use_container_width=True):
+        set_panel("note")
+        st.rerun()
+    if cols[2].button("Meal Plan", key="meal-btn", use_container_width=True):
+        set_panel("diet")
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
