@@ -198,29 +198,33 @@ def css():
             --pink:#f5caca;
             --today:#ffe9a9;
           }}
+          [data-testid="stHeader"], [data-testid="stToolbar"], #MainMenu, footer {{
+            display:none !important;
+          }}
           .stApp {{ background:var(--paper); color:var(--ink); }}
-          .block-container {{ max-width:1220px; padding-top:64px; }}
+          .stApp, .stApp *, [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] * {{
+            color:#000;
+          }}
+          .block-container {{ max-width:1220px; padding:12px 18px 18px; }}
           .simple-topbar {{
             display:flex; align-items:center; justify-content:space-between;
-            gap:10px; min-height:30px;
+            gap:10px; min-height:26px;
           }}
           .month-link {{
-            display:inline-flex; align-items:center; justify-content:center; min-height:30px;
-            padding:0 11px; border:2px outset #fff8e8; background:#efe7d4;
-            color:#000; text-decoration:none; font-weight:800; box-shadow:1px 1px 0 #7f7667;
-            font-size:13px;
+            display:inline-flex; align-items:center; justify-content:center; min-height:28px;
+            padding:0 10px; border:1px solid #c9bea8; background:#efe7d4;
+            color:#000; text-decoration:none; font-weight:800; box-shadow:1px 1px 0 #b1a58f;
+            font-size:13px; border-radius:2px;
           }}
           .month-link:hover {{ background:#fff8eb; transform:translateY(-1px); }}
           .topbar-right {{ display:flex; align-items:center; gap:14px; }}
-          .compact-action-row {{
-            display:grid; grid-template-columns:1.2fr .95fr 1fr 2.4fr; gap:8px; align-items:stretch;
-            width:100%;
-          }}
-          .compact-action-row [data-testid="stHorizontalBlock"] {{
+          .compact-action-row [data-testid="stHorizontalBlock"],
+          [data-testid="stHorizontalBlock"] {{
             flex-wrap:nowrap !important;
             gap:8px !important;
           }}
-          .compact-action-row [data-testid="column"] {{
+          .compact-action-row [data-testid="column"],
+          [data-testid="column"] {{
             min-width:0 !important;
             flex:1 1 0 !important;
           }}
@@ -238,7 +242,7 @@ def css():
           .month-wrap {{ max-width:980px; margin:0 auto; }}
           .month-nav {{
             display:grid; grid-template-columns:54px 1fr 54px; align-items:center;
-            gap:10px; margin-bottom:18px;
+            gap:10px; margin:26px 0 18px;
           }}
           .month-title {{ font-size:26px; font-weight:700; text-align:center; }}
           .month-arrow {{
@@ -252,9 +256,12 @@ def css():
           }}
           .week-label {{ color:#000; font-weight:800; text-align:center; padding-bottom:20px; font-size:20px; }}
           div.stButton > button {{
-            border-radius:0 !important; border:2px outset #fff8e8 !important; background:#efe7d4 !important;
+            border-radius:2px !important; border:1px solid #c9bea8 !important; background:#efe7d4 !important;
             color:#000 !important; min-height:42px; transition:background .12s ease, transform .08s ease, border-color .12s ease;
-            font-weight:700; box-shadow:1px 1px 0 #7f7667; font-family:Arial, sans-serif;
+            font-weight:700; box-shadow:1px 1px 0 #b1a58f; font-family:Arial, sans-serif;
+          }}
+          div.stButton > button p, div.stButton > button span {{
+            color:#000 !important;
           }}
           div.stButton > button:hover {{
             background:#fff8eb !important; border-color:#fff !important; transform:translateY(-1px);
@@ -264,7 +271,7 @@ def css():
           }}
           .calendar-cell {{
             display:flex; align-items:center; justify-content:center; gap:5px;
-            min-height:92px; border:2px outset #f1eadb; background:#fbf6eb;
+            min-height:92px; border:1px solid #d9cdb9; background:#fbf6eb;
             border-radius:0; padding:9px; font-size:20px; font-weight:500;
             text-decoration:none; color:var(--ink); transition:background .12s ease, transform .12s ease, border-color .12s ease;
           }}
@@ -278,9 +285,9 @@ def css():
           .calendar-cell.sun {{ background:var(--pink); }}
           .calendar-cell.today.sat, .calendar-cell.today.sun {{ background:var(--today); }}
           .content-mark {{
-            width:13px; height:18px; border:1px solid #333; display:inline-block;
-            background:repeating-linear-gradient(45deg, #333 0, #333 2px, #4aa3df 2px, #4aa3df 4px, #f2df66 4px, #f2df66 6px);
-            box-shadow:2px 2px 0 #222;
+            width:12px; height:16px; border:1px solid #7d745f; display:inline-block;
+            background:repeating-linear-gradient(45deg, #7d745f 0, #7d745f 2px, #4aa3df 2px, #4aa3df 4px, #f2df66 4px, #f2df66 6px);
+            box-shadow:1px 1px 0 #c8bda7;
           }}
           .calendar-cell.empty {{ opacity:.15; pointer-events:none; }}
           .calendar-date {{ display:block; }}
@@ -293,12 +300,12 @@ def css():
           .right-tools {{ display:flex; align-items:center; gap:12px; }}
           .battery-wrap {{ display:flex; align-items:center; gap:8px; }}
           .battery {{
-            width:160px; height:18px; border:3px solid #27352d; border-radius:0;
+            width:160px; height:18px; border:2px solid #27352d; border-radius:0;
             background:white; padding:2px; position:relative;
           }}
           .battery:after {{
-            content:""; position:absolute; right:-10px; top:3px; width:7px; height:9px;
-            border:3px solid #27352d; border-left:0; border-radius:0;
+            content:""; position:absolute; right:-8px; top:3px; width:6px; height:8px;
+            border:2px solid #27352d; border-left:0; border-radius:0;
           }}
           .battery-fill {{
             height:100%; width:{int(st.session_state.token * 100)}%; background:var(--green);
@@ -314,14 +321,14 @@ def css():
           .tool-row {{ display:flex; gap:14px; margin:20px 0 14px; flex-wrap:wrap; }}
           .schedule-title {{ font-size:20px; font-weight:900; margin:5px 0 6px; color:#000; }}
           .fixed-day-head {{
-            position:fixed; top:2.85rem; left:50%; transform:translateX(-50%);
+            position:fixed; top:0; left:50%; transform:translateX(-50%);
             width:min(1220px, calc(100vw - 32px)); z-index:1000; background:var(--paper);
-            padding:5px 0 6px; border-bottom:1px solid rgba(200,189,167,.55);
-            box-shadow:0 6px 18px rgba(80,70,48,.08);
+            padding:6px 0 7px; border-bottom:1px solid rgba(200,189,167,.55);
+            box-shadow:0 5px 12px rgba(80,70,48,.06);
           }}
-          .day-fixed-spacer {{ height:168px; }}
+          .day-fixed-spacer {{ height:142px; }}
           .schedule-scroll {{
-            height:calc(100vh - 205px); min-height:460px; overflow-y:auto; padding-right:12px;
+            height:calc(100vh - 182px); min-height:430px; overflow-y:auto; padding-right:12px;
             overscroll-behavior:contain;
           }}
           .st-key-now-btn button {{ background:#e8f6ea !important; font-size:20px; min-height:58px; border-color:#f8fff9 !important; }}
@@ -334,34 +341,35 @@ def css():
           .action-btn:active {{ border-style:inset; box-shadow:none; transform:translateY(1px); }}
           .st-key-monthly-matrix button {{ font-size:16px; }}
           .panel-box {{
-            border:1px solid var(--line); background:var(--softbox); border-radius:0;
-            padding:14px; margin:10px 0 16px;
+            border:1px solid var(--line); background:var(--softbox); border-radius:2px;
+            padding:12px; margin:8px 0 12px;
             color:#000;
           }}
           .day-progress {{
-            position:relative; height:66px; margin:2px 0 0; overflow:visible;
+            position:relative; height:54px; margin:0; overflow:visible;
           }}
           .progress-line {{
-            position:absolute; left:0; right:0; top:38px; height:7px; background:#d8d8d8;
+            position:absolute; left:0; right:0; top:33px; height:6px; background:#d8d8d8;
           }}
           .progress-fill {{
-            position:absolute; left:0; top:38px; height:7px; background:#4a90e2; border-radius:8px;
+            position:absolute; left:0; top:33px; height:6px; background:#4a90e2; border-radius:8px;
           }}
           .tick {{
-            position:absolute; top:27px; width:3px; height:21px; background:#5c5c5c;
+            position:absolute; top:24px; width:2px; height:20px; background:#5c5c5c;
           }}
-          .tick.major {{ top:14px; height:34px; }}
+          .tick.major {{ top:13px; height:31px; }}
           .tick-label {{
             position:absolute; top:0; transform:translateX(-50%); font-size:15px; font-weight:900; color:#000;
           }}
           .hour-zone {{
-            position:absolute; top:18px; height:38px;
+            position:absolute; top:16px; height:34px;
           }}
           .hour-zone:hover .timeline-pop {{ display:block; }}
           .timeline-pop {{
-            display:none; position:absolute; top:38px; left:50%; transform:translateX(-50%);
-            width:190px; min-height:82px; background:#fffdf7; border:2px solid #111;
-            padding:12px; z-index:50; font-size:16px; white-space:pre-wrap; color:#000;
+            display:none; position:absolute; top:36px; left:50%; transform:translateX(-50%);
+            width:190px; min-height:76px; background:#fffdf7; border:1px solid #c8bda7;
+            padding:10px; z-index:50; font-size:15px; white-space:pre-wrap; color:#000;
+            box-shadow:0 8px 20px rgba(80,70,48,.12);
           }}
           .timeline-pop b {{ display:block; margin-bottom:12px; font-weight:500; }}
           .slot {{
@@ -384,49 +392,77 @@ def css():
             border:1px solid var(--line); border-radius:7px; background:var(--panel); font-size:22px;
           }}
           .matrix-dialog {{
-            width:min(860px, 100%); max-height:78vh; overflow:auto; background:#fffaf0;
-            border:2px solid #222; box-shadow:0 8px 24px rgba(0,0,0,.14); padding:14px;
-            margin:8px auto 12px; color:#000;
+            width:min(900px, 100%); max-height:74vh; overflow:auto; background:#f9f4e8;
+            border:1px solid #c8bda7; box-shadow:0 8px 20px rgba(80,70,48,.10); padding:12px;
+            margin:8px auto 12px; color:#000; border-radius:2px;
           }}
           .matrix-head {{ display:flex; align-items:center; justify-content:space-between; gap:12px; }}
-          .matrix-title {{ font-size:24px; font-weight:900; color:#111; margin:0 0 10px; }}
+          .matrix-title {{ font-size:22px; font-weight:900; color:#000; margin:0 0 8px; }}
           .quadrant-grid {{
             display:grid !important; grid-template-columns:repeat(2, minmax(0, 1fr)) !important; gap:12px;
             aspect-ratio:1.65 / 1; color:#000;
           }}
           .quadrant-box {{
-            border:1px solid #999; background:#fffdf7; border-radius:0; padding:12px;
-            min-height:0; overflow:auto; color:#111;
+            border:1px solid #d6cab5; background:#fffdf7; border-radius:2px; padding:12px;
+            min-height:0; overflow:auto; color:#000;
           }}
           .quadrant-title {{ font-weight:900; margin-bottom:8px; color:#000; font-size:18px; line-height:1.1; }}
-          .task-pill {{ border:1px solid #d8cbb6; background:#fff; border-radius:0; padding:8px; margin:6px 0; color:#222; }}
-          textarea, input, [data-baseweb="textarea"], [data-baseweb="input"] {{
-            border-radius:7px !important;
+          .task-pill {{ border:1px solid #e2d7c2; background:#fffefa; border-radius:2px; padding:8px; margin:6px 0; color:#000; }}
+          textarea, input, [data-baseweb="textarea"], [data-baseweb="input"],
+          [data-baseweb="select"] > div {{
+            border-radius:4px !important;
+            color:#000 !important;
+            background:#fffdf7 !important;
+            border-color:#d6cab5 !important;
+          }}
+          [data-baseweb="textarea"] textarea,
+          [data-baseweb="input"] input,
+          [data-baseweb="select"] span,
+          [data-baseweb="select"] div {{
             color:#000 !important;
           }}
+          [data-testid="stTextArea"] label,
+          [data-testid="stTextInput"] label,
+          [data-testid="stSelectbox"] label,
+          [data-testid="stCheckbox"] label {{
+            color:#000 !important;
+          }}
+          label, p, span, div {{
+            color:inherit;
+          }}
+          .stTextArea textarea, .stTextInput input {{
+            color:#000 !important;
+            background:#fffdf7 !important;
+          }}
+          [data-testid="stForm"] {{
+            background:#f9f4e8 !important;
+            border:1px solid #d6cab5 !important;
+            padding:8px !important;
+            border-radius:2px !important;
+          }}
           @media (max-width: 760px) {{
-            .block-container {{ padding-top:66px; padding-left:8px; padding-right:8px; }}
-            .simple-topbar {{ margin:-54px 0 18px; }}
-            .compact-action-row {{ grid-template-columns:1.15fr .9fr .95fr .4fr; gap:4px; }}
-            .html-btn {{ min-height:34px; font-size:11px; padding:0 3px; }}
+            .block-container {{ padding:8px 7px 12px; }}
+            .html-btn {{ min-height:32px; font-size:11px; padding:0 3px; }}
             .compact-action-row [data-testid="stHorizontalBlock"] {{ gap:4px !important; }}
-            .fixed-day-head {{ top:2.85rem; width:calc(100vw - 16px); padding-top:4px; }}
-            .day-fixed-spacer {{ height:172px; }}
-            .schedule-scroll {{ height:calc(100vh - 215px); min-height:380px; }}
+            .fixed-day-head {{ top:0; width:calc(100vw - 12px); padding-top:4px; }}
+            .day-fixed-spacer {{ height:138px; }}
+            .schedule-scroll {{ height:calc(100vh - 176px); min-height:360px; }}
             .topbar-right {{ gap:8px; }}
             .battery {{ width:92px; }}
             .battery-label {{ font-size:9px; min-width:28px; }}
             .month-link {{ min-height:26px; padding:0 6px; font-size:10px; }}
             .calendar-grid {{ gap:4px; }}
             .calendar-cell {{ min-height:54px; padding:4px; font-size:14px; }}
-            .content-mark {{ width:9px; height:13px; box-shadow:1px 1px 0 #222; }}
+            .content-mark {{ width:9px; height:13px; box-shadow:1px 1px 0 #c8bda7; }}
             .week-label {{ font-size:11px; }}
             .month-title {{ font-size:21px; }}
-            .day-progress {{ height:58px; }}
+            .day-progress {{ height:48px; }}
             .tick-label {{ font-size:12px; }}
             .timeline-pop {{ width:150px; font-size:13px; }}
-            .slot {{ grid-template-columns:1fr; }}
-            .day-top {{ align-items:flex-start; flex-direction:column; }}
+            .slot {{ grid-template-columns:86px minmax(0, 1fr); gap:6px; }}
+            .slot-time {{ font-size:11px; }}
+            .day-title {{ font-size:17px; }}
+            .day-top {{ align-items:center; flex-direction:row; }}
             .quadrant-grid {{ grid-template-columns:repeat(2, minmax(0, 1fr)) !important; gap:6px; aspect-ratio:1 / 1.08; }}
             .matrix-dialog {{ width:100%; padding:9px; }}
             .matrix-title {{ font-size:17px; }}
@@ -609,7 +645,7 @@ def render_simple_topbar(selected: date):
     st.markdown(
         f"""
         <div class="simple-topbar">
-          <a class="month-link" href="?month={selected.year:04d}-{selected.month:02d}">← Month</a>
+          <a class="month-link" href="?month={selected.year:04d}-{selected.month:02d}">&larr; Month</a>
           <div class="topbar-right">
             <div class="{battery_class}">
               <div class="battery"><div class="battery-fill"></div></div>
@@ -743,11 +779,11 @@ def render_text_panel(selected: date, panel: str):
 
 def render_quadrant_dialog(selected: date):
     st.markdown('<div class="matrix-dialog">', unsafe_allow_html=True)
-    head_cols = st.columns([0.86, 0.14])
+    head_cols = st.columns([0.9, 0.1])
     with head_cols[0]:
         st.markdown('<div class="matrix-title">Monthly Eisenhower Matrix</div>', unsafe_allow_html=True)
     with head_cols[1]:
-        if st.button("X", key="close-matrix", use_container_width=True):
+        if st.button("x", key="close-matrix", use_container_width=True):
             st.session_state.matrix_open = False
             st.rerun()
     note, diet, quadrant, time_map, ui, extras = read_day(selected)
@@ -849,10 +885,6 @@ def render_day():
     render_day_header_clean(selected)
     st.session_state.flash_battery = False
 
-    if st.button("Monthly Matrix", key="monthly-matrix", use_container_width=False):
-        st.session_state.matrix_open = True
-        add_token(st.session_state.click_token)
-
     render_day_progress(selected)
 
     if st.session_state.get("last_saved"):
@@ -863,15 +895,17 @@ def render_day():
             st.success(message)
 
     st.markdown('<div class="compact-action-row">', unsafe_allow_html=True)
-    cols = st.columns([1.15, 0.9, 0.95, 0.4])
+    cols = st.columns([1, 1, 1])
     if cols[0].button("Today's Notes", key="notes-btn", use_container_width=True):
         set_panel("note")
         st.rerun()
     if cols[1].button("Meal Plan", key="meal-btn", use_container_width=True):
         set_panel("diet")
         st.rerun()
-    with cols[2]:
-        st.markdown('<a class="html-btn html-now" href="#now-slot">Go to Now</a>', unsafe_allow_html=True)
+    if cols[2].button("Monthly Matrix", key="monthly-matrix", use_container_width=True):
+        st.session_state.matrix_open = True
+        add_token(st.session_state.click_token)
+        st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
     st.markdown('<div class="day-fixed-spacer"></div>', unsafe_allow_html=True)
