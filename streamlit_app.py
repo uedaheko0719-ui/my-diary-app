@@ -188,7 +188,7 @@ def css():
         f"""
         <style>
           :root {{
-            --paper:#f8efd9;
+            --paper:#fbf4e4;
             --panel:#fffefa;
             --softbox:#fffefa;
             --line:#eee7da;
@@ -214,26 +214,25 @@ def css():
           }}
           .month-link {{
             display:inline-flex; align-items:center; justify-content:center; min-height:30px;
-            padding:0 12px; border:1px solid #d8cbb6; background:#fffdf8;
-            color:#000; text-decoration:none; font-weight:800; box-shadow:0 1px 3px rgba(60,50,35,.18);
+            padding:0 12px; border:1px solid #e3d8c5; background:#fffdf8;
+            color:#000; text-decoration:none; font-weight:700; box-shadow:none;
             font-size:13px; border-radius:2px;
           }}
-          .month-link:hover {{ background:#fff8eb; transform:translateY(-1px); }}
+          .month-link:hover {{ background:#fff; border-color:#cfc1aa; }}
           .month-link, .calendar-cell, div.stButton > button, [data-testid="stCheckbox"], textarea, input, .battery {{
-            transition:background .14s ease, transform .12s ease, box-shadow .14s ease, border-color .14s ease, filter .14s ease;
+            transition:background .14s ease, box-shadow .14s ease, border-color .14s ease, filter .14s ease;
           }}
           a, button, label, input, textarea,
           [role="button"], [data-baseweb="checkbox"], [data-baseweb="input"], [data-baseweb="textarea"],
           [data-testid="stCheckbox"], [data-testid="stTextInput"], [data-testid="stTextArea"],
           [data-testid="stFormSubmitButton"] button {{
-            transition:background .14s ease, transform .12s ease, box-shadow .14s ease, border-color .14s ease, filter .14s ease !important;
+            transition:background .14s ease, box-shadow .14s ease, border-color .14s ease, filter .14s ease !important;
           }}
           a:hover, button:hover, [role="button"]:hover,
           [data-baseweb="checkbox"]:hover, [data-testid="stCheckbox"]:hover,
           [data-testid="stFormSubmitButton"] button:hover {{
-            transform:translateY(-1px) !important;
             filter:brightness(1.025) !important;
-            box-shadow:0 3px 9px rgba(60,50,35,.16) !important;
+            box-shadow:0 1px 4px rgba(60,50,35,.08) !important;
             cursor:pointer !important;
           }}
           label:hover {{
@@ -243,7 +242,7 @@ def css():
           [data-baseweb="input"]:hover, [data-baseweb="textarea"]:hover,
           [data-testid="stTextInput"]:hover, [data-testid="stTextArea"]:hover {{
             filter:brightness(1.015) !important;
-            box-shadow:0 2px 8px rgba(60,50,35,.10) !important;
+            box-shadow:0 1px 4px rgba(60,50,35,.06) !important;
             border-color:#c9bda6 !important;
           }}
           [data-testid="stButton"] button:hover,
@@ -252,8 +251,7 @@ def css():
           [data-testid="stLinkButton"] a:hover {{
             background:#fff8eb !important;
             border-color:#c9bda6 !important;
-            transform:translateY(-1px) scale(1.01) !important;
-            box-shadow:0 4px 10px rgba(60,50,35,.18) !important;
+            box-shadow:0 1px 5px rgba(60,50,35,.10) !important;
           }}
           [data-testid="stCheckbox"] label:hover,
           [data-testid="stCheckbox"] label:hover div {{
@@ -273,8 +271,8 @@ def css():
             min-width:0 !important;
             flex:1 1 0 !important;
           }}
-          .html-btn {{ display:flex; align-items:center; justify-content:center; min-height:42px; border:1px solid #fff; color:#000; text-decoration:none; font-weight:800; box-shadow:0 1px 3px rgba(60,50,35,.18); font-size:16px; white-space:nowrap; background:#fff; }}
-          .html-btn:hover {{ filter:brightness(1.04); transform:translateY(-1px); }}
+          .html-btn {{ display:flex; align-items:center; justify-content:center; min-height:38px; border:1px solid #e3d8c5; color:#000; text-decoration:none; font-weight:700; box-shadow:none; font-size:15px; white-space:nowrap; background:#fffdf8; }}
+          .html-btn:hover {{ filter:brightness(1.02); background:#fff; }}
           .html-btn:active {{ border-style:inset; box-shadow:none; transform:translateY(1px); }}
           .html-note {{ background:#e8f2ff; }}
           .html-meal {{ background:#fff4e4; }}
@@ -288,38 +286,38 @@ def css():
           .month-title {{ font-size:26px; font-weight:700; text-align:center; }}
           .month-arrow {{
             display:flex; align-items:center; justify-content:center; height:44px;
-            border:1px solid #fff; background:#fff; border-radius:2px;
-            text-decoration:none; color:var(--ink); font-size:24px; transition:background .12s ease, transform .12s ease;
+            border:1px solid #e3d8c5; background:#fffdf8; border-radius:2px;
+            text-decoration:none; color:var(--ink); font-size:22px; transition:background .12s ease, border-color .12s ease;
           }}
-          .month-arrow:hover {{ background:#fff; transform:translateY(-1px); }}
+          .month-arrow:hover {{ background:#fff; border-color:#cfc1aa; }}
           .calendar-grid {{
             display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:8px;
           }}
-          .week-label {{ color:#000; font-weight:800; text-align:center; padding-bottom:20px; font-size:20px; }}
+          .week-label {{ color:#000; font-weight:700; text-align:center; padding-bottom:16px; font-size:18px; }}
           div.stButton > button {{
-            border-radius:2px !important; border:1px solid #d8cbb6 !important; background:#fffdf8 !important;
-            color:#000 !important; min-height:34px; transition:background .12s ease, transform .08s ease, border-color .12s ease;
-            font-weight:700; box-shadow:0 1px 3px rgba(60,50,35,.18); font-family:Arial, sans-serif;
+            border-radius:2px !important; border:1px solid #e3d8c5 !important; background:#fffdf8 !important;
+            color:#000 !important; min-height:34px; transition:background .12s ease, border-color .12s ease, box-shadow .12s ease;
+            font-weight:650; box-shadow:none; font-family:Arial, sans-serif;
             font-size:15px !important;
           }}
           div.stButton > button p, div.stButton > button span {{
             color:#000 !important;
           }}
           div.stButton > button:hover {{
-            background:#fff8eb !important; border-color:#c9bda6 !important; transform:translateY(-1px);
-            box-shadow:0 3px 8px rgba(60,50,35,.18) !important;
+            background:#fff !important; border-color:#cfc1aa !important;
+            box-shadow:0 1px 4px rgba(60,50,35,.08) !important;
           }}
           div.stButton > button:active {{
             border-style:inset !important; transform:translateY(1px); box-shadow:none;
           }}
           .calendar-cell {{
             display:flex; align-items:center; justify-content:center; gap:5px;
-            min-height:92px; border:1px solid #fff; background:#fffefa;
+            min-height:88px; border:1px solid #eee4d3; background:#fffefa;
             border-radius:0; padding:9px; font-size:20px; font-weight:500;
             text-decoration:none; color:var(--ink); transition:background .12s ease, transform .12s ease, border-color .12s ease;
           }}
           .calendar-cell:hover {{
-            background:#fff; border-color:#99b8a1; transform:translateY(-1px);
+            background:#fff; border-color:#cfc1aa;
           }}
           .calendar-cell.today {{
             border-color:#bfa24e; background:var(--today); font-weight:900;
@@ -339,25 +337,24 @@ def css():
             display:flex; align-items:center; justify-content:center;
             gap:8px; padding-bottom:0; margin-bottom:2px;
           }}
-          .day-title {{ font-size:28px; font-weight:900; text-align:center; color:#000; margin:8px 0 10px; }}
+          .day-title {{ font-size:26px; font-weight:800; text-align:center; color:#000; margin:8px 0 10px; }}
           .right-tools {{ display:flex; align-items:center; gap:12px; }}
           .battery-wrap {{ display:flex; align-items:center; gap:8px; }}
           .battery {{
-            width:188px; height:24px; border:2px solid #25372e; border-radius:0;
+            width:168px; height:22px; border:1px solid #25372e; border-radius:0;
             background:#fffefa; padding:3px; position:relative; box-shadow:none;
             display:grid; grid-template-columns:repeat(4, 1fr); gap:3px;
           }}
           .battery:hover {{
-            transform:translateY(-1px);
-            box-shadow:0 3px 8px rgba(53,168,104,.22);
+            box-shadow:0 1px 5px rgba(53,168,104,.14);
             filter:brightness(1.02);
           }}
           .battery:after {{
-            content:""; position:absolute; right:-9px; top:6px; width:7px; height:10px;
-            border:2px solid #25372e; border-left:0; border-radius:0; background:#fffefa;
+            content:""; position:absolute; right:-7px; top:6px; width:5px; height:9px;
+            border:1px solid #25372e; border-left:0; border-radius:0; background:#fffefa;
           }}
           .battery-cell {{
-            height:100%; background:#fffefa; border:1px solid rgba(37,55,46,.20);
+            height:100%; background:#fffefa; border:1px solid rgba(37,55,46,.14);
             transition:background .16s ease, filter .14s ease;
           }}
           .battery-cell.filled {{
@@ -368,9 +365,9 @@ def css():
             0% {{ background:#fff; }}
             100% {{ background:var(--green); }}
           }}
-          .battery-label {{ min-width:32px; font-size:11px; font-weight:800; }}
+          .battery-label {{ min-width:32px; font-size:11px; font-weight:700; }}
           .tool-row {{ display:flex; gap:14px; margin:20px 0 14px; flex-wrap:wrap; }}
-          .schedule-title {{ font-size:19px; font-weight:900; margin:14px 0 8px; color:#000; }}
+          .schedule-title {{ font-size:18px; font-weight:800; margin:14px 0 8px; color:#000; }}
           [data-testid="stVerticalBlock"] {{ gap:.55rem !important; }}
           [data-testid="stTextArea"] {{ margin:0 !important; }}
           .day-head {{
@@ -386,18 +383,18 @@ def css():
           .st-key-notes-btn button,
           .st-key-meal-btn button,
           .st-key-monthly-matrix button {{
-            min-height:40px !important;
+            min-height:36px !important;
             max-width:180px !important;
             margin:0 auto !important;
             background:#fffdf8 !important;
-            border-color:#d8cbb6 !important;
+            border-color:#e3d8c5 !important;
           }}
-          .action-btn {{ display:flex; align-items:center; justify-content:center; min-height:58px; border:1px solid #fff; background:#fff; color:#000; text-decoration:none; font-weight:800; font-size:20px; box-shadow:0 1px 3px rgba(60,50,35,.18); }}
-          .action-btn:hover {{ background:#f8fff9; transform:translateY(-1px); }}
+          .action-btn {{ display:flex; align-items:center; justify-content:center; min-height:46px; border:1px solid #e3d8c5; background:#fffdf8; color:#000; text-decoration:none; font-weight:700; font-size:16px; box-shadow:none; }}
+          .action-btn:hover {{ background:#fff; }}
           .action-btn:active {{ border-style:inset; box-shadow:none; transform:translateY(1px); }}
           .st-key-monthly-matrix button {{ font-size:15px !important; }}
           .panel-box {{
-            border:1px solid #fff; background:var(--softbox); border-radius:2px;
+            border:1px solid #eee4d3; background:var(--softbox); border-radius:2px;
             padding:12px; margin:8px 0 12px;
             color:#000;
           }}
@@ -407,7 +404,7 @@ def css():
           .timeline-sticky {{
             position:sticky; top:0; z-index:999; background:var(--paper);
             padding:6px 0 8px; border-bottom:1px solid rgba(216,203,182,.45);
-            box-shadow:0 5px 10px rgba(80,70,48,.05);
+            box-shadow:0 2px 7px rgba(80,70,48,.04);
           }}
           .day-actions {{
             margin-top:30px;
@@ -434,9 +431,9 @@ def css():
           }}
           .timeline-pop {{
             display:none; position:absolute; top:36px; left:50%; transform:translateX(-50%);
-            width:190px; min-height:76px; background:#fffdf7; border:1px solid #c8bda7;
+            width:190px; min-height:76px; background:#fffefa; border:1px solid #d8cbb6;
             padding:10px; z-index:50; font-size:15px; white-space:pre-wrap; color:#000;
-            box-shadow:0 8px 20px rgba(80,70,48,.12);
+            box-shadow:0 4px 12px rgba(80,70,48,.08);
           }}
           .timeline-pop b {{ display:block; margin-bottom:12px; font-weight:500; }}
           .slot {{
@@ -449,7 +446,6 @@ def css():
           }}
           .schedule-time-cell:hover {{
             background:#fff8eb;
-            transform:translateX(2px);
           }}
           .schedule-time-cell.now {{
             border-left:7px solid var(--red); background:#fffefa;
@@ -462,7 +458,7 @@ def css():
             position:absolute; z-index:20; left:0; top:32px; width:260px; max-width:70vw;
             display:none; white-space:pre-wrap; border:1px solid #fff;
             background:#fff; border-radius:7px; padding:10px; color:#000;
-            box-shadow:0 8px 22px rgba(47,42,34,.13); font-weight:500;
+            box-shadow:0 4px 12px rgba(47,42,34,.08); font-weight:500;
           }}
           .slot-time:hover .slot-task {{ display:block; }}
           .back-arrow {{
@@ -471,20 +467,20 @@ def css():
           }}
           .matrix-dialog {{
             width:min(900px, 100%); overflow:auto; background:#fffefa;
-            border:1px solid #d8cbb6; box-shadow:0 8px 20px rgba(80,70,48,.10); padding:12px;
+            border:1px solid #e3d8c5; box-shadow:none; padding:12px;
             margin:14px auto 12px; color:#000; border-radius:2px;
           }}
           .matrix-head {{ display:flex; align-items:center; justify-content:space-between; gap:12px; }}
-          .matrix-title {{ font-size:22px; font-weight:900; color:#000; margin:0 0 8px; }}
+          .matrix-title {{ font-size:20px; font-weight:800; color:#000; margin:0 0 8px; }}
           .quadrant-grid {{
             display:grid !important; grid-template-columns:repeat(2, minmax(0, 1fr)) !important; gap:12px;
             aspect-ratio:1.65 / 1; color:#000;
           }}
           .quadrant-box {{
-            border:1px solid #d8cbb6; background:#fffefa; border-radius:2px; padding:12px;
+            border:1px solid #eee4d3; background:#fffefa; border-radius:2px; padding:12px;
             min-height:150px; overflow:auto; color:#000;
           }}
-          .quadrant-title {{ font-weight:900; margin-bottom:8px; color:#000; font-size:18px; line-height:1.1; }}
+          .quadrant-title {{ font-weight:800; margin-bottom:8px; color:#000; font-size:17px; line-height:1.1; }}
           .task-pill {{ border:1px solid #fff; background:#fff; border-radius:2px; padding:8px; margin:6px 0; color:#000; }}
           textarea, input, [data-baseweb="textarea"], [data-baseweb="input"],
           [data-baseweb="select"] > div {{
@@ -517,9 +513,8 @@ def css():
           }}
           [data-testid="stCheckbox"]:hover {{
             background:#fff8eb !important;
-            border-color:#c9bda6 !important;
-            box-shadow:0 2px 6px rgba(60,50,35,.10);
-            transform:translateY(-1px);
+            border-color:#cfc1aa !important;
+            box-shadow:0 1px 4px rgba(60,50,35,.06);
           }}
           [data-testid="stCheckbox"] svg {{
             color:#000 !important;
@@ -534,14 +529,14 @@ def css():
           }}
           .stTextArea textarea:hover, .stTextInput input:hover,
           [data-baseweb="input"]:hover, [data-baseweb="textarea"]:hover {{
-            border-color:#c9bda6 !important;
-            box-shadow:0 2px 8px rgba(60,50,35,.10) !important;
+            border-color:#cfc1aa !important;
+            box-shadow:0 1px 4px rgba(60,50,35,.06) !important;
           }}
           [data-testid="stFormSubmitButton"] button {{
             background:#fffdf8 !important;
             color:#000 !important;
-            border:1px solid #d8cbb6 !important;
-            box-shadow:0 1px 3px rgba(60,50,35,.18) !important;
+            border:1px solid #e3d8c5 !important;
+            box-shadow:none !important;
           }}
           [data-testid="stFormSubmitButton"] button p,
           [data-testid="stFormSubmitButton"] button span {{
