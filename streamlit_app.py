@@ -125,6 +125,8 @@ def current_slot() -> str:
 
 
 def add_token(amount: float):
+    if amount == 0:
+        return
     st.session_state.token = min(1.0, max(0.0, st.session_state.token + amount))
     st.session_state.flash_battery = True
 
@@ -220,6 +222,46 @@ def css():
           .month-link, .calendar-cell, div.stButton > button, [data-testid="stCheckbox"], textarea, input, .battery {{
             transition:background .14s ease, transform .12s ease, box-shadow .14s ease, border-color .14s ease, filter .14s ease;
           }}
+          a, button, label, input, textarea,
+          [role="button"], [data-baseweb="checkbox"], [data-baseweb="input"], [data-baseweb="textarea"],
+          [data-testid="stCheckbox"], [data-testid="stTextInput"], [data-testid="stTextArea"],
+          [data-testid="stFormSubmitButton"] button {{
+            transition:background .14s ease, transform .12s ease, box-shadow .14s ease, border-color .14s ease, filter .14s ease !important;
+          }}
+          a:hover, button:hover, [role="button"]:hover,
+          [data-baseweb="checkbox"]:hover, [data-testid="stCheckbox"]:hover,
+          [data-testid="stFormSubmitButton"] button:hover {{
+            transform:translateY(-1px) !important;
+            filter:brightness(1.025) !important;
+            box-shadow:0 3px 9px rgba(60,50,35,.16) !important;
+            cursor:pointer !important;
+          }}
+          label:hover {{
+            cursor:pointer !important;
+          }}
+          input:hover, textarea:hover,
+          [data-baseweb="input"]:hover, [data-baseweb="textarea"]:hover,
+          [data-testid="stTextInput"]:hover, [data-testid="stTextArea"]:hover {{
+            filter:brightness(1.015) !important;
+            box-shadow:0 2px 8px rgba(60,50,35,.10) !important;
+            border-color:#c9bda6 !important;
+          }}
+          [data-testid="stButton"] button:hover,
+          [data-testid="baseButton-secondary"]:hover,
+          [data-testid="baseButton-primary"]:hover,
+          [data-testid="stLinkButton"] a:hover {{
+            background:#fff8eb !important;
+            border-color:#c9bda6 !important;
+            transform:translateY(-1px) scale(1.01) !important;
+            box-shadow:0 4px 10px rgba(60,50,35,.18) !important;
+          }}
+          [data-testid="stCheckbox"] label:hover,
+          [data-testid="stCheckbox"] label:hover div {{
+            background:#fff8eb !important;
+          }}
+          [data-testid="stCheckbox"] label:hover span {{
+            color:#000 !important;
+          }}
           .topbar-right {{ display:flex; align-items:center; gap:14px; }}
           .compact-action-row [data-testid="stHorizontalBlock"],
           [data-testid="stHorizontalBlock"] {{
@@ -301,8 +343,9 @@ def css():
           .right-tools {{ display:flex; align-items:center; gap:12px; }}
           .battery-wrap {{ display:flex; align-items:center; gap:8px; }}
           .battery {{
-            width:132px; height:16px; border:2px solid #25372e; border-radius:0;
-            background:#fffefa; padding:2px; position:relative; box-shadow:none;
+            width:188px; height:24px; border:2px solid #25372e; border-radius:0;
+            background:#fffefa; padding:3px; position:relative; box-shadow:none;
+            display:grid; grid-template-columns:repeat(4, 1fr); gap:3px;
           }}
           .battery:hover {{
             transform:translateY(-1px);
@@ -310,18 +353,20 @@ def css():
             filter:brightness(1.02);
           }}
           .battery:after {{
-            content:""; position:absolute; right:-8px; top:3px; width:6px; height:8px;
+            content:""; position:absolute; right:-9px; top:6px; width:7px; height:10px;
             border:2px solid #25372e; border-left:0; border-radius:0; background:#fffefa;
           }}
-          .battery-fill {{
-            height:100%; width:{int(st.session_state.token * 100)}%; background:var(--green);
-            border-radius:2px; transition:width .16s ease;
+          .battery-cell {{
+            height:100%; background:#fffefa; border:1px solid rgba(37,55,46,.20);
+            transition:background .16s ease, filter .14s ease;
           }}
-          .flash .battery-fill {{ animation:batteryFlash .25s ease; }}
-          @keyframes batteryFlash {{
-            0% {{ filter:brightness(1); }}
-            50% {{ filter:brightness(1.75); }}
-            100% {{ filter:brightness(1); }}
+          .battery-cell.filled {{
+            background:var(--green);
+          }}
+          .flash .battery-cell.filled {{ animation:batteryWhite .02s linear; }}
+          @keyframes batteryWhite {{
+            0% {{ background:#fff; }}
+            100% {{ background:var(--green); }}
           }}
           .battery-label {{ min-width:32px; font-size:11px; font-weight:800; }}
           .tool-row {{ display:flex; gap:14px; margin:20px 0 14px; flex-wrap:wrap; }}
@@ -517,7 +562,7 @@ def css():
             .day-head {{ top:0; padding-top:2px; }}
             .schedule-scroll {{ height:calc(100vh - 172px); min-height:360px; }}
             .topbar-right {{ gap:8px; }}
-            .battery {{ width:78px; height:13px; }}
+            .battery {{ width:104px; height:17px; gap:2px; padding:2px; }}
             .battery-label {{ font-size:9px; min-width:28px; }}
             .month-link {{ min-height:26px; padding:0 6px; font-size:10px; }}
             .calendar-grid {{ gap:4px; }}
@@ -557,9 +602,8 @@ def save_note_from_state(day: date):
     note, diet, quadrant, time_map, ui, extras = read_day(day)
     key = f"note-text-{day.isoformat()}"
     value = st.session_state.get(key, note)
-    added = max(0, len(str(value)) - len(note))
-    if added:
-        add_token(added * st.session_state.type_token)
+    delta = len(str(value)) - len(note)
+    add_token(delta * st.session_state.type_token)
     ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
     write_day(day, value, diet, quadrant, time_map, ui, extras)
     st.session_state.last_saved = f"Auto-saved notes for {day:%Y-%m-%d}"
@@ -569,9 +613,8 @@ def save_diet_from_state(day: date):
     note, diet, quadrant, time_map, ui, extras = read_day(day)
     key = f"diet-text-{day.isoformat()}"
     value = st.session_state.get(key, diet)
-    added = max(0, len(str(value)) - len(diet))
-    if added:
-        add_token(added * st.session_state.type_token)
+    delta = len(str(value)) - len(diet)
+    add_token(delta * st.session_state.type_token)
     ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
     write_day(day, note, value, quadrant, time_map, ui, extras)
     st.session_state.last_saved = f"Auto-saved meal plan for {day:%Y-%m-%d}"
@@ -583,12 +626,12 @@ def save_schedule_from_state(day: date):
     for slot in time_slots():
         key = f"slot-{day}-{slot}"
         new_time_map[slot] = st.session_state.get(key, time_map.get(slot, ""))
-    filled = sum(1 for value in new_time_map.values() if str(value).strip())
+    old_chars = sum(len(str(value)) for value in time_map.values())
+    new_chars = sum(len(str(value)) for value in new_time_map.values())
+    add_token((new_chars - old_chars) * st.session_state.type_token)
     ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
     write_day(day, note, diet, quadrant, new_time_map, ui, extras)
     st.session_state.last_saved = f"Auto-saved schedule for {day:%Y-%m-%d}"
-    if filled:
-        add_token(0.5 * min(1.0, filled / 24))
 
 
 def set_panel(panel: str):
@@ -713,13 +756,18 @@ def render_day_header_clean(selected: date):
 def render_simple_topbar(selected: date):
     pct = int(st.session_state.token * 100)
     battery_class = "battery-wrap flash" if st.session_state.flash_battery else "battery-wrap"
+    filled_cells = int((st.session_state.token * 4) + 0.999) if st.session_state.token > 0 else 0
+    cells = "".join(
+        f'<div class="battery-cell{" filled" if index < filled_cells else ""}"></div>'
+        for index in range(4)
+    )
     st.markdown(
         f"""
         <div class="simple-topbar">
           <a class="month-link" href="?month={selected.year:04d}-{selected.month:02d}">&larr; Month</a>
           <div class="topbar-right">
             <div class="{battery_class}">
-              <div class="battery"><div class="battery-fill"></div></div>
+              <div class="battery">{cells}</div>
               <div class="battery-label">{pct}%</div>
             </div>
           </div>
