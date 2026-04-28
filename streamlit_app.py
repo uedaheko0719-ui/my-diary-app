@@ -523,12 +523,15 @@ def css():
             border:1px solid var(--line); border-radius:7px; background:var(--panel); font-size:22px;
           }}
           .matrix-dialog {{
-            width:min(900px, 100%); overflow:auto; background:#fbf4e4;
-            border:1px solid #d8cbb6; box-shadow:0 10px 26px rgba(60,50,35,.08); padding:14px;
-            margin:14px auto 12px; color:#000; border-radius:3px;
+            width:min(900px, 100%); overflow:auto; background:transparent;
+            border:0; box-shadow:none; padding:8px 0 0;
+            margin:14px auto 12px; color:#000; border-radius:0;
           }}
           .matrix-head {{ display:flex; align-items:center; justify-content:space-between; gap:12px; }}
-          .matrix-title {{ font-size:20px; font-weight:800; color:#000; margin:0 0 8px; }}
+          .matrix-title {{
+            font-size:16px; font-weight:800; color:#000; margin:0 0 8px;
+            text-transform:lowercase; letter-spacing:0;
+          }}
           .matrix-dialog [data-testid="stForm"] {{
             background:#fffefa !important;
             border:1px solid #d8cbb6 !important;
@@ -537,7 +540,7 @@ def css():
             margin-bottom:10px !important;
           }}
           .matrix-dialog [data-testid="stVerticalBlockBorderWrapper"] {{
-            background:#fffefa !important;
+            background:#fff !important;
             border:1px solid #d8cbb6 !important;
             box-shadow:0 4px 14px rgba(60,50,35,.08) !important;
             min-height:156px !important;
@@ -549,7 +552,7 @@ def css():
             transform:translateY(-2px);
           }}
           .quadrant-title-bar {{
-            font-size:16px; font-weight:800; color:#000;
+            font-size:15px; font-weight:800; color:#000;
             padding-bottom:8px; margin-bottom:8px;
             border-bottom:1px solid #eadfce;
           }}
@@ -975,7 +978,7 @@ def render_quadrant_dialog(selected: date):
     st.markdown('<div class="matrix-dialog">', unsafe_allow_html=True)
     head_cols = st.columns([0.9, 0.1])
     with head_cols[0]:
-        st.markdown('<div class="matrix-title">Monthly Eisenhower Matrix</div>', unsafe_allow_html=True)
+        st.markdown('<div class="matrix-title">monthly eisenhower matrix</div>', unsafe_allow_html=True)
     with head_cols[1]:
         if st.button("x", key="close-matrix", use_container_width=True):
             st.session_state.matrix_open = False
