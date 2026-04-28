@@ -21,7 +21,7 @@ SECTION_QUADRANT = "四象限"
 
 
 def now() -> datetime:
-    return datetime.now(ZoneInfo("Asia/Shanghai"))
+    return datetime.now(ZoneInfo("America/New_York"))
 
 
 def note_path(day: date) -> Path:
@@ -116,7 +116,7 @@ def natural_time(hour: int) -> str:
 
 
 def time_slots() -> list[str]:
-    return [f"{natural_time(7 + i)} - {natural_time(8 + i)}" for i in range(24)]
+    return [f"{natural_time(i)} - {natural_time(i + 1)}" for i in range(24)]
 
 
 def current_slot() -> str:
@@ -188,6 +188,7 @@ def css():
           :root {{
             --paper:#f8efd9;
             --panel:#fbf6eb;
+            --softbox:#fffdf7;
             --line:#c8bda7;
             --ink:#263027;
             --muted:#7a7d74;
@@ -333,8 +334,9 @@ def css():
           .action-btn:active {{ border-style:inset; box-shadow:none; transform:translateY(1px); }}
           .st-key-monthly-matrix button {{ font-size:16px; }}
           .panel-box {{
-            border:1px solid var(--line); background:var(--panel); border-radius:0;
+            border:1px solid var(--line); background:var(--softbox); border-radius:0;
             padding:14px; margin:10px 0 16px;
+            color:#000;
           }}
           .day-progress {{
             position:relative; height:66px; margin:2px 0 0; overflow:visible;
@@ -358,7 +360,7 @@ def css():
           .hour-zone:hover .timeline-pop {{ display:block; }}
           .timeline-pop {{
             display:none; position:absolute; top:38px; left:50%; transform:translateX(-50%);
-            width:190px; min-height:82px; background:#fffbe6; border:2px solid #111;
+            width:190px; min-height:82px; background:#fffdf7; border:2px solid #111;
             padding:12px; z-index:50; font-size:16px; white-space:pre-wrap; color:#000;
           }}
           .timeline-pop b {{ display:block; margin-bottom:12px; font-weight:500; }}
@@ -373,7 +375,7 @@ def css():
           .slot-task {{
             position:absolute; z-index:20; left:0; top:32px; width:260px; max-width:70vw;
             display:none; white-space:pre-wrap; border:1px solid var(--line);
-            background:#fff; border-radius:7px; padding:10px; color:var(--ink);
+            background:#fffdf7; border-radius:7px; padding:10px; color:#000;
             box-shadow:0 8px 22px rgba(47,42,34,.13); font-weight:500;
           }}
           .slot-time:hover .slot-task {{ display:block; }}
@@ -381,27 +383,27 @@ def css():
             display:inline-flex; align-items:center; justify-content:center; width:42px; height:38px;
             border:1px solid var(--line); border-radius:7px; background:var(--panel); font-size:22px;
           }}
-          .matrix-overlay {{
-            position:fixed; inset:0; z-index:2000; background:rgba(30, 27, 20, .12);
-            display:flex; align-items:center; justify-content:center; padding:18px;
-          }}
           .matrix-dialog {{
-            width:min(860px, 94vw); max-height:88vh; overflow:auto; background:#fffaf0;
-            border:2px solid #222; box-shadow:0 14px 40px rgba(0,0,0,.22); padding:14px;
+            width:min(860px, 100%); max-height:78vh; overflow:auto; background:#fffaf0;
+            border:2px solid #222; box-shadow:0 8px 24px rgba(0,0,0,.14); padding:14px;
+            margin:8px auto 12px; color:#000;
           }}
           .matrix-head {{ display:flex; align-items:center; justify-content:space-between; gap:12px; }}
           .matrix-title {{ font-size:24px; font-weight:900; color:#111; margin:0 0 10px; }}
           .quadrant-grid {{
-            display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px;
-            aspect-ratio:1.65 / 1;
+            display:grid !important; grid-template-columns:repeat(2, minmax(0, 1fr)) !important; gap:12px;
+            aspect-ratio:1.65 / 1; color:#000;
           }}
           .quadrant-box {{
-            border:1px solid #999; background:#fffdf8; border-radius:0; padding:12px;
+            border:1px solid #999; background:#fffdf7; border-radius:0; padding:12px;
             min-height:0; overflow:auto; color:#111;
           }}
           .quadrant-title {{ font-weight:900; margin-bottom:8px; color:#000; font-size:18px; line-height:1.1; }}
           .task-pill {{ border:1px solid #d8cbb6; background:#fff; border-radius:0; padding:8px; margin:6px 0; color:#222; }}
-          textarea {{ border-radius:7px !important; }}
+          textarea, input, [data-baseweb="textarea"], [data-baseweb="input"] {{
+            border-radius:7px !important;
+            color:#000 !important;
+          }}
           @media (max-width: 760px) {{
             .block-container {{ padding-top:66px; padding-left:8px; padding-right:8px; }}
             .simple-topbar {{ margin:-54px 0 18px; }}
@@ -425,8 +427,8 @@ def css():
             .timeline-pop {{ width:150px; font-size:13px; }}
             .slot {{ grid-template-columns:1fr; }}
             .day-top {{ align-items:flex-start; flex-direction:column; }}
-            .quadrant-grid {{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px; aspect-ratio:1 / 1.08; }}
-            .matrix-dialog {{ width:96vw; padding:9px; }}
+            .quadrant-grid {{ grid-template-columns:repeat(2, minmax(0, 1fr)) !important; gap:6px; aspect-ratio:1 / 1.08; }}
+            .matrix-dialog {{ width:100%; padding:9px; }}
             .matrix-title {{ font-size:17px; }}
             .quadrant-box {{ padding:7px; font-size:11px; }}
             .quadrant-title {{ font-size:12px; }}
@@ -740,7 +742,7 @@ def render_text_panel(selected: date, panel: str):
 
 
 def render_quadrant_dialog(selected: date):
-    st.markdown('<div class="matrix-overlay"><div class="matrix-dialog">', unsafe_allow_html=True)
+    st.markdown('<div class="matrix-dialog">', unsafe_allow_html=True)
     head_cols = st.columns([0.86, 0.14])
     with head_cols[0]:
         st.markdown('<div class="matrix-title">Monthly Eisenhower Matrix</div>', unsafe_allow_html=True)
@@ -772,22 +774,28 @@ def render_quadrant_dialog(selected: date):
     for index, task in enumerate(tasks):
         groups[quadrant_name(task)].append((index, task))
 
-    st.markdown('<div class="quadrant-grid">', unsafe_allow_html=True)
+    html = ['<div class="quadrant-grid">']
     for title, items in groups.items():
-        st.markdown(f'<div class="quadrant-box"><div class="quadrant-title">{escape(title)}</div>', unsafe_allow_html=True)
+        html.append(f'<div class="quadrant-box"><div class="quadrant-title">{escape(title)}</div>')
         if not items:
-            st.caption("No tasks yet")
-        for index, task in items:
-            st.markdown(f'<div class="task-pill">□ {escape(task["text"])}</div>', unsafe_allow_html=True)
-            if st.button("Done", key=f"dialog-done-{selected}-{index}", use_container_width=True):
-                tasks.pop(index)
-                add_token(st.session_state.important_token)
-                ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
-                write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
-                st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
+            html.append('<div class="task-pill">No tasks yet</div>')
+        for _index, task in items:
+            html.append(f'<div class="task-pill">□ {escape(task["text"])}</div>')
+        html.append("</div>")
+    html.append("</div>")
+    st.markdown("".join(html), unsafe_allow_html=True)
+
+    task_options = [f'{idx + 1}. {task["text"]}' for idx, task in enumerate(tasks)]
+    if task_options:
+        done_choice = st.selectbox("Mark task done", task_options, key=f"done-choice-{selected}")
+        if st.button("Done Selected Task", key=f"dialog-done-selected-{selected}", use_container_width=True):
+            done_index = task_options.index(done_choice)
+            tasks.pop(done_index)
+            add_token(st.session_state.important_token)
+            ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+            write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
+            st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("</div></div>", unsafe_allow_html=True)
 
 
 def render_schedule(selected: date):
@@ -854,9 +862,6 @@ def render_day():
         else:
             st.success(message)
 
-    if st.session_state.matrix_open:
-        render_quadrant_dialog(selected)
-
     st.markdown('<div class="compact-action-row">', unsafe_allow_html=True)
     cols = st.columns([1.15, 0.9, 0.95, 0.4])
     if cols[0].button("Today's Notes", key="notes-btn", use_container_width=True):
@@ -871,10 +876,13 @@ def render_day():
     st.markdown("</div>", unsafe_allow_html=True)
     st.markdown('<div class="day-fixed-spacer"></div>', unsafe_allow_html=True)
 
+    if st.session_state.matrix_open:
+        render_quadrant_dialog(selected)
+
     if st.session_state.panel:
         render_text_panel(selected, st.session_state.panel)
 
-    st.markdown('<div class="schedule-title">▦ Daily Schedule (7:00 AM - next day 7:00 AM)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="schedule-title">Daily Schedule (0:00 - 24:00)</div>', unsafe_allow_html=True)
     st.markdown('<div class="schedule-scroll">', unsafe_allow_html=True)
     render_schedule(selected)
     st.markdown("</div>", unsafe_allow_html=True)
