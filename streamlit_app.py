@@ -732,7 +732,17 @@ def css():
             border-radius:2px !important;
           }}
           @media (max-width: 760px) {{
-            .block-container {{ padding:6px 6px 10px; }}
+            html, body, .stApp {{
+              overflow-x:hidden !important;
+            }}
+            .block-container {{
+              width:760px !important;
+              max-width:760px !important;
+              min-width:760px !important;
+              padding:8px 14px 12px !important;
+              transform:scale(.98);
+              transform-origin:top left;
+            }}
             [data-testid="stHorizontalBlock"] {{ flex-wrap:nowrap !important; gap:4px !important; }}
             [data-testid="column"] {{ min-width:0 !important; flex:1 1 0 !important; }}
             .html-btn {{ min-height:32px; font-size:11px; padding:0 3px; }}
@@ -779,8 +789,24 @@ def css():
             .quadrant-title {{ font-size:12px; }}
             .task-pill {{ padding:5px; font-size:11px; }}
           }}
+          @media (max-width: 680px) {{
+            .block-container {{ transform:scale(.89); }}
+          }}
+          @media (max-width: 600px) {{
+            .block-container {{ transform:scale(.79); }}
+          }}
+          @media (max-width: 520px) {{
+            .block-container {{ transform:scale(.68); }}
+          }}
           @media (max-width: 430px) {{
-            .block-container {{ padding:4px 4px 8px; }}
+            .block-container {{
+              width:760px !important;
+              max-width:760px !important;
+              min-width:760px !important;
+              padding:8px 14px 12px !important;
+              transform:scale(.56);
+              transform-origin:top left;
+            }}
             .simple-topbar {{ min-height:22px; }}
             .month-link {{ min-height:22px; font-size:9px; padding:0 5px; }}
             .battery {{ width:82px; height:14px; gap:1px; padding:2px; }}
@@ -806,6 +832,48 @@ def css():
             .matrix-html-box {{ min-height:104px; padding:6px; }}
             .matrix-task {{ font-size:9px; padding:5px; gap:5px; }}
             .matrix-task-check {{ width:11px; min-width:11px; height:11px; }}
+          }}
+          @media (max-width: 760px) {{
+            .simple-topbar {{ min-height:34px; gap:12px; }}
+            .day-head {{ padding:2px 0 8px; }}
+            .battery {{ width:168px; height:22px; gap:3px; padding:3px; }}
+            .battery:after {{ right:-7px; top:6px; width:5px; height:9px; }}
+            .battery-label {{ font-size:11px; min-width:32px; }}
+            .month-link {{ min-height:30px; padding:0 12px; font-size:13px; }}
+            .day-title {{ font-size:26px; margin:8px 0 10px; line-height:normal; }}
+            .day-progress {{ height:76px; }}
+            .timeline-sticky {{ padding:3px 0 2px; }}
+            .time-battery {{ top:34px; height:22px; gap:3px; padding:3px; }}
+            .tick.major {{ top:26px; height:38px; width:1px; }}
+            .tick-label {{ top:0; font-size:14px; }}
+            .day-actions {{ margin-top:30px; }}
+            .st-key-notes-btn button,
+            .st-key-meal-btn button,
+            .st-key-monthly-matrix button {{
+              min-height:36px !important;
+              max-width:180px !important;
+              font-size:15px !important;
+              padding:0 8px !important;
+            }}
+            .slot {{ grid-template-columns:190px 1fr; gap:12px; }}
+            .schedule-time-cell {{ font-size:inherit; padding:14px 8px 0 10px; }}
+            .schedule-title {{ font-size:18px; margin:14px 0 8px; }}
+            .matrix-html-grid {{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }}
+            .matrix-html-box {{ min-height:156px; padding:12px; }}
+            .matrix-task {{ font-size:15px; padding:8px 9px; gap:8px; }}
+            .matrix-task-check {{ width:14px; min-width:14px; height:14px; }}
+          }}
+          @media (max-width: 680px) {{
+            .block-container {{ transform:scale(.89); }}
+          }}
+          @media (max-width: 600px) {{
+            .block-container {{ transform:scale(.79); }}
+          }}
+          @media (max-width: 520px) {{
+            .block-container {{ transform:scale(.68); }}
+          }}
+          @media (max-width: 430px) {{
+            .block-container {{ transform:scale(.56); }}
           }}
         </style>
         """,
