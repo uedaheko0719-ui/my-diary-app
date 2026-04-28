@@ -195,42 +195,18 @@ def css():
             --today:#ffe9a9;
           }}
           .stApp {{ background:var(--paper); color:var(--ink); }}
-          .block-container {{ max-width:1220px; padding-top:78px; }}
-          .app-chrome {{
-            margin:-58px -16px 26px; background:#efe7d4; border-bottom:1px solid #d8cfbd;
-            min-height:78px; box-shadow:0 1px 0 #fff inset;
+          .block-container {{ max-width:1220px; padding-top:92px; }}
+          .simple-topbar {{
+            display:flex; align-items:center; justify-content:space-between;
+            gap:14px; margin:-54px 0 24px; min-height:42px;
           }}
-          .chrome-top {{
-            display:flex; align-items:center; justify-content:space-between; gap:14px;
-            padding:7px 16px 8px;
+          .month-link {{
+            display:inline-flex; align-items:center; justify-content:center; min-height:40px;
+            padding:0 16px; border:2px outset #fff8e8; background:#efe7d4;
+            color:#000; text-decoration:none; font-weight:800; box-shadow:1px 1px 0 #7f7667;
           }}
-          .chrome-tabs {{ display:flex; align-items:stretch; gap:8px; min-width:0; }}
-          .chrome-tab {{
-            height:48px; min-width:142px; box-sizing:border-box; display:flex; align-items:center;
-            justify-content:center; padding:0 18px; border:2px outset #fff8e8;
-            background:#e8dfcb; color:#111; text-decoration:none; font-size:17px; font-weight:700;
-            line-height:1; white-space:nowrap;
-          }}
-          .chrome-tab:hover {{ background:#f8f1df; transform:translateY(-1px); }}
-          .chrome-tab:active {{ border-style:inset; transform:translateY(1px); }}
-          .chrome-tab.active {{ background:#fffaf0; border-style:inset; }}
-          .chrome-tab.day-tab {{ justify-content:space-between; padding-right:0; min-width:164px; }}
-          .tab-title-link {{ color:#111; text-decoration:none; display:flex; align-items:center; align-self:stretch; }}
-          .chrome-close {{
-            align-self:stretch; display:flex; align-items:center; justify-content:center;
-            width:42px; margin-left:14px; background:#eecfd0; border-left:1px solid #e1b8ba;
-            color:#111; text-decoration:none; font-weight:700;
-          }}
-          .chrome-close:hover {{ background:#f5d9da; }}
-          .chrome-tools {{ display:flex; align-items:center; gap:22px; }}
-          .chrome-subtabs {{
-            display:flex; align-items:center; height:32px; background:#f3f3f3; border-top:1px solid #e1e1e1;
-          }}
-          .chrome-subtab {{
-            height:32px; box-sizing:border-box; display:flex; align-items:center;
-            padding:0 12px; border-right:1px solid #ddd; color:#111; text-decoration:none; background:#f9f9f9;
-          }}
-          .chrome-subtab.active {{ background:#fff; font-weight:700; }}
+          .month-link:hover {{ background:#fff8eb; transform:translateY(-1px); }}
+          .topbar-right {{ display:flex; align-items:center; gap:14px; }}
           .month-wrap {{ max-width:980px; margin:0 auto; }}
           .month-nav {{
             display:grid; grid-template-columns:54px 1fr 54px; align-items:center;
@@ -377,13 +353,8 @@ def css():
           textarea {{ border-radius:7px !important; }}
           @media (max-width: 760px) {{
             .block-container {{ padding-top:88px; padding-left:8px; padding-right:8px; }}
-            .app-chrome {{ margin:-62px -8px 18px; }}
-            .chrome-top {{ padding:6px; gap:6px; }}
-            .chrome-tabs {{ gap:4px; overflow-x:auto; }}
-            .chrome-tab {{ min-width:104px; height:40px; padding:0 10px; font-size:13px; }}
-            .chrome-tab.day-tab {{ min-width:126px; padding-right:0; }}
-            .chrome-close {{ width:30px; margin-left:8px; }}
-            .chrome-tools {{ gap:8px; }}
+            .simple-topbar {{ margin:-54px 0 18px; }}
+            .topbar-right {{ gap:8px; }}
             .battery {{ width:116px; }}
             .calendar-grid {{ gap:4px; }}
             .calendar-cell {{ min-height:54px; padding:4px; font-size:14px; }}
@@ -512,34 +483,6 @@ def render_day_header(selected: date):
     )
 
 
-def render_day_chrome(selected: date):
-    pct = int(st.session_state.token * 100)
-    battery_class = "battery-wrap flash" if st.session_state.flash_battery else "battery-wrap"
-    st.markdown(
-        f"""
-        <div class="app-chrome">
-          <div class="chrome-top">
-            <div class="chrome-tabs">
-              <a class="chrome-tab" href="?month={selected.year:04d}-{selected.month:02d}">Month Calendar</a>
-              <div class="chrome-tab active">{selected:%m-%d} Diary <span class="chrome-close">×</span></div>
-            </div>
-            <div class="chrome-tools">
-              <div class="{battery_class}">
-                <div class="battery"><div class="battery-fill"></div></div>
-                <div class="battery-label">{pct}%</div>
-              </div>
-            </div>
-          </div>
-          <div class="chrome-subtabs">
-            <a class="chrome-subtab" href="?month={selected.year:04d}-{selected.month:02d}">Month Calendar</a>
-            <div class="chrome-subtab active">{selected:%m-%d} Diary&nbsp;&nbsp;×</div>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
 def render_day_header_clean(selected: date):
     st.markdown(
         f"""
@@ -551,27 +494,18 @@ def render_day_header_clean(selected: date):
     )
 
 
-def render_day_chrome_clean(selected: date):
+def render_simple_topbar(selected: date):
     pct = int(st.session_state.token * 100)
     battery_class = "battery-wrap flash" if st.session_state.flash_battery else "battery-wrap"
     st.markdown(
         f"""
-        <div class="app-chrome">
-          <div class="chrome-top">
-            <div class="chrome-tabs">
-              <a class="chrome-tab" href="?month={selected.year:04d}-{selected.month:02d}">Month Calendar</a>
-              <div class="chrome-tab active day-tab"><a class="tab-title-link" href="?day={selected.isoformat()}">{selected:%m-%d} Diary</a><a class="chrome-close" href="?month={selected.year:04d}-{selected.month:02d}">x</a></div>
+        <div class="simple-topbar">
+          <a class="month-link" href="?month={selected.year:04d}-{selected.month:02d}">← Month</a>
+          <div class="topbar-right">
+            <div class="{battery_class}">
+              <div class="battery"><div class="battery-fill"></div></div>
+              <div class="battery-label">{pct}%</div>
             </div>
-            <div class="chrome-tools">
-              <div class="{battery_class}">
-                <div class="battery"><div class="battery-fill"></div></div>
-                <div class="battery-label">{pct}%</div>
-              </div>
-            </div>
-          </div>
-          <div class="chrome-subtabs">
-            <a class="chrome-subtab" href="?month={selected.year:04d}-{selected.month:02d}">Month Calendar</a>
-            <a class="chrome-subtab active" href="?day={selected.isoformat()}">{selected:%m-%d} Diary</a>
           </div>
         </div>
         """,
@@ -731,8 +665,8 @@ def render_schedule(selected: date):
 
 def render_day():
     selected = st.session_state.selected_day
-    render_day_chrome_clean(selected)
-    spacer_top, settings_top = st.columns([0.84, 0.16])
+    render_simple_topbar(selected)
+    spacer_top, settings_top = st.columns([0.86, 0.14])
     with settings_top:
         if st.button("Settings ▸", key="settings-btn", use_container_width=True):
             st.session_state.settings_open = not st.session_state.settings_open
