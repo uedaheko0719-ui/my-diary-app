@@ -8,7 +8,6 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import streamlit as st
-import streamlit.components.v1 as components
 
 
 NOTES_DIR = Path("notes")
@@ -206,10 +205,10 @@ def css():
           .stApp, .stApp *, [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] * {{
             color:#000;
           }}
-          .block-container {{ max-width:1220px; padding:10px 18px 14px; }}
+          .block-container {{ max-width:1220px; padding:8px 18px 12px; }}
           .simple-topbar {{
             display:flex; align-items:center; justify-content:space-between;
-            gap:10px; min-height:26px;
+            gap:12px; min-height:34px;
           }}
           .month-link {{
             display:inline-flex; align-items:center; justify-content:center; min-height:30px;
@@ -294,16 +293,16 @@ def css():
             display:flex; align-items:center; justify-content:center;
             gap:8px; padding-bottom:0; margin-bottom:2px;
           }}
-          .day-title {{ font-size:24px; font-weight:900; text-align:center; color:#000; }}
+          .day-title {{ font-size:28px; font-weight:900; text-align:center; color:#000; margin:8px 0 10px; }}
           .right-tools {{ display:flex; align-items:center; gap:12px; }}
           .battery-wrap {{ display:flex; align-items:center; gap:8px; }}
           .battery {{
-            width:160px; height:18px; border:2px solid #fff; border-radius:0;
-            background:white; padding:2px; position:relative; box-shadow:0 1px 3px rgba(60,50,35,.18);
+            width:132px; height:16px; border:2px solid #25372e; border-radius:0;
+            background:#fffefa; padding:2px; position:relative; box-shadow:none;
           }}
           .battery:after {{
             content:""; position:absolute; right:-8px; top:3px; width:6px; height:8px;
-            border:2px solid #fff; border-left:0; border-radius:0; background:#fff;
+            border:2px solid #25372e; border-left:0; border-radius:0; background:#fffefa;
           }}
           .battery-fill {{
             height:100%; width:{int(st.session_state.token * 100)}%; background:var(--green);
@@ -315,7 +314,7 @@ def css():
             50% {{ filter:brightness(1.75); }}
             100% {{ filter:brightness(1); }}
           }}
-          .battery-label {{ min-width:36px; font-size:11px; font-weight:800; }}
+          .battery-label {{ min-width:32px; font-size:11px; font-weight:800; }}
           .tool-row {{ display:flex; gap:14px; margin:20px 0 14px; flex-wrap:wrap; }}
           .schedule-title {{ font-size:19px; font-weight:900; margin:14px 0 8px; color:#000; }}
           [data-testid="stVerticalBlock"] {{ gap:.55rem !important; }}
@@ -333,8 +332,8 @@ def css():
           .st-key-notes-btn button,
           .st-key-meal-btn button,
           .st-key-monthly-matrix button {{
-            min-height:36px !important;
-            max-width:220px !important;
+            min-height:40px !important;
+            max-width:180px !important;
             margin:0 auto !important;
             background:#fffdf8 !important;
             border-color:#d8cbb6 !important;
@@ -402,8 +401,8 @@ def css():
             border:1px solid var(--line); border-radius:7px; background:var(--panel); font-size:22px;
           }}
           .matrix-dialog {{
-            width:min(900px, 100%); overflow:auto; background:#fff;
-            border:1px solid #eadfce; box-shadow:0 8px 20px rgba(80,70,48,.10); padding:12px;
+            width:min(900px, 100%); overflow:auto; background:#fffefa;
+            border:1px solid #d8cbb6; box-shadow:0 8px 20px rgba(80,70,48,.10); padding:12px;
             margin:14px auto 12px; color:#000; border-radius:2px;
           }}
           .matrix-head {{ display:flex; align-items:center; justify-content:space-between; gap:12px; }}
@@ -413,8 +412,8 @@ def css():
             aspect-ratio:1.65 / 1; color:#000;
           }}
           .quadrant-box {{
-            border:1px solid #fff; background:#fff; border-radius:2px; padding:12px;
-            min-height:0; overflow:auto; color:#000;
+            border:1px solid #d8cbb6; background:#fffefa; border-radius:2px; padding:12px;
+            min-height:150px; overflow:auto; color:#000;
           }}
           .quadrant-title {{ font-weight:900; margin-bottom:8px; color:#000; font-size:18px; line-height:1.1; }}
           .task-pill {{ border:1px solid #fff; background:#fff; border-radius:2px; padding:8px; margin:6px 0; color:#000; }}
@@ -441,6 +440,16 @@ def css():
           [data-testid="stCheckbox"] label {{
             color:#000 !important;
           }}
+          [data-testid="stCheckbox"] {{
+            background:#fffefa !important;
+            border:1px solid #eadfce !important;
+            padding:6px 8px !important;
+            margin:4px 0 !important;
+          }}
+          [data-testid="stCheckbox"] svg {{
+            color:#000 !important;
+            fill:#000 !important;
+          }}
           label, p, span, div {{
             color:inherit;
           }}
@@ -466,12 +475,14 @@ def css():
           }}
           @media (max-width: 760px) {{
             .block-container {{ padding:8px 7px 12px; }}
+            [data-testid="stHorizontalBlock"] {{ flex-wrap:nowrap !important; gap:4px !important; }}
+            [data-testid="column"] {{ min-width:0 !important; flex:1 1 0 !important; }}
             .html-btn {{ min-height:32px; font-size:11px; padding:0 3px; }}
             .compact-action-row [data-testid="stHorizontalBlock"] {{ gap:4px !important; }}
             .day-head {{ top:0; padding-top:2px; }}
             .schedule-scroll {{ height:calc(100vh - 172px); min-height:360px; }}
             .topbar-right {{ gap:8px; }}
-            .battery {{ width:92px; }}
+            .battery {{ width:78px; height:13px; }}
             .battery-label {{ font-size:9px; min-width:28px; }}
             .month-link {{ min-height:26px; padding:0 6px; font-size:10px; }}
             .calendar-grid {{ gap:4px; }}
@@ -484,7 +495,7 @@ def css():
             .timeline-pop {{ width:150px; font-size:13px; }}
             .slot {{ grid-template-columns:86px minmax(0, 1fr); gap:6px; }}
             .slot-time {{ font-size:11px; }}
-            .day-title {{ font-size:17px; }}
+            .day-title {{ font-size:18px; margin:6px 0 8px; }}
             .day-top {{ align-items:center; flex-direction:row; }}
             .quadrant-grid {{ grid-template-columns:repeat(2, minmax(0, 1fr)) !important; gap:6px; aspect-ratio:1 / 1.08; }}
             .matrix-dialog {{ width:100%; padding:9px; }}
@@ -716,7 +727,7 @@ def render_text_panel(selected: date, panel: str):
     note, diet, quadrant, time_map, ui, extras = read_day(selected)
     if panel == "note":
         st.markdown('<div class="panel-box">', unsafe_allow_html=True)
-        value = st.text_area(
+        st.text_area(
             "Today's Notes",
             value=note,
             height=260,
@@ -724,20 +735,10 @@ def render_text_panel(selected: date, panel: str):
             on_change=save_note_from_state,
             args=(selected,),
         )
-        if st.button("Save Notes Now", key=f"save-note-{selected}", use_container_width=True):
-            add_token(max(st.session_state.click_token, len(value) * st.session_state.type_token))
-            ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
-            write_day(selected, value, diet, quadrant, time_map, ui, extras)
-            saved_note, _diet, _quad, _time, _ui, _extras = read_day(selected)
-            if saved_note.strip() == value.strip():
-                st.session_state.last_saved = f"Notes saved for {selected:%Y-%m-%d}"
-            else:
-                st.session_state.last_saved = "Save failed: notes were not written."
-            st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
     elif panel == "diet":
         st.markdown('<div class="panel-box">', unsafe_allow_html=True)
-        value = st.text_area(
+        st.text_area(
             "Meal Plan",
             value=diet,
             height=220,
@@ -745,16 +746,6 @@ def render_text_panel(selected: date, panel: str):
             on_change=save_diet_from_state,
             args=(selected,),
         )
-        if st.button("Save Meal Plan Now", key=f"save-diet-{selected}", use_container_width=True):
-            add_token(max(st.session_state.click_token, len(value) * st.session_state.type_token))
-            ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
-            write_day(selected, note, value, quadrant, time_map, ui, extras)
-            _note, saved_diet, _quad, _time, _ui, _extras = read_day(selected)
-            if saved_diet.strip() == value.strip():
-                st.session_state.last_saved = f"Meal plan saved for {selected:%Y-%m-%d}"
-            else:
-                st.session_state.last_saved = "Save failed: meal plan was not written."
-            st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
     elif panel == "quadrant":
         st.markdown('<div class="panel-box">', unsafe_allow_html=True)
@@ -763,8 +754,8 @@ def render_text_panel(selected: date, panel: str):
         with st.form(f"quadrant-form-{selected}", clear_on_submit=True):
             task_text = st.text_input("Task", placeholder="Write one task")
             col_a, col_b = st.columns(2)
-            important = col_a.toggle("Important")
-            urgent = col_b.toggle("Urgent")
+            important = col_a.checkbox("Important")
+            urgent = col_b.checkbox("Urgent")
             submitted = st.form_submit_button("Add Task", use_container_width=True)
         if submitted and task_text.strip():
             tasks.append({"text": task_text.strip(), "important": important, "urgent": urgent})
@@ -803,6 +794,28 @@ def render_text_panel(selected: date, panel: str):
 def render_quadrant_dialog(selected: date):
     note, diet, quadrant, time_map, ui, extras = read_day(selected)
     tasks = load_quadrant_tasks(quadrant)
+    st.markdown('<div class="matrix-dialog">', unsafe_allow_html=True)
+    head_cols = st.columns([0.9, 0.1])
+    with head_cols[0]:
+        st.markdown('<div class="matrix-title">Monthly Eisenhower Matrix</div>', unsafe_allow_html=True)
+    with head_cols[1]:
+        if st.button("x", key="close-matrix", use_container_width=True):
+            st.session_state.matrix_open = False
+            st.rerun()
+
+    with st.form(f"quadrant-dialog-form-{selected}", clear_on_submit=True):
+        col_task, col_important, col_urgent, col_add = st.columns([2.2, 0.75, 0.75, 0.8])
+        task_text = col_task.text_input("Task", placeholder="Write one task")
+        important = col_important.checkbox("Important")
+        urgent = col_urgent.checkbox("Urgent")
+        submitted = col_add.form_submit_button("Add Task", use_container_width=True)
+    if submitted and task_text.strip():
+        tasks.append({"text": task_text.strip(), "important": important, "urgent": urgent})
+        add_token(st.session_state.important_token)
+        ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+        write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
+        st.rerun()
+
     groups = {
         "Important and Urgent": [],
         "Important, Not Urgent": [],
@@ -812,121 +825,26 @@ def render_quadrant_dialog(selected: date):
     for index, task in enumerate(tasks):
         groups[quadrant_name(task)].append((index, task))
 
-    cells = []
-    for title, items in groups.items():
-        task_html = "".join(
-            f'<div class="task">? {escape(task["text"])}</div>' for _index, task in items
-        ) or '<div class="empty">No tasks yet</div>'
-        cells.append(f'<section><h3>{escape(title)}</h3>{task_html}</section>')
+    done_index = None
+    row_a = st.columns(2)
+    row_b = st.columns(2)
+    slots = list(groups.items())
+    for column, (title, items) in zip([row_a[0], row_a[1], row_b[0], row_b[1]], slots):
+        with column:
+            with st.container(border=True):
+                st.markdown(f"**{title}**")
+                if not items:
+                    st.caption("No tasks yet")
+                for index, task in items:
+                    if st.checkbox(task["text"], key=f"matrix-done-{selected}-{index}"):
+                        done_index = index
 
-    components.html(
-        f"""
-        <div id="matrixModal">
-          <div id="matrixHandle">
-            <strong>Monthly Eisenhower Matrix</strong>
-            <button id="hideMatrix" type="button">x</button>
-          </div>
-          <div class="matrixGrid">{''.join(cells)}</div>
-        </div>
-        <style>
-          body {{ margin:0; background:transparent; font-family:Arial, sans-serif; color:#000; }}
-          #matrixModal {{
-            position:absolute; left:18px; top:8px; width:min(820px, calc(100vw - 36px));
-            background:#fff; border:1px solid #fff; box-shadow:0 12px 28px rgba(60,50,35,.18);
-            padding:12px; resize:both; overflow:auto; min-width:320px; min-height:260px;
-          }}
-          #matrixHandle {{
-            display:flex; align-items:center; justify-content:space-between; cursor:move;
-            padding:2px 0 10px; color:#000; user-select:none;
-          }}
-          #hideMatrix {{
-            border:1px solid #eee; background:#fff; color:#000; width:30px; height:28px;
-            cursor:pointer; font-weight:700;
-          }}
-          .matrixGrid {{
-            display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px;
-            aspect-ratio:1.6 / 1;
-          }}
-          section {{
-            background:#fff; border:1px solid #f2f2f2; padding:12px; overflow:auto; color:#000;
-          }}
-          h3 {{ margin:0 0 10px; font-size:18px; line-height:1.1; color:#000; }}
-          .task, .empty {{
-            color:#000; background:#fff; border:1px solid #f4f4f4; padding:7px; margin:6px 0;
-            font-size:15px;
-          }}
-          .empty {{ color:#555; }}
-          @media (max-width: 640px) {{
-            #matrixModal {{ left:6px; width:calc(100vw - 12px); min-width:280px; }}
-            .matrixGrid {{ gap:6px; aspect-ratio:1 / 1.12; }}
-            h3 {{ font-size:12px; }}
-            .task, .empty {{ font-size:11px; padding:5px; }}
-            section {{ padding:7px; }}
-          }}
-        </style>
-        <script>
-          const modal = document.getElementById('matrixModal');
-          const handle = document.getElementById('matrixHandle');
-          const hide = document.getElementById('hideMatrix');
-          let drag = false, dx = 0, dy = 0;
-          handle.addEventListener('pointerdown', (event) => {{
-            drag = true;
-            dx = event.clientX - modal.offsetLeft;
-            dy = event.clientY - modal.offsetTop;
-            handle.setPointerCapture(event.pointerId);
-          }});
-          handle.addEventListener('pointermove', (event) => {{
-            if (!drag) return;
-            modal.style.left = Math.max(0, event.clientX - dx) + 'px';
-            modal.style.top = Math.max(0, event.clientY - dy) + 'px';
-          }});
-          handle.addEventListener('pointerup', () => drag = false);
-          hide.addEventListener('click', () => modal.style.display = 'none');
-        </script>
-        """,
-        height=430,
-    )
-
-    st.markdown('<div class="matrix-dialog">', unsafe_allow_html=True)
-    head_cols = st.columns([0.9, 0.1])
-    with head_cols[0]:
-        st.markdown('<div class="matrix-title">Matrix Controls</div>', unsafe_allow_html=True)
-    with head_cols[1]:
-        if st.button("x", key="close-matrix", use_container_width=True):
-            st.session_state.matrix_open = False
-            st.rerun()
-    with st.form(f"quadrant-dialog-form-{selected}", clear_on_submit=True):
-        col_task, col_kind, col_add = st.columns([2.2, 1.25, 0.8])
-        task_text = col_task.text_input("Task", placeholder="Write one task")
-        quadrant_choice = col_kind.selectbox(
-            "Quadrant",
-            [
-                "Important and Urgent",
-                "Important, Not Urgent",
-                "Urgent, Not Important",
-                "Not Important or Urgent",
-            ],
-        )
-        submitted = col_add.form_submit_button("Add Task", use_container_width=True)
-    if submitted and task_text.strip():
-        important = quadrant_choice in {"Important and Urgent", "Important, Not Urgent"}
-        urgent = quadrant_choice in {"Important and Urgent", "Urgent, Not Important"}
-        tasks.append({"text": task_text.strip(), "important": important, "urgent": urgent})
+    if done_index is not None:
+        tasks.pop(done_index)
         add_token(st.session_state.important_token)
         ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
         write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
         st.rerun()
-
-    task_options = [f'{idx + 1}. {task["text"]}' for idx, task in enumerate(tasks)]
-    if task_options:
-        done_choice = st.selectbox("Mark task done", task_options, key=f"done-choice-{selected}")
-        if st.button("Done Selected Task", key=f"dialog-done-selected-{selected}", use_container_width=True):
-            done_index = task_options.index(done_choice)
-            tasks.pop(done_index)
-            add_token(st.session_state.important_token)
-            ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
-            write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
-            st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
 def render_schedule(selected: date):
@@ -959,19 +877,6 @@ def render_schedule(selected: date):
         changed[slot] = value
         if value.strip():
             filled += 1
-
-    if st.button("Save Schedule Now", use_container_width=True):
-        add_token(0.5 * min(1.0, filled / 24))
-        ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
-        write_day(selected, note, diet, quadrant, changed, ui, extras)
-        _note, _diet, _quad, saved_time, _ui, _extras = read_day(selected)
-        expected = {slot: value for slot, value in changed.items() if value.strip()}
-        actual = {slot: value for slot, value in saved_time.items() if value.strip()}
-        if actual == expected:
-            st.session_state.last_saved = f"Schedule saved for {selected:%Y-%m-%d}"
-        else:
-            st.session_state.last_saved = "Save failed: schedule was not written."
-        st.rerun()
 
 
 def render_day():
