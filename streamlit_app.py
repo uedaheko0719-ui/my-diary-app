@@ -373,16 +373,14 @@ def css():
             border:1px solid #25372e; border-left:0; border-radius:0; background:#fffefa;
           }}
           .battery-cell {{
-            height:100%; background:#fffefa; border:1px solid rgba(37,55,46,.14);
+            height:100%; background:linear-gradient(90deg, var(--green) 0 var(--fill, 0%), #fffefa var(--fill, 0%) 100%);
+            border:1px solid rgba(37,55,46,.14);
             transition:background .16s ease, filter .14s ease;
           }}
-          .battery-cell.filled {{
-            background:var(--green);
-          }}
-          .flash .battery-cell.filled {{ animation:batteryWhite .02s linear; }}
+          .flash .battery-cell {{ animation:batteryWhite .02s linear; }}
           @keyframes batteryWhite {{
             0% {{ background:#fff; }}
-            100% {{ background:var(--green); }}
+            100% {{ filter:brightness(1); }}
           }}
           .battery-label {{ min-width:32px; font-size:11px; font-weight:700; }}
           .tool-row {{ display:flex; gap:14px; margin:20px 0 14px; flex-wrap:wrap; }}
@@ -423,7 +421,7 @@ def css():
             color:#000;
           }}
           .day-progress {{
-            position:relative; height:72px; margin:0; overflow:visible;
+            position:relative; height:76px; margin:0; overflow:visible;
           }}
           .timeline-sticky {{
             position:sticky; top:0; z-index:999; background:var(--paper);
@@ -434,26 +432,51 @@ def css():
             margin-top:30px;
           }}
           .progress-line {{
+            display:none;
             position:absolute; left:0; right:0; top:34px; height:18px;
-            background:linear-gradient(90deg, rgba(53,168,104,.12), rgba(225,181,63,.13), rgba(201,74,58,.11));
+            background:#fffefa;
             border:1px solid rgba(37,55,46,.14);
             box-shadow:inset 0 0 0 1px rgba(255,255,255,.72), 0 7px 16px rgba(60,50,35,.07);
           }}
           .progress-fill {{
+            display:none;
             position:absolute; left:0; top:35px; height:16px;
-            background:linear-gradient(90deg, #36aa6e 0%, #b7b84b 62%, #c94a3a 100%);
+            background:var(--green);
             box-shadow:0 0 14px rgba(53,168,104,.25);
           }}
           .tick {{
             display:none;
           }}
-          .tick.major {{ display:block; position:absolute; top:25px; width:2px; height:34px; background:#222; opacity:.58; }}
+          .time-battery {{
+            position:absolute; left:0; right:0; top:34px; height:22px;
+            display:grid; grid-template-columns:repeat(24, minmax(0, 1fr)); gap:3px;
+            padding:3px; border:1px solid rgba(37,55,46,.16);
+            background:#fffefa;
+            box-shadow:inset 0 0 0 1px rgba(255,255,255,.72), 0 7px 16px rgba(60,50,35,.07);
+          }}
+          .time-cell {{
+            position:relative;
+            background:linear-gradient(90deg, var(--green) 0 var(--fill, 0%), rgba(53,168,104,.10) var(--fill, 0%) 100%);
+            border:1px solid rgba(37,55,46,.10);
+            min-width:0;
+            transition:filter .14s ease, box-shadow .14s ease, transform .14s ease, border-color .14s ease;
+          }}
+          .time-cell:hover {{
+            filter:brightness(1.05);
+            transform:translateY(-2px);
+            border-color:rgba(53,168,104,.38);
+            box-shadow:0 0 0 1px rgba(53,168,104,.18), 0 7px 16px rgba(53,168,104,.16);
+            z-index:3;
+          }}
+          .time-cell:hover .timeline-pop {{ display:block; }}
+          .tick.major {{ display:block; position:absolute; top:26px; width:1px; height:38px; background:#222; opacity:.22; }}
           .tick-label {{
             position:absolute; top:0; transform:translateX(-50%); font-size:14px; font-weight:800; color:#000;
           }}
           .tick-label.end {{ transform:translateX(-100%); }}
           .tick.major.end {{ transform:translateX(-1px); }}
           .hour-zone {{
+            display:none;
             position:absolute; top:24px; height:36px;
           }}
           .hour-zone:hover .timeline-pop {{ display:block; }}
@@ -813,18 +836,19 @@ def render_day_header_clean(selected: date):
 def render_simple_topbar(selected: date):
     pct = int(st.session_state.token * 100)
     battery_class = "battery-wrap flash" if st.session_state.flash_battery else "battery-wrap"
-    filled_cells = int((st.session_state.token * 4) + 0.999) if st.session_state.token > 0 else 0
-    cells = "".join(
-        f'<div class="battery-cell{" filled" if index < filled_cells else ""}"></div>'
-        for index in range(4)
-    )
+    token_pct = max(0.0, min(100.0, st.session_state.token * 100))
+    cells = []
+    for index in range(4):
+        start = index * 25
+        fill = max(0.0, min(25.0, token_pct - start)) / 25 * 100
+        cells.append(f'<div class="battery-cell" style="--fill:{fill:.2f}%"></div>')
     st.markdown(
         f"""
         <div class="simple-topbar">
           <a class="month-link" href="?month={selected.year:04d}-{selected.month:02d}">&larr; Month</a>
           <div class="topbar-right">
             <div class="{battery_class}">
-              <div class="battery">{cells}</div>
+              <div class="battery">{"".join(cells)}</div>
               <div class="battery-label">{pct}%</div>
             </div>
           </div>
@@ -845,23 +869,34 @@ def render_day_progress(selected: date):
         pct = 0
 
     html = ['<div class="day-progress">']
-    html.append('<div class="progress-line"></div>')
-    html.append(f'<div class="progress-fill" style="width:{pct:.2f}%"></div>')
     for hour in range(24):
         left = hour / 24 * 100
         if hour in {0, 6, 12, 18}:
             html.append(f'<div class="tick major" style="left:{left:.2f}%"></div>')
             html.append(f'<div class="tick-label" style="left:{left:.2f}%">{hour:02d}</div>')
+    html.append('<div class="tick major end" style="left:100%"></div>')
+    html.append('<div class="tick-label end" style="left:100%">24</div>')
 
+    html.append('<div class="time-battery">')
+    for hour in range(24):
+        if selected < current.date():
+            fill = 100
+        elif selected > current.date():
+            fill = 0
+        elif hour < current.hour:
+            fill = 100
+        elif hour == current.hour:
+            fill = current.minute / 60 * 100
+        else:
+            fill = 0
         slot = f"{natural_time(hour)} - {natural_time(hour + 1)}"
         text = escape(time_map.get(slot, "").strip() or "No task")
         pop_time = f"{hour:02d}:00 ~ {(hour + 1) % 24:02d}:00"
         html.append(
-            f'<div class="hour-zone" style="left:{left:.2f}%; width:{100/24:.4f}%">'
+            f'<div class="time-cell" style="--fill:{fill:.2f}%">'
             f'<div class="timeline-pop"><b>{pop_time}</b>{text}</div></div>'
         )
-    html.append('<div class="tick major end" style="left:100%"></div>')
-    html.append('<div class="tick-label end" style="left:100%">24</div>')
+    html.append("</div>")
     html.append("</div>")
     st.markdown("".join(html), unsafe_allow_html=True)
 
