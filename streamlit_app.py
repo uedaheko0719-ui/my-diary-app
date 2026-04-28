@@ -579,7 +579,7 @@ def css():
             aspect-ratio:1.65 / 1; color:#000;
           }}
           .quadrant-box {{
-            border:1px solid #eee4d3; background:#fffefa; border-radius:2px; padding:12px;
+            border:1px solid #eee4d3; background:#fff; border-radius:2px; padding:12px;
             min-height:150px; overflow:auto; color:#000;
           }}
           .quadrant-title {{ font-weight:800; margin-bottom:8px; color:#000; font-size:17px; line-height:1.1; }}
@@ -608,10 +608,17 @@ def css():
             color:#000 !important;
           }}
           [data-testid="stCheckbox"] {{
-            background:#fffefa !important;
+            background:#fff !important;
             border:1px solid #eadfce !important;
             padding:6px 8px !important;
             margin:4px 0 !important;
+          }}
+          [data-testid="stCheckbox"] label,
+          [data-testid="stCheckbox"] label > div,
+          [data-testid="stCheckbox"] label span,
+          [data-testid="stCheckbox"] [data-testid="stMarkdownContainer"],
+          [data-testid="stCheckbox"] [data-testid="stMarkdownContainer"] * {{
+            background:#fff !important;
           }}
           [data-testid="stCheckbox"]:hover {{
             background:#fff8eb !important;
