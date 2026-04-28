@@ -218,21 +218,26 @@ def css():
             color:#000; text-decoration:none; font-weight:700; box-shadow:none;
             font-size:13px; border-radius:2px;
           }}
-          .month-link:hover {{ background:#fff; border-color:#cfc1aa; }}
+          .month-link:hover {{
+            background:#fff; border-color:#bca98c;
+            transform:translateY(-2px);
+            box-shadow:0 8px 18px rgba(60,50,35,.18);
+          }}
           .month-link, .calendar-cell, div.stButton > button, [data-testid="stCheckbox"], textarea, input, .battery {{
-            transition:background .14s ease, box-shadow .14s ease, border-color .14s ease, filter .14s ease;
+            transition:background .14s ease, transform .14s ease, box-shadow .14s ease, border-color .14s ease, filter .14s ease;
           }}
           a, button, label, input, textarea,
           [role="button"], [data-baseweb="checkbox"], [data-baseweb="input"], [data-baseweb="textarea"],
           [data-testid="stCheckbox"], [data-testid="stTextInput"], [data-testid="stTextArea"],
           [data-testid="stFormSubmitButton"] button {{
-            transition:background .14s ease, box-shadow .14s ease, border-color .14s ease, filter .14s ease !important;
+            transition:background .14s ease, transform .14s ease, box-shadow .14s ease, border-color .14s ease, filter .14s ease !important;
           }}
           a:hover, button:hover, [role="button"]:hover,
           [data-baseweb="checkbox"]:hover, [data-testid="stCheckbox"]:hover,
           [data-testid="stFormSubmitButton"] button:hover {{
-            filter:brightness(1.025) !important;
-            box-shadow:0 1px 4px rgba(60,50,35,.08) !important;
+            transform:translateY(-2px) !important;
+            filter:brightness(1.04) !important;
+            box-shadow:0 7px 18px rgba(60,50,35,.18) !important;
             cursor:pointer !important;
           }}
           label:hover {{
@@ -251,7 +256,8 @@ def css():
           [data-testid="stLinkButton"] a:hover {{
             background:#fff8eb !important;
             border-color:#c9bda6 !important;
-            box-shadow:0 1px 5px rgba(60,50,35,.10) !important;
+            transform:translateY(-2px) scale(1.012) !important;
+            box-shadow:0 8px 20px rgba(60,50,35,.20) !important;
           }}
           [data-testid="stCheckbox"] label:hover,
           [data-testid="stCheckbox"] label:hover div {{
@@ -272,7 +278,12 @@ def css():
             flex:1 1 0 !important;
           }}
           .html-btn {{ display:flex; align-items:center; justify-content:center; min-height:38px; border:1px solid #e3d8c5; color:#000; text-decoration:none; font-weight:700; box-shadow:none; font-size:15px; white-space:nowrap; background:#fffdf8; }}
-          .html-btn:hover {{ filter:brightness(1.02); background:#fff; }}
+          .html-btn:hover {{
+            filter:brightness(1.04); background:#fff;
+            transform:translateY(-2px);
+            border-color:#bca98c;
+            box-shadow:0 8px 18px rgba(60,50,35,.18);
+          }}
           .html-btn:active {{ border-style:inset; box-shadow:none; transform:translateY(1px); }}
           .html-note {{ background:#e8f2ff; }}
           .html-meal {{ background:#fff4e4; }}
@@ -289,7 +300,11 @@ def css():
             border:1px solid #e3d8c5; background:#fffdf8; border-radius:2px;
             text-decoration:none; color:var(--ink); font-size:22px; transition:background .12s ease, border-color .12s ease;
           }}
-          .month-arrow:hover {{ background:#fff; border-color:#cfc1aa; }}
+          .month-arrow:hover {{
+            background:#fff; border-color:#bca98c;
+            transform:translateY(-2px);
+            box-shadow:0 8px 18px rgba(60,50,35,.18);
+          }}
           .calendar-grid {{
             display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:8px;
           }}
@@ -304,8 +319,9 @@ def css():
             color:#000 !important;
           }}
           div.stButton > button:hover {{
-            background:#fff !important; border-color:#cfc1aa !important;
-            box-shadow:0 1px 4px rgba(60,50,35,.08) !important;
+            background:#fff !important; border-color:#bca98c !important;
+            box-shadow:0 8px 20px rgba(60,50,35,.20) !important;
+            transform:translateY(-2px) scale(1.012) !important;
           }}
           div.stButton > button:active {{
             border-style:inset !important; transform:translateY(1px); box-shadow:none;
@@ -317,7 +333,9 @@ def css():
             text-decoration:none; color:var(--ink); transition:background .12s ease, transform .12s ease, border-color .12s ease;
           }}
           .calendar-cell:hover {{
-            background:#fff; border-color:#cfc1aa;
+            background:#fff; border-color:#bca98c;
+            transform:translateY(-2px);
+            box-shadow:0 9px 20px rgba(60,50,35,.16);
           }}
           .calendar-cell.today {{
             border-color:#bfa24e; background:var(--today); font-weight:900;
@@ -346,8 +364,9 @@ def css():
             display:grid; grid-template-columns:repeat(4, 1fr); gap:3px;
           }}
           .battery:hover {{
-            box-shadow:0 1px 5px rgba(53,168,104,.14);
-            filter:brightness(1.02);
+            box-shadow:0 0 0 2px rgba(53,168,104,.16), 0 8px 18px rgba(53,168,104,.18);
+            filter:brightness(1.05);
+            transform:translateY(-2px);
           }}
           .battery:after {{
             content:""; position:absolute; right:-7px; top:6px; width:5px; height:9px;
@@ -390,7 +409,12 @@ def css():
             border-color:#e3d8c5 !important;
           }}
           .action-btn {{ display:flex; align-items:center; justify-content:center; min-height:46px; border:1px solid #e3d8c5; background:#fffdf8; color:#000; text-decoration:none; font-weight:700; font-size:16px; box-shadow:none; }}
-          .action-btn:hover {{ background:#fff; }}
+          .action-btn:hover {{
+            background:#fff;
+            transform:translateY(-2px);
+            border-color:#bca98c;
+            box-shadow:0 8px 18px rgba(60,50,35,.18);
+          }}
           .action-btn:active {{ border-style:inset; box-shadow:none; transform:translateY(1px); }}
           .st-key-monthly-matrix button {{ font-size:15px !important; }}
           .panel-box {{
@@ -399,7 +423,7 @@ def css():
             color:#000;
           }}
           .day-progress {{
-            position:relative; height:54px; margin:0; overflow:visible;
+            position:relative; height:72px; margin:0; overflow:visible;
           }}
           .timeline-sticky {{
             position:sticky; top:0; z-index:999; background:var(--paper);
@@ -410,24 +434,32 @@ def css():
             margin-top:30px;
           }}
           .progress-line {{
-            position:absolute; left:0; right:0; top:33px; height:6px; background:#d8d8d8;
+            position:absolute; left:0; right:0; top:34px; height:18px;
+            background:linear-gradient(90deg, rgba(53,168,104,.12), rgba(225,181,63,.13), rgba(201,74,58,.11));
+            border:1px solid rgba(37,55,46,.14);
+            box-shadow:inset 0 0 0 1px rgba(255,255,255,.72), 0 7px 16px rgba(60,50,35,.07);
           }}
           .progress-fill {{
-            position:absolute; left:0; top:33px; height:6px; background:#4a90e2; border-radius:8px;
+            position:absolute; left:0; top:35px; height:16px;
+            background:linear-gradient(90deg, #36aa6e 0%, #b7b84b 62%, #c94a3a 100%);
+            box-shadow:0 0 14px rgba(53,168,104,.25);
           }}
           .tick {{
-            position:absolute; top:24px; width:2px; height:20px; background:#5c5c5c;
+            display:none;
           }}
-          .tick.major {{ top:13px; height:31px; }}
+          .tick.major {{ display:block; position:absolute; top:25px; width:2px; height:34px; background:#222; opacity:.58; }}
           .tick-label {{
-            position:absolute; top:0; transform:translateX(-50%); font-size:15px; font-weight:900; color:#000;
+            position:absolute; top:0; transform:translateX(-50%); font-size:14px; font-weight:800; color:#000;
           }}
+          .tick-label.end {{ transform:translateX(-100%); }}
+          .tick.major.end {{ transform:translateX(-1px); }}
           .hour-zone {{
-            position:absolute; top:16px; height:34px;
+            position:absolute; top:24px; height:36px;
           }}
           .hour-zone:hover .timeline-pop {{ display:block; }}
           .hour-zone:hover {{
-            background:rgba(53,168,104,.06);
+            background:rgba(53,168,104,.20);
+            box-shadow:0 0 0 1px rgba(53,168,104,.24), 0 0 14px rgba(53,168,104,.15);
           }}
           .timeline-pop {{
             display:none; position:absolute; top:36px; left:50%; transform:translateX(-50%);
@@ -446,6 +478,8 @@ def css():
           }}
           .schedule-time-cell:hover {{
             background:#fff8eb;
+            transform:translateY(-1px);
+            box-shadow:0 5px 12px rgba(60,50,35,.12);
           }}
           .schedule-time-cell.now {{
             border-left:7px solid var(--red); background:#fffefa;
@@ -466,12 +500,39 @@ def css():
             border:1px solid var(--line); border-radius:7px; background:var(--panel); font-size:22px;
           }}
           .matrix-dialog {{
-            width:min(900px, 100%); overflow:auto; background:#fffefa;
-            border:1px solid #e3d8c5; box-shadow:none; padding:12px;
-            margin:14px auto 12px; color:#000; border-radius:2px;
+            width:min(900px, 100%); overflow:auto; background:#fbf4e4;
+            border:1px solid #d8cbb6; box-shadow:0 10px 26px rgba(60,50,35,.08); padding:14px;
+            margin:14px auto 12px; color:#000; border-radius:3px;
           }}
           .matrix-head {{ display:flex; align-items:center; justify-content:space-between; gap:12px; }}
           .matrix-title {{ font-size:20px; font-weight:800; color:#000; margin:0 0 8px; }}
+          .matrix-dialog [data-testid="stForm"] {{
+            background:#fffefa !important;
+            border:1px solid #d8cbb6 !important;
+            padding:10px !important;
+            border-radius:2px !important;
+            margin-bottom:10px !important;
+          }}
+          .matrix-dialog [data-testid="stVerticalBlockBorderWrapper"] {{
+            background:#fffefa !important;
+            border:1px solid #d8cbb6 !important;
+            box-shadow:0 4px 14px rgba(60,50,35,.08) !important;
+            min-height:156px !important;
+            border-radius:2px !important;
+          }}
+          .matrix-dialog [data-testid="stVerticalBlockBorderWrapper"]:hover {{
+            border-color:#bba98d !important;
+            box-shadow:0 9px 22px rgba(60,50,35,.16) !important;
+            transform:translateY(-2px);
+          }}
+          .quadrant-title-bar {{
+            font-size:16px; font-weight:800; color:#000;
+            padding-bottom:8px; margin-bottom:8px;
+            border-bottom:1px solid #eadfce;
+          }}
+          .matrix-dialog [data-testid="stCaptionContainer"] {{
+            color:#6f6a60 !important;
+          }}
           .quadrant-grid {{
             display:grid !important; grid-template-columns:repeat(2, minmax(0, 1fr)) !important; gap:12px;
             aspect-ratio:1.65 / 1; color:#000;
@@ -513,8 +574,9 @@ def css():
           }}
           [data-testid="stCheckbox"]:hover {{
             background:#fff8eb !important;
-            border-color:#cfc1aa !important;
-            box-shadow:0 1px 4px rgba(60,50,35,.06);
+            border-color:#bca98c !important;
+            box-shadow:0 7px 18px rgba(60,50,35,.16) !important;
+            transform:translateY(-2px);
           }}
           [data-testid="stCheckbox"] svg {{
             color:#000 !important;
@@ -787,9 +849,8 @@ def render_day_progress(selected: date):
     html.append(f'<div class="progress-fill" style="width:{pct:.2f}%"></div>')
     for hour in range(24):
         left = hour / 24 * 100
-        major = hour in {0, 6, 12, 18}
-        html.append(f'<div class="tick {"major" if major else ""}" style="left:{left:.2f}%"></div>')
-        if major:
+        if hour in {0, 6, 12, 18}:
+            html.append(f'<div class="tick major" style="left:{left:.2f}%"></div>')
             html.append(f'<div class="tick-label" style="left:{left:.2f}%">{hour:02d}</div>')
 
         slot = f"{natural_time(hour)} - {natural_time(hour + 1)}"
@@ -799,6 +860,8 @@ def render_day_progress(selected: date):
             f'<div class="hour-zone" style="left:{left:.2f}%; width:{100/24:.4f}%">'
             f'<div class="timeline-pop"><b>{pop_time}</b>{text}</div></div>'
         )
+    html.append('<div class="tick major end" style="left:100%"></div>')
+    html.append('<div class="tick-label end" style="left:100%">24</div>')
     html.append("</div>")
     st.markdown("".join(html), unsafe_allow_html=True)
 
@@ -912,7 +975,7 @@ def render_quadrant_dialog(selected: date):
     for column, (title, items) in zip([row_a[0], row_a[1], row_b[0], row_b[1]], slots):
         with column:
             with st.container(border=True):
-                st.markdown(f"**{title}**")
+                st.markdown(f'<div class="quadrant-title-bar">{escape(title)}</div>', unsafe_allow_html=True)
                 if not items:
                     st.caption("No tasks yet")
                 for index, task in items:
