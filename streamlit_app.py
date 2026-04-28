@@ -904,6 +904,69 @@ def css():
           @media (max-width: 430px) {{
             .block-container {{ transform:scale(.56); }}
           }}
+          @media (max-width: 760px) {{
+            html, body, .stApp {{
+              overflow-x:hidden !important;
+            }}
+            .block-container {{
+              width:100% !important;
+              min-width:0 !important;
+              max-width:100% !important;
+              transform:none !important;
+              transform-origin:initial !important;
+              padding:8px 10px 12px !important;
+              box-sizing:border-box !important;
+            }}
+            .month-wrap {{
+              width:100% !important;
+              max-width:100% !important;
+              margin:0 auto !important;
+              overflow:visible !important;
+            }}
+            .month-nav {{
+              grid-template-columns:38px minmax(0, 1fr) 38px !important;
+              gap:6px !important;
+              margin:10px 0 10px !important;
+              width:100% !important;
+            }}
+            .month-arrow {{
+              height:34px !important;
+              font-size:18px !important;
+            }}
+            .month-title {{
+              font-size:20px !important;
+              text-align:center !important;
+              white-space:nowrap !important;
+            }}
+            .calendar-grid {{
+              width:100% !important;
+              grid-template-columns:repeat(7, minmax(0, 1fr)) !important;
+              gap:3px !important;
+            }}
+            .week-label {{
+              font-size:10px !important;
+              padding-bottom:5px !important;
+              min-width:0 !important;
+            }}
+            .calendar-cell {{
+              min-height:0 !important;
+              aspect-ratio:1 / 1 !important;
+              padding:2px !important;
+              font-size:12px !important;
+              gap:2px !important;
+              min-width:0 !important;
+              overflow:hidden !important;
+              box-sizing:border-box !important;
+            }}
+            .content-mark {{
+              width:7px !important;
+              height:10px !important;
+              box-shadow:none !important;
+            }}
+            .calendar-today-label {{
+              display:none !important;
+            }}
+          }}
         </style>
         """,
         unsafe_allow_html=True,
