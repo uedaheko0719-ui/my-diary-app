@@ -384,18 +384,38 @@ def save_note_from_state(day: date):
     note, diet, quadrant, time_map, ui, extras = read_day(day)
     key = f"note-text-{day.isoformat()}"
     value = st.session_state.get(key, note)
+    added = max(0, len(str(value)) - len(note))
+    if added:
+        add_token(added * st.session_state.type_token)
     ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
     write_day(day, value, diet, quadrant, time_map, ui, extras)
-    st.session_state.last_saved = f"Notes saved for {day:%Y-%m-%d}"
+    st.session_state.last_saved = f"Auto-saved notes for {day:%Y-%m-%d}"
 
 
 def save_diet_from_state(day: date):
     note, diet, quadrant, time_map, ui, extras = read_day(day)
     key = f"diet-text-{day.isoformat()}"
     value = st.session_state.get(key, diet)
+    added = max(0, len(str(value)) - len(diet))
+    if added:
+        add_token(added * st.session_state.type_token)
     ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
     write_day(day, note, value, quadrant, time_map, ui, extras)
-    st.session_state.last_saved = f"Meal plan saved for {day:%Y-%m-%d}"
+    st.session_state.last_saved = f"Auto-saved meal plan for {day:%Y-%m-%d}"
+
+
+def save_schedule_from_state(day: date):
+    note, diet, quadrant, time_map, ui, extras = read_day(day)
+    new_time_map: dict[str, str] = {}
+    for slot in time_slots():
+        key = f"slot-{day}-{slot}"
+        new_time_map[slot] = st.session_state.get(key, time_map.get(slot, ""))
+    filled = sum(1 for value in new_time_map.values() if str(value).strip())
+    ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+    write_day(day, note, diet, quadrant, new_time_map, ui, extras)
+    st.session_state.last_saved = f"Auto-saved schedule for {day:%Y-%m-%d}"
+    if filled:
+        add_token(0.5 * min(1.0, filled / 24))
 
 
 def load_quadrant_tasks(raw: str) -> list[dict]:
@@ -591,8 +611,10 @@ def render_text_panel(selected: date, panel: str):
             value=note,
             height=260,
             key=f"note-text-{selected.isoformat()}",
+            on_change=save_note_from_state,
+            args=(selected,),
         )
-        if st.button("Save Notes", key=f"save-note-{selected}", use_container_width=True):
+        if st.button("Save Notes Now", key=f"save-note-{selected}", use_container_width=True):
             add_token(max(st.session_state.click_token, len(value) * st.session_state.type_token))
             ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
             write_day(selected, value, diet, quadrant, time_map, ui, extras)
@@ -610,8 +632,10 @@ def render_text_panel(selected: date, panel: str):
             value=diet,
             height=220,
             key=f"diet-text-{selected.isoformat()}",
+            on_change=save_diet_from_state,
+            args=(selected,),
         )
-        if st.button("Save Meal Plan", key=f"save-diet-{selected}", use_container_width=True):
+        if st.button("Save Meal Plan Now", key=f"save-diet-{selected}", use_container_width=True):
             add_token(max(st.session_state.click_token, len(value) * st.session_state.type_token))
             ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
             write_day(selected, note, value, quadrant, time_map, ui, extras)
@@ -688,13 +712,15 @@ def render_schedule(selected: date):
             key=f"slot-{selected}-{slot}",
             height=74,
             label_visibility="collapsed",
+            on_change=save_schedule_from_state,
+            args=(selected,),
         )
         st.markdown("</div></div>", unsafe_allow_html=True)
         changed[slot] = value
         if value.strip():
             filled += 1
 
-    if st.button("Save Schedule", use_container_width=True):
+    if st.button("Save Schedule Now", use_container_width=True):
         add_token(0.5 * min(1.0, filled / 24))
         ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
         write_day(selected, note, diet, quadrant, changed, ui, extras)
