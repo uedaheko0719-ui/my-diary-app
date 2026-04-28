@@ -198,7 +198,7 @@ def css():
           .block-container {{ max-width:1220px; padding-top:92px; }}
           .simple-topbar {{
             display:flex; align-items:center; justify-content:space-between;
-            gap:14px; margin:-54px 0 24px; min-height:42px;
+            gap:14px; min-height:42px;
           }}
           .month-link {{
             display:inline-flex; align-items:center; justify-content:center; min-height:40px;
@@ -285,6 +285,14 @@ def css():
           .battery-label {{ min-width:42px; font-size:12px; font-weight:800; }}
           .tool-row {{ display:flex; gap:14px; margin:20px 0 14px; flex-wrap:wrap; }}
           .schedule-title {{ font-size:27px; font-weight:900; margin:16px 0 12px; color:#000; }}
+          .fixed-day-head {{
+            position:sticky; top:2.75rem; z-index:40; background:var(--paper);
+            padding:10px 0 12px; border-bottom:1px solid rgba(200,189,167,.55);
+          }}
+          .schedule-scroll {{
+            height:calc(100vh - 420px); min-height:360px; overflow-y:auto; padding-right:12px;
+            overscroll-behavior:contain;
+          }}
           .st-key-notes-btn button {{ background:#e8f2ff !important; font-size:20px; min-height:58px; border-color:#f9fdff !important; }}
           .st-key-meal-btn button {{ background:#fff4e4 !important; font-size:20px; min-height:58px; border-color:#fff9f0 !important; }}
           .st-key-now-btn button {{ background:#e8f6ea !important; font-size:20px; min-height:58px; border-color:#f8fff9 !important; }}
@@ -354,6 +362,8 @@ def css():
           @media (max-width: 760px) {{
             .block-container {{ padding-top:88px; padding-left:8px; padding-right:8px; }}
             .simple-topbar {{ margin:-54px 0 18px; }}
+            .fixed-day-head {{ top:2.75rem; padding-top:6px; }}
+            .schedule-scroll {{ height:calc(100vh - 390px); min-height:320px; }}
             .topbar-right {{ gap:8px; }}
             .battery {{ width:116px; }}
             .calendar-grid {{ gap:4px; }}
@@ -690,6 +700,50 @@ def render_text_panel(selected: date, panel: str):
         st.markdown("</div>", unsafe_allow_html=True)
 
 
+@st.dialog("Monthly Eisenhower Matrix")
+def render_quadrant_dialog(selected: date):
+    note, diet, quadrant, time_map, ui, extras = read_day(selected)
+    st.subheader("Monthly Eisenhower Matrix")
+    tasks = load_quadrant_tasks(quadrant)
+    with st.form(f"quadrant-dialog-form-{selected}", clear_on_submit=True):
+        task_text = st.text_input("Task", placeholder="Write one task")
+        col_a, col_b, col_c = st.columns([1, 1, 1])
+        important = col_a.toggle("Important")
+        urgent = col_b.toggle("Urgent")
+        submitted = col_c.form_submit_button("Add Task", use_container_width=True)
+    if submitted and task_text.strip():
+        tasks.append({"text": task_text.strip(), "important": important, "urgent": urgent})
+        add_token(st.session_state.important_token)
+        ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+        write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
+        st.rerun()
+
+    groups = {
+        "Important and Urgent": [],
+        "Important, Not Urgent": [],
+        "Urgent, Not Important": [],
+        "Not Important or Urgent": [],
+    }
+    for index, task in enumerate(tasks):
+        groups[quadrant_name(task)].append((index, task))
+
+    st.markdown('<div class="quadrant-grid">', unsafe_allow_html=True)
+    for title, items in groups.items():
+        st.markdown(f'<div class="quadrant-box"><div class="quadrant-title">{escape(title)}</div>', unsafe_allow_html=True)
+        if not items:
+            st.caption("No tasks yet")
+        for index, task in items:
+            st.markdown(f'<div class="task-pill">□ {escape(task["text"])}</div>', unsafe_allow_html=True)
+            if st.button("Done", key=f"dialog-done-{selected}-{index}", use_container_width=True):
+                tasks.pop(index)
+                add_token(st.session_state.important_token)
+                ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+                write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
+                st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
 def render_schedule(selected: date):
     note, diet, quadrant, time_map, ui, extras = read_day(selected)
     slots = time_slots()
@@ -736,6 +790,7 @@ def render_schedule(selected: date):
 
 def render_day():
     selected = st.session_state.selected_day
+    st.markdown('<div class="fixed-day-head">', unsafe_allow_html=True)
     render_simple_topbar(selected)
     spacer_top, settings_top = st.columns([0.86, 0.14])
     with settings_top:
@@ -747,9 +802,8 @@ def render_day():
     st.session_state.flash_battery = False
 
     if st.button("Monthly Matrix", key="monthly-matrix", use_container_width=False):
-        st.session_state.panel = "" if st.session_state.panel == "quadrant" else "quadrant"
+        render_quadrant_dialog(selected)
         add_token(st.session_state.click_token)
-        st.rerun()
 
     render_day_progress(selected)
 
@@ -773,12 +827,15 @@ def render_day():
         add_token(st.session_state.click_token)
         st.rerun()
     c3.markdown('<a class="action-btn" href="#now-slot">Go to Now</a>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     if st.session_state.panel:
         render_text_panel(selected, st.session_state.panel)
 
     st.markdown('<div class="schedule-title">▦ Daily Schedule (7:00 AM - next day 7:00 AM)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="schedule-scroll">', unsafe_allow_html=True)
     render_schedule(selected)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def main():
