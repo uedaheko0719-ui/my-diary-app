@@ -316,7 +316,9 @@ def css():
           }}
           .battery-label {{ min-width:36px; font-size:11px; font-weight:800; }}
           .tool-row {{ display:flex; gap:14px; margin:20px 0 14px; flex-wrap:wrap; }}
-          .schedule-title {{ font-size:19px; font-weight:900; margin:8px 0 6px; color:#000; }}
+          .schedule-title {{ font-size:19px; font-weight:900; margin:6px 0 2px; color:#000; }}
+          [data-testid="stVerticalBlock"] {{ gap:.28rem !important; }}
+          [data-testid="stTextArea"] {{ margin:0 !important; }}
           .day-head {{
             position:sticky; top:0; z-index:1000; background:var(--paper);
             padding:2px 0 7px; border-bottom:1px solid rgba(238,231,218,.9);
@@ -366,6 +368,13 @@ def css():
           .slot {{
             display:grid; grid-template-columns:190px 1fr; gap:12px; align-items:start;
             padding:6px 0; border-bottom:1px solid rgba(255,255,255,.95);
+          }}
+          .schedule-time-cell {{
+            font-weight:800; padding:14px 8px 0 10px; min-height:74px; position:relative;
+            background:transparent; color:#000;
+          }}
+          .schedule-time-cell.now {{
+            border-left:7px solid var(--red); background:#fffefa;
           }}
           .slot.now {{ border-left:7px solid var(--red); padding-left:10px; background:#fffdf8; }}
           .slot-time {{
@@ -895,24 +904,25 @@ def render_schedule(selected: date):
     filled = 0
 
     for slot in slots:
-        cls = "slot now" if slot == active_slot else "slot"
-        slot_id = ' id="now-slot"' if slot == active_slot else ""
         task_hint = time_map.get(slot, "").strip() or "No task in this time block."
-        st.markdown(
-            f'<div class="{cls}"{slot_id}><div class="slot-time">{escape(slot)}'
-            f'<div class="slot-task">{escape(task_hint)}</div></div><div>',
-            unsafe_allow_html=True,
-        )
-        value = st.text_area(
-            f"{slot} plan",
-            value=time_map.get(slot, ""),
-            key=f"slot-{selected}-{slot}",
-            height=74,
-            label_visibility="collapsed",
-            on_change=save_schedule_from_state,
-            args=(selected,),
-        )
-        st.markdown("</div></div>", unsafe_allow_html=True)
+        marker = " now" if slot == active_slot else ""
+        slot_id = ' id="now-slot"' if slot == active_slot else ""
+        row = st.columns([0.22, 0.78], gap="small")
+        with row[0]:
+            st.markdown(
+                f'<div class="schedule-time-cell{marker}"{slot_id} title="{escape(task_hint)}">{escape(slot)}</div>',
+                unsafe_allow_html=True,
+            )
+        with row[1]:
+            value = st.text_area(
+                f"{slot} plan",
+                value=time_map.get(slot, ""),
+                key=f"slot-{selected}-{slot}",
+                height=68,
+                label_visibility="collapsed",
+                on_change=save_schedule_from_state,
+                args=(selected,),
+            )
         changed[slot] = value
         if value.strip():
             filled += 1
@@ -965,9 +975,8 @@ def render_day():
         render_text_panel(selected, st.session_state.panel)
 
     st.markdown('<div class="schedule-title">Daily Schedule (0:00 - 24:00)</div>', unsafe_allow_html=True)
-    st.markdown('<div class="schedule-scroll">', unsafe_allow_html=True)
-    render_schedule(selected)
-    st.markdown("</div>", unsafe_allow_html=True)
+    with st.container(height=610, border=False):
+        render_schedule(selected)
 
 
 def main():
