@@ -150,6 +150,26 @@ def init_state():
         st.session_state.setdefault(key, value)
 
     params = st.query_params
+    if params.get("matrix_done") and params.get("day"):
+        try:
+            picked = date.fromisoformat(params["day"])
+            task_index = int(params["matrix_done"])
+            note, diet, quadrant, time_map, ui, extras = read_day(picked)
+            tasks = load_quadrant_tasks(quadrant)
+            if 0 <= task_index < len(tasks):
+                tasks.pop(task_index)
+                add_token(st.session_state.important_token)
+                ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+                write_day(picked, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
+            st.session_state.selected_day = picked
+            st.session_state.view_year = picked.year
+            st.session_state.view_month = picked.month
+            st.session_state.view = "day"
+            st.session_state.matrix_open = True
+            st.query_params.clear()
+        except (ValueError, TypeError):
+            st.query_params.clear()
+
     if params.get("month"):
         try:
             year_text, month_text = params["month"].split("-", 1)
@@ -389,8 +409,8 @@ def css():
           [data-testid="stTextArea"] {{ margin:0 !important; }}
           .day-head {{
             position:sticky; top:0; z-index:1000; background:var(--paper);
-            padding:2px 0 7px; border-bottom:1px solid rgba(238,231,218,.9);
-            box-shadow:0 4px 10px rgba(80,70,48,.04);
+            padding:2px 0 8px; border-bottom:1px solid rgba(238,231,218,.9);
+            box-shadow:0 6px 14px rgba(80,70,48,.07);
           }}
           .schedule-scroll {{
             height:calc(100vh - 190px); min-height:430px; overflow-y:auto; padding-right:12px;
@@ -424,9 +444,10 @@ def css():
             position:relative; height:76px; margin:0; overflow:visible;
           }}
           .timeline-sticky {{
-            position:sticky; top:0; z-index:999; background:var(--paper);
-            padding:6px 0 8px; border-bottom:1px solid rgba(216,203,182,.45);
-            box-shadow:0 2px 7px rgba(80,70,48,.04);
+            background:var(--paper);
+            padding:3px 0 2px;
+            border-bottom:0;
+            box-shadow:none;
           }}
           .day-actions {{
             margin-top:30px;
@@ -578,6 +599,51 @@ def css():
             display:grid !important; grid-template-columns:repeat(2, minmax(0, 1fr)) !important; gap:12px;
             aspect-ratio:1.65 / 1; color:#000;
           }}
+          .matrix-html-grid {{
+            display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px;
+            margin-top:10px;
+          }}
+          .matrix-html-box {{
+            background:#fff;
+            border:1px solid #d8cbb6;
+            min-height:156px;
+            padding:12px;
+            box-shadow:0 4px 14px rgba(60,50,35,.08);
+            border-radius:2px;
+          }}
+          .matrix-html-box:hover {{
+            border-color:#bba98d;
+            box-shadow:0 9px 22px rgba(60,50,35,.16);
+            transform:translateY(-2px);
+          }}
+          .matrix-empty {{
+            color:#6f6a60;
+            font-size:14px;
+            padding-top:2px;
+          }}
+          .matrix-task {{
+            display:flex; align-items:center; gap:8px;
+            background:#fff;
+            border:1px solid #eadfce;
+            padding:8px 9px;
+            margin:6px 0;
+            color:#000 !important;
+            text-decoration:none !important;
+            font-size:15px;
+            line-height:1.25;
+          }}
+          .matrix-task:hover {{
+            background:#fff8eb;
+            border-color:#bca98c;
+            box-shadow:0 7px 18px rgba(60,50,35,.16);
+            transform:translateY(-2px);
+          }}
+          .matrix-task-check {{
+            width:14px; min-width:14px; height:14px;
+            border:1px solid #111;
+            background:#fff;
+            display:inline-block;
+          }}
           .quadrant-box {{
             border:1px solid #eee4d3; background:#fff; border-radius:2px; padding:12px;
             min-height:150px; overflow:auto; color:#000;
@@ -685,6 +751,9 @@ def css():
             .day-title {{ font-size:18px; margin:6px 0 8px; }}
             .day-top {{ align-items:center; flex-direction:row; }}
             .quadrant-grid {{ grid-template-columns:repeat(2, minmax(0, 1fr)) !important; gap:6px; aspect-ratio:1 / 1.08; }}
+            .matrix-html-grid {{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px; }}
+            .matrix-html-box {{ min-height:126px; padding:8px; }}
+            .matrix-task {{ padding:6px; font-size:11px; }}
             .matrix-dialog {{ width:100%; padding:9px; }}
             .matrix-title {{ font-size:14px; }}
             .quadrant-box {{ padding:7px; font-size:11px; }}
@@ -858,7 +927,7 @@ def render_day_header_clean(selected: date):
     )
 
 
-def render_simple_topbar(selected: date):
+def simple_topbar_html(selected: date) -> str:
     pct = int(st.session_state.token * 100)
     battery_class = "battery-wrap flash" if st.session_state.flash_battery else "battery-wrap"
     token_pct = max(0.0, min(100.0, st.session_state.token * 100))
@@ -867,8 +936,7 @@ def render_simple_topbar(selected: date):
         start = index * 25
         fill = max(0.0, min(25.0, token_pct - start)) / 25 * 100
         cells.append(f'<div class="battery-cell" style="--fill:{fill:.2f}%"></div>')
-    st.markdown(
-        f"""
+    return f"""
         <div class="simple-topbar">
           <a class="month-link" href="?month={selected.year:04d}-{selected.month:02d}">&larr; Month</a>
           <div class="topbar-right">
@@ -878,12 +946,14 @@ def render_simple_topbar(selected: date):
             </div>
           </div>
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
+        """
 
 
-def render_day_progress(selected: date):
+def render_simple_topbar(selected: date):
+    st.markdown(simple_topbar_html(selected), unsafe_allow_html=True)
+
+
+def day_progress_html(selected: date) -> str:
     _note, _diet, _quadrant, time_map, _ui, _extras = read_day(selected)
     current = now()
     if selected == current.date():
@@ -923,7 +993,11 @@ def render_day_progress(selected: date):
         )
     html.append("</div>")
     html.append("</div>")
-    st.markdown("".join(html), unsafe_allow_html=True)
+    return "".join(html)
+
+
+def render_day_progress(selected: date):
+    st.markdown(day_progress_html(selected), unsafe_allow_html=True)
 
 
 def render_text_panel(selected: date, panel: str):
@@ -1028,26 +1102,20 @@ def render_quadrant_dialog(selected: date):
     for index, task in enumerate(tasks):
         groups[quadrant_name(task)].append((index, task))
 
-    done_index = None
-    row_a = st.columns(2)
-    row_b = st.columns(2)
-    slots = list(groups.items())
-    for column, (title, items) in zip([row_a[0], row_a[1], row_b[0], row_b[1]], slots):
-        with column:
-            with st.container(border=True):
-                st.markdown(f'<div class="quadrant-title-bar">{escape(title)}</div>', unsafe_allow_html=True)
-                if not items:
-                    st.caption("No tasks yet")
-                for index, task in items:
-                    if st.checkbox(task["text"], key=f"matrix-done-{selected}-{index}"):
-                        done_index = index
-
-    if done_index is not None:
-        tasks.pop(done_index)
-        add_token(st.session_state.important_token)
-        ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
-        write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
-        st.rerun()
+    grid_html = ['<div class="matrix-html-grid">']
+    for title, items in groups.items():
+        grid_html.append('<div class="matrix-html-box">')
+        grid_html.append(f'<div class="quadrant-title-bar">{escape(title)}</div>')
+        if not items:
+            grid_html.append('<div class="matrix-empty">No tasks yet</div>')
+        for index, task in items:
+            grid_html.append(
+                f'<a class="matrix-task" href="?day={selected.isoformat()}&matrix_done={index}">'
+                f'<span class="matrix-task-check"></span><span>{escape(task["text"])}</span></a>'
+            )
+        grid_html.append("</div>")
+    grid_html.append("</div>")
+    st.markdown("".join(grid_html), unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 def render_schedule(selected: date):
@@ -1084,13 +1152,19 @@ def render_schedule(selected: date):
 
 def render_day():
     selected = st.session_state.selected_day
-    render_simple_topbar(selected)
-    render_day_header_clean(selected)
+    sticky_html = f"""
+    <div class="day-head">
+      {simple_topbar_html(selected)}
+      <div class="day-top">
+        <div class="day-title">{selected:%Y-%m-%d} {selected.strftime('%A')}</div>
+      </div>
+      <div class="timeline-sticky">
+        {day_progress_html(selected)}
+      </div>
+    </div>
+    """
+    st.markdown(sticky_html, unsafe_allow_html=True)
     st.session_state.flash_battery = False
-
-    st.markdown('<div class="timeline-sticky">', unsafe_allow_html=True)
-    render_day_progress(selected)
-    st.markdown('</div>', unsafe_allow_html=True)
 
     if st.session_state.get("last_saved"):
         message = st.session_state.last_saved
