@@ -21,7 +21,8 @@ SECTION_QUADRANT = "四象限"
 
 
 def now() -> datetime:
-    return datetime.now(ZoneInfo("Asia/Shanghai"))
+    # Changed to US Eastern time
+    return datetime.now(ZoneInfo("America/New_York"))
 
 
 def note_path(day: date) -> Path:
@@ -115,6 +116,18 @@ def natural_time(hour: int) -> str:
     return f"{hour - 12}:00 PM"
 
 
+def natural_time_short(hour: int) -> str:
+    """Short label for timeline tick marks, e.g. '6AM', '12PM'"""
+    hour %= 24
+    if hour == 0:
+        return "12AM"
+    if hour < 12:
+        return f"{hour}AM"
+    if hour == 12:
+        return "12PM"
+    return f"{hour - 12}PM"
+
+
 def time_slots() -> list[str]:
     return [f"{natural_time(7 + i)} - {natural_time(8 + i)}" for i in range(24)]
 
@@ -181,7 +194,6 @@ def init_state():
 
 
 def css():
-    battery_class = "battery-wrap flash" if st.session_state.flash_battery else "battery-wrap"
     st.markdown(
         f"""
         <style>
@@ -198,11 +210,35 @@ def css():
             --today:#ffe9a9;
           }}
           .stApp {{ background:var(--paper); color:var(--ink); }}
-          .block-container {{ max-width:1220px; padding-top:92px; }}
+
+          /* Remove Streamlit's default top padding — our sticky bar handles spacing */
+          .block-container {{
+            max-width:1220px;
+            padding-top:8px !important;
+            padding-bottom:40px;
+          }}
+
+          /* ── Sticky header ───────────────────────────────────────────── */
+          .fixed-day-head {{
+            position:sticky;
+            top:0;
+            z-index:1000;
+            background:var(--paper);
+            padding:8px 0 8px;
+            border-bottom:2px solid rgba(200,189,167,.6);
+            box-shadow:0 4px 16px rgba(80,70,48,.10);
+            margin-bottom:0;
+          }}
+
+          /* Spacer below sticky header — only needs to cover the schedule list gap */
+          .day-fixed-spacer {{ height:0; }}
+
+          /* ── Topbar ──────────────────────────────────────────────────── */
           .simple-topbar {{
             display:flex; align-items:center; justify-content:space-between;
-            gap:10px; min-height:30px;
+            gap:10px; min-height:30px; margin-bottom:4px;
           }}
+          .topbar-right {{ display:flex; align-items:center; gap:14px; }}
           .month-link {{
             display:inline-flex; align-items:center; justify-content:center; min-height:30px;
             padding:0 11px; border:2px outset #fff8e8; background:#efe7d4;
@@ -210,78 +246,8 @@ def css():
             font-size:13px;
           }}
           .month-link:hover {{ background:#fff8eb; transform:translateY(-1px); }}
-          .topbar-right {{ display:flex; align-items:center; gap:14px; }}
-          .compact-action-row {{
-            display:grid; grid-template-columns:1.2fr .95fr 1fr 2.4fr; gap:8px; align-items:stretch;
-            width:100%;
-          }}
-          .html-btn {{
-            display:flex; align-items:center; justify-content:center; min-height:42px;
-            border:2px outset #fff8e8; color:#000; text-decoration:none; font-weight:800;
-            box-shadow:1px 1px 0 #7f7667; font-size:16px; white-space:nowrap;
-          }}
-          .html-btn:hover {{ filter:brightness(1.04); transform:translateY(-1px); }}
-          .html-btn:active {{ border-style:inset; box-shadow:none; transform:translateY(1px); }}
-          .html-note {{ background:#e8f2ff; }}
-          .html-meal {{ background:#fff4e4; }}
-          .html-now {{ background:#e8f6ea; }}
-          .html-spacer {{ min-width:0; }}
-          .month-wrap {{ max-width:980px; margin:0 auto; }}
-          .month-nav {{
-            display:grid; grid-template-columns:54px 1fr 54px; align-items:center;
-            gap:10px; margin-bottom:18px;
-          }}
-          .month-title {{ font-size:26px; font-weight:700; text-align:center; }}
-          .month-arrow {{
-            display:flex; align-items:center; justify-content:center; height:44px;
-            border:2px outset #eee6d6; background:#efe7d4; border-radius:0;
-            text-decoration:none; color:var(--ink); font-size:24px; transition:background .12s ease, transform .12s ease;
-          }}
-          .month-arrow:hover {{ background:#fff; transform:translateY(-1px); }}
-          .calendar-grid {{
-            display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:8px;
-          }}
-          .week-label {{ color:#000; font-weight:800; text-align:center; padding-bottom:20px; font-size:20px; }}
-          div.stButton > button {{
-            border-radius:0 !important; border:2px outset #fff8e8 !important; background:#efe7d4 !important;
-            color:#000 !important; min-height:42px; transition:background .12s ease, transform .08s ease, border-color .12s ease;
-            font-weight:700; box-shadow:1px 1px 0 #7f7667; font-family:Arial, sans-serif;
-          }}
-          div.stButton > button:hover {{
-            background:#fff8eb !important; border-color:#fff !important; transform:translateY(-1px);
-          }}
-          div.stButton > button:active {{
-            border-style:inset !important; transform:translateY(1px); box-shadow:none;
-          }}
-          .calendar-cell {{
-            display:flex; align-items:center; justify-content:center; gap:5px;
-            min-height:92px; border:2px outset #f1eadb; background:#fbf6eb;
-            border-radius:0; padding:9px; font-size:20px; font-weight:500;
-            text-decoration:none; color:var(--ink); transition:background .12s ease, transform .12s ease, border-color .12s ease;
-          }}
-          .calendar-cell:hover {{
-            background:#fff; border-color:#99b8a1; transform:translateY(-1px);
-          }}
-          .calendar-cell.today {{
-            border-color:#bfa24e; background:var(--today); font-weight:900;
-          }}
-          .calendar-cell.sat {{ background:var(--blue); }}
-          .calendar-cell.sun {{ background:var(--pink); }}
-          .calendar-cell.today.sat, .calendar-cell.today.sun {{ background:var(--today); }}
-          .content-mark {{
-            width:13px; height:18px; border:1px solid #333; display:inline-block;
-            background:repeating-linear-gradient(45deg, #333 0, #333 2px, #4aa3df 2px, #4aa3df 4px, #f2df66 4px, #f2df66 6px);
-            box-shadow:2px 2px 0 #222;
-          }}
-          .calendar-cell.empty {{ opacity:.15; pointer-events:none; }}
-          .calendar-date {{ display:block; }}
-          .calendar-today-label {{ display:block; color:var(--red); font-size:11px; margin-top:4px; }}
-          .day-top {{
-            display:flex; align-items:center; justify-content:center;
-            gap:8px; padding-bottom:0; margin-bottom:2px;
-          }}
-          .day-title {{ font-size:24px; font-weight:900; text-align:center; color:#000; }}
-          .right-tools {{ display:flex; align-items:center; gap:12px; }}
+
+          /* ── Battery ─────────────────────────────────────────────────── */
           .battery-wrap {{ display:flex; align-items:center; gap:8px; }}
           .battery {{
             width:160px; height:18px; border:3px solid #27352d; border-radius:0;
@@ -295,69 +261,136 @@ def css():
             height:100%; width:{int(st.session_state.token * 100)}%; background:var(--green);
             border-radius:2px; transition:width .16s ease;
           }}
-          .flash .battery-fill {{ animation:batteryFlash .25s ease; }}
+          .battery-wrap.flash .battery-fill {{ animation:batteryFlash .25s ease; }}
           @keyframes batteryFlash {{
             0% {{ filter:brightness(1); }}
             50% {{ filter:brightness(1.75); }}
             100% {{ filter:brightness(1); }}
           }}
           .battery-label {{ min-width:36px; font-size:11px; font-weight:800; }}
-          .tool-row {{ display:flex; gap:14px; margin:20px 0 14px; flex-wrap:wrap; }}
-          .schedule-title {{ font-size:22px; font-weight:900; margin:8px 0 8px; color:#000; }}
-          .fixed-day-head {{
-            position:fixed; top:2.85rem; left:50%; transform:translateX(-50%);
-            width:min(1220px, calc(100vw - 32px)); z-index:1000; background:var(--paper);
-            padding:6px 0 7px; border-bottom:1px solid rgba(200,189,167,.55);
-            box-shadow:0 6px 18px rgba(80,70,48,.08);
+
+          /* ── Action buttons row ──────────────────────────────────────── */
+          .compact-action-row {{
+            display:grid; grid-template-columns:1.2fr .95fr 1fr 2.4fr; gap:8px;
+            align-items:stretch; width:100%; margin-top:6px;
           }}
-          .day-fixed-spacer {{ height:205px; }}
-          .schedule-scroll {{
-            height:calc(100vh - 250px); min-height:420px; overflow-y:auto; padding-right:12px;
-            overscroll-behavior:contain;
+          .html-btn {{
+            display:flex; align-items:center; justify-content:center; min-height:36px;
+            border:2px outset #fff8e8; color:#000; text-decoration:none; font-weight:800;
+            box-shadow:1px 1px 0 #7f7667; font-size:14px; white-space:nowrap;
           }}
-          .st-key-now-btn button {{ background:#e8f6ea !important; font-size:20px; min-height:58px; border-color:#f8fff9 !important; }}
-          .action-btn {{
-            display:flex; align-items:center; justify-content:center; min-height:58px;
-            border:2px outset #f8fff9; background:#e8f6ea; color:#000; text-decoration:none;
-            font-weight:800; font-size:20px; box-shadow:1px 1px 0 #7f7667;
+          .html-btn:hover {{ filter:brightness(1.04); transform:translateY(-1px); }}
+          .html-btn:active {{ border-style:inset; box-shadow:none; transform:translateY(1px); }}
+          .html-note {{ background:#e8f2ff; }}
+          .html-meal {{ background:#fff4e4; }}
+          .html-now  {{ background:#e8f6ea; }}
+          .html-spacer {{ min-width:0; }}
+
+          /* ── Month view ──────────────────────────────────────────────── */
+          .month-wrap {{ max-width:980px; margin:0 auto; }}
+          .month-nav {{
+            display:grid; grid-template-columns:54px 1fr 54px; align-items:center;
+            gap:10px; margin-bottom:18px;
           }}
-          .action-btn:hover {{ background:#f8fff9; transform:translateY(-1px); }}
-          .action-btn:active {{ border-style:inset; box-shadow:none; transform:translateY(1px); }}
-          .st-key-settings-btn button {{ font-size:17px; }}
-          .st-key-monthly-matrix button {{ font-size:16px; }}
-          .panel-box {{
-            border:1px solid var(--line); background:var(--panel); border-radius:0;
-            padding:14px; margin:10px 0 16px;
+          .month-title {{ font-size:26px; font-weight:700; text-align:center; }}
+          .month-arrow {{
+            display:flex; align-items:center; justify-content:center; height:44px;
+            border:2px outset #eee6d6; background:#efe7d4; border-radius:0;
+            text-decoration:none; color:var(--ink); font-size:24px;
+            transition:background .12s ease, transform .12s ease;
           }}
+          .month-arrow:hover {{ background:#fff; transform:translateY(-1px); }}
+          .calendar-grid {{
+            display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:8px;
+          }}
+          .week-label {{ color:#000; font-weight:800; text-align:center; padding-bottom:20px; font-size:20px; }}
+          .calendar-cell {{
+            display:flex; align-items:center; justify-content:center; gap:5px;
+            min-height:92px; border:2px outset #f1eadb; background:#fbf6eb;
+            border-radius:0; padding:9px; font-size:20px; font-weight:500;
+            text-decoration:none; color:var(--ink);
+            transition:background .12s ease, transform .12s ease, border-color .12s ease;
+          }}
+          .calendar-cell:hover {{ background:#fff; border-color:#99b8a1; transform:translateY(-1px); }}
+          .calendar-cell.today {{ border-color:#bfa24e; background:var(--today); font-weight:900; }}
+          .calendar-cell.sat {{ background:var(--blue); }}
+          .calendar-cell.sun {{ background:var(--pink); }}
+          .calendar-cell.today.sat, .calendar-cell.today.sun {{ background:var(--today); }}
+          .content-mark {{
+            width:13px; height:18px; border:1px solid #333; display:inline-block;
+            background:repeating-linear-gradient(45deg,#333 0,#333 2px,#4aa3df 2px,#4aa3df 4px,#f2df66 4px,#f2df66 6px);
+            box-shadow:2px 2px 0 #222;
+          }}
+          .calendar-cell.empty {{ opacity:.15; pointer-events:none; }}
+          .calendar-date {{ display:block; }}
+          .calendar-today-label {{ display:block; color:var(--red); font-size:11px; margin-top:4px; }}
+
+          /* ── Streamlit buttons ───────────────────────────────────────── */
+          div.stButton > button {{
+            border-radius:0 !important; border:2px outset #fff8e8 !important; background:#efe7d4 !important;
+            color:#000 !important; min-height:36px; transition:background .12s ease, transform .08s ease;
+            font-weight:700; box-shadow:1px 1px 0 #7f7667; font-family:Arial, sans-serif;
+          }}
+          div.stButton > button:hover {{
+            background:#fff8eb !important; border-color:#fff !important; transform:translateY(-1px);
+          }}
+          div.stButton > button:active {{
+            border-style:inset !important; transform:translateY(1px); box-shadow:none;
+          }}
+          .st-key-settings-btn button {{ font-size:13px; min-height:30px; }}
+          .st-key-monthly-matrix button {{ font-size:13px; }}
+
+          /* ── Day header ──────────────────────────────────────────────── */
+          .day-top {{
+            display:flex; align-items:center; justify-content:center;
+            gap:8px; margin-bottom:2px;
+          }}
+          .day-title {{ font-size:20px; font-weight:900; text-align:center; color:#000; }}
+
+          /* ── Progress timeline ───────────────────────────────────────── */
           .day-progress {{
-            position:relative; height:82px; margin:6px 0 4px; overflow:visible;
+            position:relative; height:70px; margin:4px 0 2px; overflow:visible;
           }}
           .progress-line {{
-            position:absolute; left:0; right:0; top:45px; height:8px; background:#d8d8d8;
+            position:absolute; left:0; right:0; top:40px; height:7px; background:#d8d8d8;
           }}
           .progress-fill {{
-            position:absolute; left:0; top:45px; height:8px; background:#4a90e2; border-radius:8px;
+            position:absolute; left:0; top:40px; height:7px; background:#4a90e2; border-radius:8px;
           }}
           .tick {{
-            position:absolute; top:32px; width:3px; height:25px; background:#5c5c5c;
+            position:absolute; top:30px; width:2px; height:20px; background:#5c5c5c;
           }}
-          .tick.major {{ top:18px; height:39px; }}
+          .tick.major {{ top:18px; height:32px; }}
           .tick-label {{
-            position:absolute; top:0; transform:translateX(-50%); font-size:18px; font-weight:900; color:#000;
+            position:absolute; top:0; transform:translateX(-50%); font-size:13px;
+            font-weight:900; color:#000; white-space:nowrap;
           }}
           .hour-zone {{
-            position:absolute; top:22px; height:45px;
+            position:absolute; top:20px; height:38px;
           }}
           .hour-zone:hover .timeline-pop {{ display:block; }}
           .timeline-pop {{
-            display:none; position:absolute; top:45px; left:50%; transform:translateX(-50%);
-            width:190px; min-height:82px; background:#fffbe6; border:2px solid #111;
-            padding:12px; z-index:50; font-size:16px; white-space:pre-wrap; color:#000;
+            display:none; position:absolute; top:42px; left:50%; transform:translateX(-50%);
+            width:190px; min-height:60px; background:#fffbe6; border:2px solid #111;
+            padding:10px; z-index:50; font-size:14px; white-space:pre-wrap; color:#000;
           }}
-          .timeline-pop b {{ display:block; margin-bottom:12px; font-weight:500; }}
+          .timeline-pop b {{ display:block; margin-bottom:8px; font-weight:600; }}
+
+          /* ── Panel box (notes / meal) ────────────────────────────────── */
+          .panel-box {{
+            border:1px solid var(--line); background:var(--panel); border-radius:0;
+            padding:14px; margin:8px 0 12px;
+          }}
+
+          /* ── Schedule list ───────────────────────────────────────────── */
+          .schedule-title {{ font-size:18px; font-weight:900; margin:6px 0 6px; color:#000; }}
+          .schedule-scroll {{
+            /* No fixed height — let page scroll naturally */
+            padding-right:4px;
+          }}
           .slot {{
             display:grid; grid-template-columns:190px 1fr; gap:12px; align-items:start;
-            padding:10px 0; border-bottom:1px solid rgba(222,211,192,.75);
+            padding:8px 0; border-bottom:1px solid rgba(222,211,192,.75);
           }}
           .slot.now {{ border-left:7px solid var(--red); padding-left:10px; background:#fffdf8; }}
           .slot-time {{
@@ -370,24 +403,37 @@ def css():
             box-shadow:0 8px 22px rgba(47,42,34,.13); font-weight:500;
           }}
           .slot-time:hover .slot-task {{ display:block; }}
+
+          /* ── Quadrant grid — always 2×2 on desktop ───────────────────── */
+          .quadrant-grid {{
+            display:grid !important;
+            grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+            gap:12px;
+            margin-top:10px;
+          }}
+          .quadrant-box {{
+            border:1px solid #999; background:#fffdf8; border-radius:0;
+            padding:12px; min-height:140px;
+          }}
+          .quadrant-title {{ font-weight:800; margin-bottom:8px; font-size:13px; }}
+          .task-pill {{
+            border:1px solid #d8cbb6; background:#fff; border-radius:6px;
+            padding:6px 8px; margin:5px 0; font-size:13px;
+          }}
+
+          /* ── Misc ────────────────────────────────────────────────────── */
           .back-arrow {{
             display:inline-flex; align-items:center; justify-content:center; width:42px; height:38px;
             border:1px solid var(--line); border-radius:7px; background:var(--panel); font-size:22px;
           }}
-          .quadrant-grid {{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }}
-          .quadrant-box {{ border:1px solid #999; background:#fffdf8; border-radius:0; padding:12px; min-height:170px; }}
-          .quadrant-title {{ font-weight:800; margin-bottom:8px; }}
-          .task-pill {{ border:1px solid #d8cbb6; background:#fff; border-radius:6px; padding:8px; margin:6px 0; }}
+          .tool-row {{ display:flex; gap:14px; margin:12px 0 10px; flex-wrap:wrap; }}
           textarea {{ border-radius:7px !important; }}
+
+          /* ── Mobile ──────────────────────────────────────────────────── */
           @media (max-width: 760px) {{
-            .block-container {{ padding-top:88px; padding-left:8px; padding-right:8px; }}
-            .simple-topbar {{ margin:-54px 0 18px; }}
+            .block-container {{ padding-top:6px !important; padding-left:8px; padding-right:8px; }}
             .compact-action-row {{ grid-template-columns:1.15fr .9fr .95fr .4fr; gap:4px; }}
-            .html-btn {{ min-height:34px; font-size:11px; padding:0 3px; }}
-            .fixed-day-head {{ top:2.85rem; width:calc(100vw - 16px); padding-top:5px; }}
-            .day-fixed-spacer {{ height:218px; }}
-            .schedule-scroll {{ height:calc(100vh - 265px); min-height:340px; }}
-            .topbar-right {{ gap:8px; }}
+            .html-btn {{ min-height:30px; font-size:11px; padding:0 3px; }}
             .battery {{ width:92px; }}
             .battery-label {{ font-size:9px; min-width:28px; }}
             .month-link {{ min-height:26px; padding:0 6px; font-size:10px; }}
@@ -396,12 +442,13 @@ def css():
             .content-mark {{ width:9px; height:13px; box-shadow:1px 1px 0 #222; }}
             .week-label {{ font-size:11px; }}
             .month-title {{ font-size:21px; }}
-            .day-progress {{ height:76px; }}
-            .tick-label {{ font-size:13px; }}
-            .timeline-pop {{ width:150px; font-size:13px; }}
+            .day-progress {{ height:64px; }}
+            .tick-label {{ font-size:11px; }}
+            .timeline-pop {{ width:150px; font-size:12px; }}
             .slot {{ grid-template-columns:1fr; }}
             .day-top {{ align-items:flex-start; flex-direction:column; }}
-            .quadrant-grid {{ grid-template-columns:1fr; }}
+            /* Stack quadrant 1-col on mobile */
+            .quadrant-grid {{ grid-template-columns:1fr !important; }}
           }}
         </style>
         """,
@@ -550,17 +597,6 @@ def render_month():
     st.markdown("</div>", unsafe_allow_html=True)
 
 
-def render_day_header(selected: date):
-    st.markdown(
-        f"""
-        <div class="day-top">
-          <div class="day-title">{selected:%Y-%m-%d} · {selected.strftime('%A')}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
 def render_day_header_clean(selected: date):
     st.markdown(
         f"""
@@ -615,7 +651,9 @@ def render_day_progress(selected: date):
     _note, _diet, _quadrant, time_map, _ui, _extras = read_day(selected)
     current = now()
     if selected == current.date():
-        pct = ((current.hour * 60) + current.minute) / (24 * 60) * 100
+        # Progress is based on hours 7AM–7AM (24h window starting at 7)
+        hour_offset = (current.hour - 7) % 24
+        pct = (hour_offset * 60 + current.minute) / (24 * 60) * 100
     elif selected < current.date():
         pct = 100
     else:
@@ -624,19 +662,23 @@ def render_day_progress(selected: date):
     html = ['<div class="day-progress">']
     html.append('<div class="progress-line"></div>')
     html.append(f'<div class="progress-fill" style="width:{pct:.2f}%"></div>')
-    for hour in range(24):
-        left = hour / 24 * 100
-        major = hour in {0, 6, 12, 18}
-        html.append(f'<div class="tick {"major" if major else ""}" style="left:{left:.2f}%"></div>')
-        if major:
-            html.append(f'<div class="tick-label" style="left:{left:.2f}%">{hour:02d}</div>')
 
-        slot = f"{natural_time(hour)} - {natural_time(hour + 1)}"
+    # Tick marks: major at 7AM, 1PM, 7PM, 1AM (every 6h from 7AM start)
+    major_offsets = {0, 6, 12, 18}
+    for i in range(24):
+        left = i / 24 * 100
+        is_major = i in major_offsets
+        html.append(f'<div class="tick {"major" if is_major else ""}" style="left:{left:.2f}%"></div>')
+        if is_major:
+            label = natural_time_short(7 + i)
+            html.append(f'<div class="tick-label" style="left:{left:.2f}%">{label}</div>')
+
+        slot = f"{natural_time(7 + i)} - {natural_time(8 + i)}"
         text = escape(time_map.get(slot, "").strip() or "No task")
-        pop_time = f"{hour:02d}:00 ~ {(hour + 1) % 24:02d}:00"
+        pop_label = f"{natural_time(7 + i)} – {natural_time(8 + i)}"
         html.append(
             f'<div class="hour-zone" style="left:{left:.2f}%; width:{100/24:.4f}%">'
-            f'<div class="timeline-pop"><b>{pop_time}</b>{text}</div></div>'
+            f'<div class="timeline-pop"><b>{pop_label}</b>{text}</div></div>'
         )
     html.append("</div>")
     st.markdown("".join(html), unsafe_allow_html=True)
@@ -820,33 +862,33 @@ def render_schedule(selected: date):
 
 def render_day():
     selected = st.session_state.selected_day
+
+    # ── Sticky header (everything except the schedule list) ──────────
     st.markdown('<div class="fixed-day-head">', unsafe_allow_html=True)
-    render_simple_topbar(selected)
+
+    # Row 1: topbar (← Month + battery) + Settings button
     spacer_top, settings_top = st.columns([0.86, 0.14])
+    with spacer_top:
+        render_simple_topbar(selected)
     with settings_top:
         if st.button("Settings ▸", key="settings-btn", use_container_width=True):
             st.session_state.settings_open = not st.session_state.settings_open
             add_token(st.session_state.click_token)
             st.rerun()
+
+    # Row 2: date title
     render_day_header_clean(selected)
     st.session_state.flash_battery = False
 
+    # Row 3: Monthly Matrix button
     if st.button("Monthly Matrix", key="monthly-matrix", use_container_width=False):
         render_quadrant_dialog(selected)
         add_token(st.session_state.click_token)
 
+    # Row 4: progress timeline
     render_day_progress(selected)
 
-    if st.session_state.settings_open:
-        render_settings(selected)
-
-    if st.session_state.get("last_saved"):
-        message = st.session_state.last_saved
-        if str(message).startswith("Save failed"):
-            st.error(message)
-        else:
-            st.success(message)
-
+    # Row 5: action buttons
     st.markdown('<div class="compact-action-row">', unsafe_allow_html=True)
     st.markdown(
         f'<a class="html-btn html-note" href="?day={selected.isoformat()}&panel=note">Today\'s Notes</a>',
@@ -859,13 +901,31 @@ def render_day():
     st.markdown('<a class="html-btn html-now" href="#now-slot">Go to Now</a>', unsafe_allow_html=True)
     st.markdown('<div class="html-spacer"></div>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
+
+    # Close sticky header div
     st.markdown("</div>", unsafe_allow_html=True)
+
+    # Zero-height spacer (sticky handles its own space)
     st.markdown('<div class="day-fixed-spacer"></div>', unsafe_allow_html=True)
 
+    # ── Settings panel (outside sticky, scrolls with page) ───────────
+    if st.session_state.settings_open:
+        render_settings(selected)
+
+    # ── Save feedback ─────────────────────────────────────────────────
+    if st.session_state.get("last_saved"):
+        message = st.session_state.last_saved
+        if str(message).startswith("Save failed"):
+            st.error(message)
+        else:
+            st.success(message)
+
+    # ── Notes / Meal panel ────────────────────────────────────────────
     if st.session_state.panel:
         render_text_panel(selected, st.session_state.panel)
 
-    st.markdown('<div class="schedule-title">▦ Daily Schedule (7:00 AM - next day 7:00 AM)</div>', unsafe_allow_html=True)
+    # ── Schedule (scrolls with the page) ─────────────────────────────
+    st.markdown('<div class="schedule-title">▦ Daily Schedule (7:00 AM – next day 7:00 AM)</div>', unsafe_allow_html=True)
     st.markdown('<div class="schedule-scroll">', unsafe_allow_html=True)
     render_schedule(selected)
     st.markdown("</div>", unsafe_allow_html=True)
