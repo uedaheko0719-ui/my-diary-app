@@ -137,7 +137,6 @@ def init_state():
         "view_month": today.month,
         "selected_day": today,
         "panel": "",
-        "settings_open": False,
         "matrix_open": False,
         "token": 0.0,
         "flash_battery": False,
@@ -199,7 +198,7 @@ def css():
             --today:#ffe9a9;
           }}
           .stApp {{ background:var(--paper); color:var(--ink); }}
-          .block-container {{ max-width:1220px; padding-top:92px; }}
+          .block-container {{ max-width:1220px; padding-top:64px; }}
           .simple-topbar {{
             display:flex; align-items:center; justify-content:space-between;
             gap:10px; min-height:30px;
@@ -312,16 +311,16 @@ def css():
           }}
           .battery-label {{ min-width:36px; font-size:11px; font-weight:800; }}
           .tool-row {{ display:flex; gap:14px; margin:20px 0 14px; flex-wrap:wrap; }}
-          .schedule-title {{ font-size:22px; font-weight:900; margin:8px 0 8px; color:#000; }}
+          .schedule-title {{ font-size:20px; font-weight:900; margin:5px 0 6px; color:#000; }}
           .fixed-day-head {{
             position:fixed; top:2.85rem; left:50%; transform:translateX(-50%);
             width:min(1220px, calc(100vw - 32px)); z-index:1000; background:var(--paper);
-            padding:6px 0 7px; border-bottom:1px solid rgba(200,189,167,.55);
+            padding:5px 0 6px; border-bottom:1px solid rgba(200,189,167,.55);
             box-shadow:0 6px 18px rgba(80,70,48,.08);
           }}
-          .day-fixed-spacer {{ height:205px; }}
+          .day-fixed-spacer {{ height:168px; }}
           .schedule-scroll {{
-            height:calc(100vh - 250px); min-height:420px; overflow-y:auto; padding-right:12px;
+            height:calc(100vh - 205px); min-height:460px; overflow-y:auto; padding-right:12px;
             overscroll-behavior:contain;
           }}
           .st-key-now-btn button {{ background:#e8f6ea !important; font-size:20px; min-height:58px; border-color:#f8fff9 !important; }}
@@ -332,34 +331,33 @@ def css():
           }}
           .action-btn:hover {{ background:#f8fff9; transform:translateY(-1px); }}
           .action-btn:active {{ border-style:inset; box-shadow:none; transform:translateY(1px); }}
-          .st-key-settings-btn button {{ font-size:17px; }}
           .st-key-monthly-matrix button {{ font-size:16px; }}
           .panel-box {{
             border:1px solid var(--line); background:var(--panel); border-radius:0;
             padding:14px; margin:10px 0 16px;
           }}
           .day-progress {{
-            position:relative; height:82px; margin:6px 0 4px; overflow:visible;
+            position:relative; height:66px; margin:2px 0 0; overflow:visible;
           }}
           .progress-line {{
-            position:absolute; left:0; right:0; top:45px; height:8px; background:#d8d8d8;
+            position:absolute; left:0; right:0; top:38px; height:7px; background:#d8d8d8;
           }}
           .progress-fill {{
-            position:absolute; left:0; top:45px; height:8px; background:#4a90e2; border-radius:8px;
+            position:absolute; left:0; top:38px; height:7px; background:#4a90e2; border-radius:8px;
           }}
           .tick {{
-            position:absolute; top:32px; width:3px; height:25px; background:#5c5c5c;
+            position:absolute; top:27px; width:3px; height:21px; background:#5c5c5c;
           }}
-          .tick.major {{ top:18px; height:39px; }}
+          .tick.major {{ top:14px; height:34px; }}
           .tick-label {{
-            position:absolute; top:0; transform:translateX(-50%); font-size:18px; font-weight:900; color:#000;
+            position:absolute; top:0; transform:translateX(-50%); font-size:15px; font-weight:900; color:#000;
           }}
           .hour-zone {{
-            position:absolute; top:22px; height:45px;
+            position:absolute; top:18px; height:38px;
           }}
           .hour-zone:hover .timeline-pop {{ display:block; }}
           .timeline-pop {{
-            display:none; position:absolute; top:45px; left:50%; transform:translateX(-50%);
+            display:none; position:absolute; top:38px; left:50%; transform:translateX(-50%);
             width:190px; min-height:82px; background:#fffbe6; border:2px solid #111;
             padding:12px; z-index:50; font-size:16px; white-space:pre-wrap; color:#000;
           }}
@@ -405,14 +403,14 @@ def css():
           .task-pill {{ border:1px solid #d8cbb6; background:#fff; border-radius:0; padding:8px; margin:6px 0; color:#222; }}
           textarea {{ border-radius:7px !important; }}
           @media (max-width: 760px) {{
-            .block-container {{ padding-top:88px; padding-left:8px; padding-right:8px; }}
+            .block-container {{ padding-top:66px; padding-left:8px; padding-right:8px; }}
             .simple-topbar {{ margin:-54px 0 18px; }}
             .compact-action-row {{ grid-template-columns:1.15fr .9fr .95fr .4fr; gap:4px; }}
             .html-btn {{ min-height:34px; font-size:11px; padding:0 3px; }}
             .compact-action-row [data-testid="stHorizontalBlock"] {{ gap:4px !important; }}
-            .fixed-day-head {{ top:2.85rem; width:calc(100vw - 16px); padding-top:5px; }}
-            .day-fixed-spacer {{ height:218px; }}
-            .schedule-scroll {{ height:calc(100vh - 265px); min-height:340px; }}
+            .fixed-day-head {{ top:2.85rem; width:calc(100vw - 16px); padding-top:4px; }}
+            .day-fixed-spacer {{ height:172px; }}
+            .schedule-scroll {{ height:calc(100vh - 215px); min-height:380px; }}
             .topbar-right {{ gap:8px; }}
             .battery {{ width:92px; }}
             .battery-label {{ font-size:9px; min-width:28px; }}
@@ -422,8 +420,8 @@ def css():
             .content-mark {{ width:9px; height:13px; box-shadow:1px 1px 0 #222; }}
             .week-label {{ font-size:11px; }}
             .month-title {{ font-size:21px; }}
-            .day-progress {{ height:76px; }}
-            .tick-label {{ font-size:13px; }}
+            .day-progress {{ height:58px; }}
+            .tick-label {{ font-size:12px; }}
             .timeline-pop {{ width:150px; font-size:13px; }}
             .slot {{ grid-template-columns:1fr; }}
             .day-top {{ align-items:flex-start; flex-direction:column; }}
@@ -620,26 +618,6 @@ def render_simple_topbar(selected: date):
         """,
         unsafe_allow_html=True,
     )
-
-
-def render_settings(selected: date):
-    st.markdown('<div class="panel-box">', unsafe_allow_html=True)
-    st.subheader("Battery Settings")
-    c1, c2, c3 = st.columns(3)
-    st.session_state.click_token = c1.number_input(
-        "Click token", min_value=0.0, max_value=1.0, value=float(st.session_state.click_token), step=0.001, format="%.3f"
-    )
-    st.session_state.type_token = c2.number_input(
-        "Type token / char", min_value=0.0, max_value=0.05, value=float(st.session_state.type_token), step=0.001, format="%.3f"
-    )
-    st.session_state.important_token = c3.number_input(
-        "Important task token", min_value=0.0, max_value=1.0, value=float(st.session_state.important_token), step=0.01
-    )
-    if st.button("Reset Battery"):
-        st.session_state.token = 0.0
-        save_token(selected)
-        st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_day_progress(selected: date):
@@ -860,12 +838,6 @@ def render_day():
     selected = st.session_state.selected_day
     st.markdown('<div class="fixed-day-head">', unsafe_allow_html=True)
     render_simple_topbar(selected)
-    spacer_top, settings_top = st.columns([0.86, 0.14])
-    with settings_top:
-        if st.button("Settings >", key="settings-btn", use_container_width=True):
-            st.session_state.settings_open = not st.session_state.settings_open
-            add_token(st.session_state.click_token)
-            st.rerun()
     render_day_header_clean(selected)
     st.session_state.flash_battery = False
 
@@ -874,9 +846,6 @@ def render_day():
         add_token(st.session_state.click_token)
 
     render_day_progress(selected)
-
-    if st.session_state.settings_open:
-        render_settings(selected)
 
     if st.session_state.get("last_saved"):
         message = st.session_state.last_saved
