@@ -8,6 +8,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 
 NOTES_DIR = Path("notes")
@@ -187,9 +188,9 @@ def css():
         <style>
           :root {{
             --paper:#f8efd9;
-            --panel:#fbf6eb;
-            --softbox:#fffdf7;
-            --line:#c8bda7;
+            --panel:#fffefa;
+            --softbox:#fffefa;
+            --line:#eee7da;
             --ink:#263027;
             --muted:#7a7d74;
             --green:#35a868;
@@ -205,15 +206,15 @@ def css():
           .stApp, .stApp *, [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] * {{
             color:#000;
           }}
-          .block-container {{ max-width:1220px; padding:12px 18px 18px; }}
+          .block-container {{ max-width:1220px; padding:8px 18px 12px; }}
           .simple-topbar {{
             display:flex; align-items:center; justify-content:space-between;
             gap:10px; min-height:26px;
           }}
           .month-link {{
             display:inline-flex; align-items:center; justify-content:center; min-height:28px;
-            padding:0 10px; border:1px solid #c9bea8; background:#efe7d4;
-            color:#000; text-decoration:none; font-weight:800; box-shadow:1px 1px 0 #b1a58f;
+            padding:0 10px; border:1px solid #fff; background:#fff;
+            color:#000; text-decoration:none; font-weight:800; box-shadow:0 1px 3px rgba(60,50,35,.18);
             font-size:13px; border-radius:2px;
           }}
           .month-link:hover {{ background:#fff8eb; transform:translateY(-1px); }}
@@ -228,11 +229,7 @@ def css():
             min-width:0 !important;
             flex:1 1 0 !important;
           }}
-          .html-btn {{
-            display:flex; align-items:center; justify-content:center; min-height:42px;
-            border:2px outset #fff8e8; color:#000; text-decoration:none; font-weight:800;
-            box-shadow:1px 1px 0 #7f7667; font-size:16px; white-space:nowrap;
-          }}
+          .html-btn {{ display:flex; align-items:center; justify-content:center; min-height:42px; border:1px solid #fff; color:#000; text-decoration:none; font-weight:800; box-shadow:0 1px 3px rgba(60,50,35,.18); font-size:16px; white-space:nowrap; background:#fff; }}
           .html-btn:hover {{ filter:brightness(1.04); transform:translateY(-1px); }}
           .html-btn:active {{ border-style:inset; box-shadow:none; transform:translateY(1px); }}
           .html-note {{ background:#e8f2ff; }}
@@ -247,7 +244,7 @@ def css():
           .month-title {{ font-size:26px; font-weight:700; text-align:center; }}
           .month-arrow {{
             display:flex; align-items:center; justify-content:center; height:44px;
-            border:2px outset #eee6d6; background:#efe7d4; border-radius:0;
+            border:1px solid #fff; background:#fff; border-radius:2px;
             text-decoration:none; color:var(--ink); font-size:24px; transition:background .12s ease, transform .12s ease;
           }}
           .month-arrow:hover {{ background:#fff; transform:translateY(-1px); }}
@@ -256,9 +253,9 @@ def css():
           }}
           .week-label {{ color:#000; font-weight:800; text-align:center; padding-bottom:20px; font-size:20px; }}
           div.stButton > button {{
-            border-radius:2px !important; border:1px solid #c9bea8 !important; background:#efe7d4 !important;
+            border-radius:2px !important; border:1px solid #fff !important; background:#fff !important;
             color:#000 !important; min-height:42px; transition:background .12s ease, transform .08s ease, border-color .12s ease;
-            font-weight:700; box-shadow:1px 1px 0 #b1a58f; font-family:Arial, sans-serif;
+            font-weight:700; box-shadow:0 1px 3px rgba(60,50,35,.18); font-family:Arial, sans-serif;
           }}
           div.stButton > button p, div.stButton > button span {{
             color:#000 !important;
@@ -271,7 +268,7 @@ def css():
           }}
           .calendar-cell {{
             display:flex; align-items:center; justify-content:center; gap:5px;
-            min-height:92px; border:1px solid #d9cdb9; background:#fbf6eb;
+            min-height:92px; border:1px solid #fff; background:#fffefa;
             border-radius:0; padding:9px; font-size:20px; font-weight:500;
             text-decoration:none; color:var(--ink); transition:background .12s ease, transform .12s ease, border-color .12s ease;
           }}
@@ -300,12 +297,12 @@ def css():
           .right-tools {{ display:flex; align-items:center; gap:12px; }}
           .battery-wrap {{ display:flex; align-items:center; gap:8px; }}
           .battery {{
-            width:160px; height:18px; border:2px solid #27352d; border-radius:0;
-            background:white; padding:2px; position:relative;
+            width:160px; height:18px; border:2px solid #fff; border-radius:0;
+            background:white; padding:2px; position:relative; box-shadow:0 1px 3px rgba(60,50,35,.18);
           }}
           .battery:after {{
             content:""; position:absolute; right:-8px; top:3px; width:6px; height:8px;
-            border:2px solid #27352d; border-left:0; border-radius:0;
+            border:2px solid #fff; border-left:0; border-radius:0; background:#fff;
           }}
           .battery-fill {{
             height:100%; width:{int(st.session_state.token * 100)}%; background:var(--green);
@@ -319,29 +316,23 @@ def css():
           }}
           .battery-label {{ min-width:36px; font-size:11px; font-weight:800; }}
           .tool-row {{ display:flex; gap:14px; margin:20px 0 14px; flex-wrap:wrap; }}
-          .schedule-title {{ font-size:20px; font-weight:900; margin:5px 0 6px; color:#000; }}
-          .fixed-day-head {{
-            position:fixed; top:0; left:50%; transform:translateX(-50%);
-            width:min(1220px, calc(100vw - 32px)); z-index:1000; background:var(--paper);
-            padding:6px 0 7px; border-bottom:1px solid rgba(200,189,167,.55);
-            box-shadow:0 5px 12px rgba(80,70,48,.06);
+          .schedule-title {{ font-size:19px; font-weight:900; margin:8px 0 6px; color:#000; }}
+          .day-head {{
+            position:sticky; top:0; z-index:1000; background:var(--paper);
+            padding:2px 0 7px; border-bottom:1px solid rgba(238,231,218,.9);
+            box-shadow:0 4px 10px rgba(80,70,48,.04);
           }}
-          .day-fixed-spacer {{ height:142px; }}
           .schedule-scroll {{
-            height:calc(100vh - 182px); min-height:430px; overflow-y:auto; padding-right:12px;
-            overscroll-behavior:contain;
+            height:calc(100vh - 190px); min-height:430px; overflow-y:auto; padding-right:12px;
+            overscroll-behavior:contain; scroll-behavior:smooth;
           }}
           .st-key-now-btn button {{ background:#e8f6ea !important; font-size:20px; min-height:58px; border-color:#f8fff9 !important; }}
-          .action-btn {{
-            display:flex; align-items:center; justify-content:center; min-height:58px;
-            border:2px outset #f8fff9; background:#e8f6ea; color:#000; text-decoration:none;
-            font-weight:800; font-size:20px; box-shadow:1px 1px 0 #7f7667;
-          }}
+          .action-btn {{ display:flex; align-items:center; justify-content:center; min-height:58px; border:1px solid #fff; background:#fff; color:#000; text-decoration:none; font-weight:800; font-size:20px; box-shadow:0 1px 3px rgba(60,50,35,.18); }}
           .action-btn:hover {{ background:#f8fff9; transform:translateY(-1px); }}
           .action-btn:active {{ border-style:inset; box-shadow:none; transform:translateY(1px); }}
           .st-key-monthly-matrix button {{ font-size:16px; }}
           .panel-box {{
-            border:1px solid var(--line); background:var(--softbox); border-radius:2px;
+            border:1px solid #fff; background:var(--softbox); border-radius:2px;
             padding:12px; margin:8px 0 12px;
             color:#000;
           }}
@@ -374,7 +365,7 @@ def css():
           .timeline-pop b {{ display:block; margin-bottom:12px; font-weight:500; }}
           .slot {{
             display:grid; grid-template-columns:190px 1fr; gap:12px; align-items:start;
-            padding:10px 0; border-bottom:1px solid rgba(222,211,192,.75);
+            padding:6px 0; border-bottom:1px solid rgba(255,255,255,.95);
           }}
           .slot.now {{ border-left:7px solid var(--red); padding-left:10px; background:#fffdf8; }}
           .slot-time {{
@@ -382,8 +373,8 @@ def css():
           }}
           .slot-task {{
             position:absolute; z-index:20; left:0; top:32px; width:260px; max-width:70vw;
-            display:none; white-space:pre-wrap; border:1px solid var(--line);
-            background:#fffdf7; border-radius:7px; padding:10px; color:#000;
+            display:none; white-space:pre-wrap; border:1px solid #fff;
+            background:#fff; border-radius:7px; padding:10px; color:#000;
             box-shadow:0 8px 22px rgba(47,42,34,.13); font-weight:500;
           }}
           .slot-time:hover .slot-task {{ display:block; }}
@@ -392,8 +383,8 @@ def css():
             border:1px solid var(--line); border-radius:7px; background:var(--panel); font-size:22px;
           }}
           .matrix-dialog {{
-            width:min(900px, 100%); max-height:74vh; overflow:auto; background:#f9f4e8;
-            border:1px solid #c8bda7; box-shadow:0 8px 20px rgba(80,70,48,.10); padding:12px;
+            width:min(900px, 100%); overflow:auto; background:#fff;
+            border:1px solid #fff; box-shadow:0 8px 20px rgba(80,70,48,.10); padding:12px;
             margin:8px auto 12px; color:#000; border-radius:2px;
           }}
           .matrix-head {{ display:flex; align-items:center; justify-content:space-between; gap:12px; }}
@@ -403,17 +394,17 @@ def css():
             aspect-ratio:1.65 / 1; color:#000;
           }}
           .quadrant-box {{
-            border:1px solid #d6cab5; background:#fffdf7; border-radius:2px; padding:12px;
+            border:1px solid #fff; background:#fff; border-radius:2px; padding:12px;
             min-height:0; overflow:auto; color:#000;
           }}
           .quadrant-title {{ font-weight:900; margin-bottom:8px; color:#000; font-size:18px; line-height:1.1; }}
-          .task-pill {{ border:1px solid #e2d7c2; background:#fffefa; border-radius:2px; padding:8px; margin:6px 0; color:#000; }}
+          .task-pill {{ border:1px solid #fff; background:#fff; border-radius:2px; padding:8px; margin:6px 0; color:#000; }}
           textarea, input, [data-baseweb="textarea"], [data-baseweb="input"],
           [data-baseweb="select"] > div {{
             border-radius:4px !important;
             color:#000 !important;
-            background:#fffdf7 !important;
-            border-color:#d6cab5 !important;
+            background:#fff !important;
+            border-color:#fff !important;
           }}
           [data-baseweb="textarea"] textarea,
           [data-baseweb="input"] input,
@@ -432,11 +423,11 @@ def css():
           }}
           .stTextArea textarea, .stTextInput input {{
             color:#000 !important;
-            background:#fffdf7 !important;
+            background:#fff !important;
           }}
           [data-testid="stForm"] {{
-            background:#f9f4e8 !important;
-            border:1px solid #d6cab5 !important;
+            background:#fff !important;
+            border:1px solid #fff !important;
             padding:8px !important;
             border-radius:2px !important;
           }}
@@ -444,9 +435,8 @@ def css():
             .block-container {{ padding:8px 7px 12px; }}
             .html-btn {{ min-height:32px; font-size:11px; padding:0 3px; }}
             .compact-action-row [data-testid="stHorizontalBlock"] {{ gap:4px !important; }}
-            .fixed-day-head {{ top:0; width:calc(100vw - 12px); padding-top:4px; }}
-            .day-fixed-spacer {{ height:138px; }}
-            .schedule-scroll {{ height:calc(100vh - 176px); min-height:360px; }}
+            .day-head {{ top:0; padding-top:2px; }}
+            .schedule-scroll {{ height:calc(100vh - 172px); min-height:360px; }}
             .topbar-right {{ gap:8px; }}
             .battery {{ width:92px; }}
             .battery-label {{ font-size:9px; min-width:28px; }}
@@ -778,16 +768,100 @@ def render_text_panel(selected: date, panel: str):
 
 
 def render_quadrant_dialog(selected: date):
+    note, diet, quadrant, time_map, ui, extras = read_day(selected)
+    tasks = load_quadrant_tasks(quadrant)
+    groups = {
+        "Important and Urgent": [],
+        "Important, Not Urgent": [],
+        "Urgent, Not Important": [],
+        "Not Important or Urgent": [],
+    }
+    for index, task in enumerate(tasks):
+        groups[quadrant_name(task)].append((index, task))
+
+    cells = []
+    for title, items in groups.items():
+        task_html = "".join(
+            f'<div class="task">? {escape(task["text"])}</div>' for _index, task in items
+        ) or '<div class="empty">No tasks yet</div>'
+        cells.append(f'<section><h3>{escape(title)}</h3>{task_html}</section>')
+
+    components.html(
+        f"""
+        <div id="matrixModal">
+          <div id="matrixHandle">
+            <strong>Monthly Eisenhower Matrix</strong>
+            <button id="hideMatrix" type="button">x</button>
+          </div>
+          <div class="matrixGrid">{''.join(cells)}</div>
+        </div>
+        <style>
+          body {{ margin:0; background:transparent; font-family:Arial, sans-serif; color:#000; }}
+          #matrixModal {{
+            position:absolute; left:18px; top:8px; width:min(820px, calc(100vw - 36px));
+            background:#fff; border:1px solid #fff; box-shadow:0 12px 28px rgba(60,50,35,.18);
+            padding:12px; resize:both; overflow:auto; min-width:320px; min-height:260px;
+          }}
+          #matrixHandle {{
+            display:flex; align-items:center; justify-content:space-between; cursor:move;
+            padding:2px 0 10px; color:#000; user-select:none;
+          }}
+          #hideMatrix {{
+            border:1px solid #eee; background:#fff; color:#000; width:30px; height:28px;
+            cursor:pointer; font-weight:700;
+          }}
+          .matrixGrid {{
+            display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px;
+            aspect-ratio:1.6 / 1;
+          }}
+          section {{
+            background:#fff; border:1px solid #f2f2f2; padding:12px; overflow:auto; color:#000;
+          }}
+          h3 {{ margin:0 0 10px; font-size:18px; line-height:1.1; color:#000; }}
+          .task, .empty {{
+            color:#000; background:#fff; border:1px solid #f4f4f4; padding:7px; margin:6px 0;
+            font-size:15px;
+          }}
+          .empty {{ color:#555; }}
+          @media (max-width: 640px) {{
+            #matrixModal {{ left:6px; width:calc(100vw - 12px); min-width:280px; }}
+            .matrixGrid {{ gap:6px; aspect-ratio:1 / 1.12; }}
+            h3 {{ font-size:12px; }}
+            .task, .empty {{ font-size:11px; padding:5px; }}
+            section {{ padding:7px; }}
+          }}
+        </style>
+        <script>
+          const modal = document.getElementById('matrixModal');
+          const handle = document.getElementById('matrixHandle');
+          const hide = document.getElementById('hideMatrix');
+          let drag = false, dx = 0, dy = 0;
+          handle.addEventListener('pointerdown', (event) => {{
+            drag = true;
+            dx = event.clientX - modal.offsetLeft;
+            dy = event.clientY - modal.offsetTop;
+            handle.setPointerCapture(event.pointerId);
+          }});
+          handle.addEventListener('pointermove', (event) => {{
+            if (!drag) return;
+            modal.style.left = Math.max(0, event.clientX - dx) + 'px';
+            modal.style.top = Math.max(0, event.clientY - dy) + 'px';
+          }});
+          handle.addEventListener('pointerup', () => drag = false);
+          hide.addEventListener('click', () => modal.style.display = 'none');
+        </script>
+        """,
+        height=430,
+    )
+
     st.markdown('<div class="matrix-dialog">', unsafe_allow_html=True)
     head_cols = st.columns([0.9, 0.1])
     with head_cols[0]:
-        st.markdown('<div class="matrix-title">Monthly Eisenhower Matrix</div>', unsafe_allow_html=True)
+        st.markdown('<div class="matrix-title">Matrix Controls</div>', unsafe_allow_html=True)
     with head_cols[1]:
         if st.button("x", key="close-matrix", use_container_width=True):
             st.session_state.matrix_open = False
             st.rerun()
-    note, diet, quadrant, time_map, ui, extras = read_day(selected)
-    tasks = load_quadrant_tasks(quadrant)
     with st.form(f"quadrant-dialog-form-{selected}", clear_on_submit=True):
         task_text = st.text_input("Task", placeholder="Write one task")
         col_a, col_b, col_c = st.columns([1, 1, 1])
@@ -801,26 +875,6 @@ def render_quadrant_dialog(selected: date):
         write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
         st.rerun()
 
-    groups = {
-        "Important and Urgent": [],
-        "Important, Not Urgent": [],
-        "Urgent, Not Important": [],
-        "Not Important or Urgent": [],
-    }
-    for index, task in enumerate(tasks):
-        groups[quadrant_name(task)].append((index, task))
-
-    html = ['<div class="quadrant-grid">']
-    for title, items in groups.items():
-        html.append(f'<div class="quadrant-box"><div class="quadrant-title">{escape(title)}</div>')
-        if not items:
-            html.append('<div class="task-pill">No tasks yet</div>')
-        for _index, task in items:
-            html.append(f'<div class="task-pill">□ {escape(task["text"])}</div>')
-        html.append("</div>")
-    html.append("</div>")
-    st.markdown("".join(html), unsafe_allow_html=True)
-
     task_options = [f'{idx + 1}. {task["text"]}' for idx, task in enumerate(tasks)]
     if task_options:
         done_choice = st.selectbox("Mark task done", task_options, key=f"done-choice-{selected}")
@@ -832,7 +886,6 @@ def render_quadrant_dialog(selected: date):
             write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
             st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
-
 
 def render_schedule(selected: date):
     note, diet, quadrant, time_map, ui, extras = read_day(selected)
@@ -880,7 +933,6 @@ def render_schedule(selected: date):
 
 def render_day():
     selected = st.session_state.selected_day
-    st.markdown('<div class="fixed-day-head">', unsafe_allow_html=True)
     render_simple_topbar(selected)
     render_day_header_clean(selected)
     st.session_state.flash_battery = False
@@ -894,7 +946,6 @@ def render_day():
         else:
             st.success(message)
 
-    st.markdown('<div class="compact-action-row">', unsafe_allow_html=True)
     cols = st.columns([1, 1, 1])
     if cols[0].button("Today's Notes", key="notes-btn", use_container_width=True):
         set_panel("note")
@@ -906,9 +957,6 @@ def render_day():
         st.session_state.matrix_open = True
         add_token(st.session_state.click_token)
         st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown('<div class="day-fixed-spacer"></div>', unsafe_allow_html=True)
 
     if st.session_state.matrix_open:
         render_quadrant_dialog(selected)
