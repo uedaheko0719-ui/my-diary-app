@@ -380,6 +380,24 @@ def save_token(day: date):
     write_day(day, note, diet, quadrant, time_map, ui, extras)
 
 
+def save_note_from_state(day: date):
+    note, diet, quadrant, time_map, ui, extras = read_day(day)
+    key = f"note-text-{day.isoformat()}"
+    value = st.session_state.get(key, note)
+    ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+    write_day(day, value, diet, quadrant, time_map, ui, extras)
+    st.session_state.last_saved = f"Notes saved for {day:%Y-%m-%d}"
+
+
+def save_diet_from_state(day: date):
+    note, diet, quadrant, time_map, ui, extras = read_day(day)
+    key = f"diet-text-{day.isoformat()}"
+    value = st.session_state.get(key, diet)
+    ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+    write_day(day, note, value, quadrant, time_map, ui, extras)
+    st.session_state.last_saved = f"Meal plan saved for {day:%Y-%m-%d}"
+
+
 def load_quadrant_tasks(raw: str) -> list[dict]:
     if not raw.strip():
         return []
@@ -568,20 +586,40 @@ def render_text_panel(selected: date, panel: str):
     note, diet, quadrant, time_map, ui, extras = read_day(selected)
     if panel == "note":
         st.markdown('<div class="panel-box">', unsafe_allow_html=True)
-        value = st.text_area("Today's Notes", value=note, height=260)
-        if st.button("Save Notes", use_container_width=True):
+        value = st.text_area(
+            "Today's Notes",
+            value=note,
+            height=260,
+            key=f"note-text-{selected.isoformat()}",
+        )
+        if st.button("Save Notes", key=f"save-note-{selected}", use_container_width=True):
             add_token(max(st.session_state.click_token, len(value) * st.session_state.type_token))
             ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
             write_day(selected, value, diet, quadrant, time_map, ui, extras)
+            saved_note, _diet, _quad, _time, _ui, _extras = read_day(selected)
+            if saved_note.strip() == value.strip():
+                st.session_state.last_saved = f"Notes saved for {selected:%Y-%m-%d}"
+            else:
+                st.session_state.last_saved = "Save failed: notes were not written."
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
     elif panel == "diet":
         st.markdown('<div class="panel-box">', unsafe_allow_html=True)
-        value = st.text_area("Meal Plan", value=diet, height=220)
-        if st.button("Save Meal Plan", use_container_width=True):
+        value = st.text_area(
+            "Meal Plan",
+            value=diet,
+            height=220,
+            key=f"diet-text-{selected.isoformat()}",
+        )
+        if st.button("Save Meal Plan", key=f"save-diet-{selected}", use_container_width=True):
             add_token(max(st.session_state.click_token, len(value) * st.session_state.type_token))
             ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
             write_day(selected, note, value, quadrant, time_map, ui, extras)
+            _note, saved_diet, _quad, _time, _ui, _extras = read_day(selected)
+            if saved_diet.strip() == value.strip():
+                st.session_state.last_saved = f"Meal plan saved for {selected:%Y-%m-%d}"
+            else:
+                st.session_state.last_saved = "Save failed: meal plan was not written."
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
     elif panel == "quadrant":
@@ -660,6 +698,13 @@ def render_schedule(selected: date):
         add_token(0.5 * min(1.0, filled / 24))
         ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
         write_day(selected, note, diet, quadrant, changed, ui, extras)
+        _note, _diet, _quad, saved_time, _ui, _extras = read_day(selected)
+        expected = {slot: value for slot, value in changed.items() if value.strip()}
+        actual = {slot: value for slot, value in saved_time.items() if value.strip()}
+        if actual == expected:
+            st.session_state.last_saved = f"Schedule saved for {selected:%Y-%m-%d}"
+        else:
+            st.session_state.last_saved = "Save failed: schedule was not written."
         st.rerun()
 
 
@@ -684,6 +729,13 @@ def render_day():
 
     if st.session_state.settings_open:
         render_settings(selected)
+
+    if st.session_state.get("last_saved"):
+        message = st.session_state.last_saved
+        if str(message).startswith("Save failed"):
+            st.error(message)
+        else:
+            st.success(message)
 
     c1, c2, c3, c4 = st.columns([1.2, 0.92, 1.0, 2.8])
     if c1.button("Today's Notes", key="notes-btn", use_container_width=True):
