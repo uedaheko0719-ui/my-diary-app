@@ -3,11 +3,12 @@ from __future__ import annotations
 import calendar
 import json
 from html import escape
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 
 NOTES_DIR = Path("notes")
@@ -116,7 +117,7 @@ def natural_time(hour: int) -> str:
 
 
 def time_slots() -> list[str]:
-    return [f"{natural_time(i)} - {natural_time(i + 1)}" for i in range(24)]
+    return [f"{natural_time(i)} - {natural_time(i + 1)}" for i in range(7, 26)]
 
 
 def current_slot() -> str:
@@ -481,6 +482,35 @@ def css():
             padding:3px; border:1px solid rgba(37,55,46,.16);
             background:#fffefa;
             box-shadow:inset 0 0 0 1px rgba(255,255,255,.72), 0 7px 16px rgba(60,50,35,.07);
+          }}
+          .timeline-scroll {{
+            width:100%;
+            overflow-x:auto;
+            overflow-y:visible;
+            scroll-snap-type:x mandatory;
+            scrollbar-width:thin;
+            overscroll-behavior-x:contain;
+          }}
+          .timeline-track {{
+            display:grid;
+            grid-template-columns:repeat(3, 100%);
+            width:300%;
+          }}
+          .timeline-panel {{
+            position:relative;
+            scroll-snap-align:start;
+            padding:0 1px;
+          }}
+          .timeline-panel-link {{
+            display:block;
+            color:inherit !important;
+            text-decoration:none !important;
+          }}
+          .time-cell.yesterday {{
+            background:linear-gradient(90deg, var(--red) 0 var(--fill, 0%), rgba(201,74,58,.10) var(--fill, 0%) 100%);
+          }}
+          .time-cell.tomorrow {{
+            background:#fffefa;
           }}
           .time-cell {{
             position:relative;
@@ -1066,7 +1096,7 @@ def render_simple_topbar(selected: date):
     st.markdown(simple_topbar_html(selected), unsafe_allow_html=True)
 
 
-def day_progress_html(selected: date) -> str:
+def single_day_progress_html(selected: date, tone: str = "today", link_day: date | None = None) -> str:
     _note, _diet, _quadrant, time_map, _ui, _extras = read_day(selected)
     current = now()
     if selected == current.date():
@@ -1076,7 +1106,9 @@ def day_progress_html(selected: date) -> str:
     else:
         pct = 0
 
-    html = ['<div class="day-progress">']
+    open_link = f'<a class="timeline-panel-link" href="?day={link_day.isoformat()}">' if link_day else ""
+    close_link = "</a>" if link_day else ""
+    html = [open_link, '<div class="day-progress">']
     for hour in range(24):
         left = hour / 24 * 100
         if hour in {0, 6, 12, 18}:
@@ -1097,20 +1129,82 @@ def day_progress_html(selected: date) -> str:
             fill = current.minute / 60 * 100
         else:
             fill = 0
+        if tone == "yesterday":
+            fill = 100
+            cell_class = "time-cell yesterday"
+        elif tone == "tomorrow":
+            fill = 0
+            cell_class = "time-cell tomorrow"
+        else:
+            cell_class = "time-cell"
         slot = f"{natural_time(hour)} - {natural_time(hour + 1)}"
-        text = escape(time_map.get(slot, "").strip() or "No task")
+        text = escape(time_map.get(slot, "").strip() or ("No task" if tone != "tomorrow" else ""))
         pop_time = f"{hour:02d}:00 ~ {(hour + 1) % 24:02d}:00"
         html.append(
-            f'<div class="time-cell" style="--fill:{fill:.2f}%">'
+            f'<div class="{cell_class}" style="--fill:{fill:.2f}%">'
             f'<div class="timeline-pop"><b>{pop_time}</b>{text}</div></div>'
         )
     html.append("</div>")
     html.append("</div>")
+    html.append(close_link)
     return "".join(html)
+
+
+def day_progress_html(selected: date) -> str:
+    yesterday = selected - timedelta(days=1)
+    tomorrow = selected + timedelta(days=1)
+    return (
+        '<div class="timeline-scroll">'
+        '<div class="timeline-track">'
+        f'<div class="timeline-panel">{single_day_progress_html(yesterday, "yesterday", yesterday)}</div>'
+        f'<div class="timeline-panel">{single_day_progress_html(selected, "today")}</div>'
+        f'<div class="timeline-panel">{single_day_progress_html(tomorrow, "tomorrow", tomorrow)}</div>'
+        '</div>'
+        '</div>'
+    )
 
 
 def render_day_progress(selected: date):
     st.markdown(day_progress_html(selected), unsafe_allow_html=True)
+
+
+def render_timeline_swipe_script(selected: date):
+    yesterday = (selected - timedelta(days=1)).isoformat()
+    tomorrow = (selected + timedelta(days=1)).isoformat()
+    components.html(
+        f"""
+        <script>
+        const doc = window.parent.document;
+        const run = () => {{
+          const scroller = doc.querySelector('.timeline-scroll');
+          if (!scroller || scroller.dataset.ready === '1') return;
+          scroller.dataset.ready = '1';
+          const goCenter = () => {{
+            scroller.scrollLeft = scroller.clientWidth;
+          }};
+          setTimeout(goCenter, 40);
+          setTimeout(goCenter, 180);
+          let locked = false;
+          scroller.addEventListener('scroll', () => {{
+            if (locked) return;
+            const width = scroller.clientWidth || 1;
+            if (scroller.scrollLeft < width * 0.20) {{
+              locked = true;
+              window.parent.location.search = '?day={yesterday}';
+            }}
+            if (scroller.scrollLeft > width * 1.80) {{
+              locked = true;
+              window.parent.location.search = '?day={tomorrow}';
+            }}
+          }}, {{ passive: true }});
+        }};
+        setTimeout(run, 50);
+        setTimeout(run, 250);
+        setTimeout(run, 800);
+        </script>
+        """,
+        height=0,
+    )
 
 
 def render_text_panel(selected: date, panel: str):
@@ -1277,6 +1371,7 @@ def render_day():
         '</div>'
     )
     st.markdown(sticky_html, unsafe_allow_html=True)
+    render_timeline_swipe_script(selected)
     st.session_state.flash_battery = False
 
     if st.session_state.get("last_saved"):
@@ -1306,7 +1401,7 @@ def render_day():
     if st.session_state.panel:
         render_text_panel(selected, st.session_state.panel)
 
-    st.markdown('<div class="schedule-title">Daily Schedule (0:00 - 24:00)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="schedule-title">Daily Schedule (7:00 AM - next day 2:00 AM)</div>', unsafe_allow_html=True)
     with st.container(height=610, border=False):
         render_schedule(selected)
 
