@@ -164,6 +164,9 @@ def init_state():
             st.session_state.view_year = picked.year
             st.session_state.view_month = picked.month
             st.session_state.view = "day"
+            panel = params.get("panel")
+            if panel in {"note", "diet"}:
+                st.session_state.panel = "" if st.session_state.panel == panel else panel
             st.query_params.clear()
         except ValueError:
             st.query_params.clear()
@@ -198,15 +201,31 @@ def css():
           .block-container {{ max-width:1220px; padding-top:92px; }}
           .simple-topbar {{
             display:flex; align-items:center; justify-content:space-between;
-            gap:14px; min-height:42px;
+            gap:10px; min-height:30px;
           }}
           .month-link {{
-            display:inline-flex; align-items:center; justify-content:center; min-height:40px;
-            padding:0 16px; border:2px outset #fff8e8; background:#efe7d4;
+            display:inline-flex; align-items:center; justify-content:center; min-height:30px;
+            padding:0 11px; border:2px outset #fff8e8; background:#efe7d4;
             color:#000; text-decoration:none; font-weight:800; box-shadow:1px 1px 0 #7f7667;
+            font-size:13px;
           }}
           .month-link:hover {{ background:#fff8eb; transform:translateY(-1px); }}
           .topbar-right {{ display:flex; align-items:center; gap:14px; }}
+          .compact-action-row {{
+            display:grid; grid-template-columns:1.2fr .95fr 1fr 2.4fr; gap:8px; align-items:stretch;
+            width:100%;
+          }}
+          .html-btn {{
+            display:flex; align-items:center; justify-content:center; min-height:42px;
+            border:2px outset #fff8e8; color:#000; text-decoration:none; font-weight:800;
+            box-shadow:1px 1px 0 #7f7667; font-size:16px; white-space:nowrap;
+          }}
+          .html-btn:hover {{ filter:brightness(1.04); transform:translateY(-1px); }}
+          .html-btn:active {{ border-style:inset; box-shadow:none; transform:translateY(1px); }}
+          .html-note {{ background:#e8f2ff; }}
+          .html-meal {{ background:#fff4e4; }}
+          .html-now {{ background:#e8f6ea; }}
+          .html-spacer {{ min-width:0; }}
           .month-wrap {{ max-width:980px; margin:0 auto; }}
           .month-nav {{
             display:grid; grid-template-columns:54px 1fr 54px; align-items:center;
@@ -259,17 +278,17 @@ def css():
           .calendar-today-label {{ display:block; color:var(--red); font-size:11px; margin-top:4px; }}
           .day-top {{
             display:flex; align-items:center; justify-content:center;
-            gap:12px; padding-bottom:4px; margin-bottom:8px;
+            gap:8px; padding-bottom:0; margin-bottom:2px;
           }}
-          .day-title {{ font-size:34px; font-weight:900; text-align:center; color:#000; }}
+          .day-title {{ font-size:24px; font-weight:900; text-align:center; color:#000; }}
           .right-tools {{ display:flex; align-items:center; gap:12px; }}
           .battery-wrap {{ display:flex; align-items:center; gap:8px; }}
           .battery {{
-            width:210px; height:24px; border:3px solid #27352d; border-radius:0;
-            background:white; padding:3px; position:relative;
+            width:160px; height:18px; border:3px solid #27352d; border-radius:0;
+            background:white; padding:2px; position:relative;
           }}
           .battery:after {{
-            content:""; position:absolute; right:-10px; top:4px; width:7px; height:12px;
+            content:""; position:absolute; right:-10px; top:3px; width:7px; height:9px;
             border:3px solid #27352d; border-left:0; border-radius:0;
           }}
           .battery-fill {{
@@ -282,19 +301,20 @@ def css():
             50% {{ filter:brightness(1.75); }}
             100% {{ filter:brightness(1); }}
           }}
-          .battery-label {{ min-width:42px; font-size:12px; font-weight:800; }}
+          .battery-label {{ min-width:36px; font-size:11px; font-weight:800; }}
           .tool-row {{ display:flex; gap:14px; margin:20px 0 14px; flex-wrap:wrap; }}
-          .schedule-title {{ font-size:27px; font-weight:900; margin:16px 0 12px; color:#000; }}
+          .schedule-title {{ font-size:22px; font-weight:900; margin:8px 0 8px; color:#000; }}
           .fixed-day-head {{
-            position:sticky; top:2.75rem; z-index:40; background:var(--paper);
-            padding:10px 0 12px; border-bottom:1px solid rgba(200,189,167,.55);
+            position:fixed; top:2.85rem; left:50%; transform:translateX(-50%);
+            width:min(1220px, calc(100vw - 32px)); z-index:1000; background:var(--paper);
+            padding:6px 0 7px; border-bottom:1px solid rgba(200,189,167,.55);
+            box-shadow:0 6px 18px rgba(80,70,48,.08);
           }}
+          .day-fixed-spacer {{ height:205px; }}
           .schedule-scroll {{
-            height:calc(100vh - 420px); min-height:360px; overflow-y:auto; padding-right:12px;
+            height:calc(100vh - 250px); min-height:420px; overflow-y:auto; padding-right:12px;
             overscroll-behavior:contain;
           }}
-          .st-key-notes-btn button {{ background:#e8f2ff !important; font-size:20px; min-height:58px; border-color:#f9fdff !important; }}
-          .st-key-meal-btn button {{ background:#fff4e4 !important; font-size:20px; min-height:58px; border-color:#fff9f0 !important; }}
           .st-key-now-btn button {{ background:#e8f6ea !important; font-size:20px; min-height:58px; border-color:#f8fff9 !important; }}
           .action-btn {{
             display:flex; align-items:center; justify-content:center; min-height:58px;
@@ -310,27 +330,27 @@ def css():
             padding:14px; margin:10px 0 16px;
           }}
           .day-progress {{
-            position:relative; height:150px; margin:22px 0 20px; overflow:visible;
+            position:relative; height:82px; margin:6px 0 4px; overflow:visible;
           }}
           .progress-line {{
-            position:absolute; left:0; right:0; top:66px; height:10px; background:#d8d8d8;
+            position:absolute; left:0; right:0; top:45px; height:8px; background:#d8d8d8;
           }}
           .progress-fill {{
-            position:absolute; left:0; top:66px; height:10px; background:#4a90e2; border-radius:8px;
+            position:absolute; left:0; top:45px; height:8px; background:#4a90e2; border-radius:8px;
           }}
           .tick {{
-            position:absolute; top:45px; width:3px; height:36px; background:#5c5c5c;
+            position:absolute; top:32px; width:3px; height:25px; background:#5c5c5c;
           }}
-          .tick.major {{ top:26px; height:55px; }}
+          .tick.major {{ top:18px; height:39px; }}
           .tick-label {{
-            position:absolute; top:0; transform:translateX(-50%); font-size:22px; font-weight:900; color:#000;
+            position:absolute; top:0; transform:translateX(-50%); font-size:18px; font-weight:900; color:#000;
           }}
           .hour-zone {{
-            position:absolute; top:40px; height:76px;
+            position:absolute; top:22px; height:45px;
           }}
           .hour-zone:hover .timeline-pop {{ display:block; }}
           .timeline-pop {{
-            display:none; position:absolute; top:62px; left:50%; transform:translateX(-50%);
+            display:none; position:absolute; top:45px; left:50%; transform:translateX(-50%);
             width:190px; min-height:82px; background:#fffbe6; border:2px solid #111;
             padding:12px; z-index:50; font-size:16px; white-space:pre-wrap; color:#000;
           }}
@@ -362,17 +382,22 @@ def css():
           @media (max-width: 760px) {{
             .block-container {{ padding-top:88px; padding-left:8px; padding-right:8px; }}
             .simple-topbar {{ margin:-54px 0 18px; }}
-            .fixed-day-head {{ top:2.75rem; padding-top:6px; }}
-            .schedule-scroll {{ height:calc(100vh - 390px); min-height:320px; }}
+            .compact-action-row {{ grid-template-columns:1.15fr .9fr .95fr .4fr; gap:4px; }}
+            .html-btn {{ min-height:34px; font-size:11px; padding:0 3px; }}
+            .fixed-day-head {{ top:2.85rem; width:calc(100vw - 16px); padding-top:5px; }}
+            .day-fixed-spacer {{ height:218px; }}
+            .schedule-scroll {{ height:calc(100vh - 265px); min-height:340px; }}
             .topbar-right {{ gap:8px; }}
-            .battery {{ width:116px; }}
+            .battery {{ width:92px; }}
+            .battery-label {{ font-size:9px; min-width:28px; }}
+            .month-link {{ min-height:26px; padding:0 6px; font-size:10px; }}
             .calendar-grid {{ gap:4px; }}
             .calendar-cell {{ min-height:54px; padding:4px; font-size:14px; }}
             .content-mark {{ width:9px; height:13px; box-shadow:1px 1px 0 #222; }}
             .week-label {{ font-size:11px; }}
             .month-title {{ font-size:21px; }}
-            .day-progress {{ height:118px; }}
-            .tick-label {{ font-size:15px; }}
+            .day-progress {{ height:76px; }}
+            .tick-label {{ font-size:13px; }}
             .timeline-pop {{ width:150px; font-size:13px; }}
             .slot {{ grid-template-columns:1fr; }}
             .day-top {{ align-items:flex-start; flex-direction:column; }}
@@ -426,6 +451,11 @@ def save_schedule_from_state(day: date):
     st.session_state.last_saved = f"Auto-saved schedule for {day:%Y-%m-%d}"
     if filled:
         add_token(0.5 * min(1.0, filled / 24))
+
+
+def set_panel(panel: str):
+    st.session_state.panel = "" if st.session_state.panel == panel else panel
+    add_token(st.session_state.click_token)
 
 
 def load_quadrant_tasks(raw: str) -> list[dict]:
@@ -817,17 +847,20 @@ def render_day():
         else:
             st.success(message)
 
-    c1, c2, c3, c4 = st.columns([1.2, 0.92, 1.0, 2.8])
-    if c1.button("Today's Notes", key="notes-btn", use_container_width=True):
-        st.session_state.panel = "" if st.session_state.panel == "note" else "note"
-        add_token(st.session_state.click_token)
-        st.rerun()
-    if c2.button("Meal Plan", key="meal-btn", use_container_width=True):
-        st.session_state.panel = "" if st.session_state.panel == "diet" else "diet"
-        add_token(st.session_state.click_token)
-        st.rerun()
-    c3.markdown('<a class="action-btn" href="#now-slot">Go to Now</a>', unsafe_allow_html=True)
+    st.markdown('<div class="compact-action-row">', unsafe_allow_html=True)
+    st.markdown(
+        f'<a class="html-btn html-note" href="?day={selected.isoformat()}&panel=note">Today\'s Notes</a>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f'<a class="html-btn html-meal" href="?day={selected.isoformat()}&panel=diet">Meal Plan</a>',
+        unsafe_allow_html=True,
+    )
+    st.markdown('<a class="html-btn html-now" href="#now-slot">Go to Now</a>', unsafe_allow_html=True)
+    st.markdown('<div class="html-spacer"></div>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown('<div class="day-fixed-spacer"></div>', unsafe_allow_html=True)
 
     if st.session_state.panel:
         render_text_panel(selected, st.session_state.panel)
