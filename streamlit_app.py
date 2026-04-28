@@ -157,6 +157,9 @@ def init_state():
         st.session_state.setdefault(key, value)
 
     params = st.query_params
+    if not params.get("day") and not params.get("month") and not params.get("matrix_done"):
+        st.session_state.view = "month"
+
     if params.get("matrix_done") and params.get("day"):
         try:
             picked = date.fromisoformat(params["day"])
@@ -196,6 +199,8 @@ def init_state():
             panel = params.get("panel")
             if panel in {"note", "diet"}:
                 st.session_state.panel = "" if st.session_state.panel == panel else panel
+            if params.get("matrix") == "open":
+                st.session_state.matrix_open = True
             st.query_params.clear()
         except ValueError:
             st.query_params.clear()
@@ -290,13 +295,11 @@ def css():
             color:#000 !important;
           }}
           .topbar-right {{ display:flex; align-items:center; gap:14px; }}
-          .compact-action-row [data-testid="stHorizontalBlock"],
-          [data-testid="stHorizontalBlock"] {{
+          .compact-action-row [data-testid="stHorizontalBlock"] {{
             flex-wrap:nowrap !important;
             gap:8px !important;
           }}
-          .compact-action-row [data-testid="column"],
-          [data-testid="column"] {{
+          .compact-action-row [data-testid="column"] {{
             min-width:0 !important;
             flex:1 1 0 !important;
           }}
@@ -494,6 +497,32 @@ def css():
           }}
           .day-actions {{
             margin-top:30px;
+          }}
+          .action-link-grid {{
+            display:grid;
+            grid-template-columns:repeat(3, minmax(0, 1fr));
+            gap:10px;
+            margin-top:30px;
+          }}
+          .day-action-link {{
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            min-height:36px;
+            border:1px solid #e3d8c5;
+            background:#fffdf8;
+            color:#000 !important;
+            text-decoration:none !important;
+            font-size:15px;
+            font-weight:650;
+            box-sizing:border-box;
+            white-space:nowrap;
+          }}
+          .day-action-link:hover {{
+            background:#fff;
+            border-color:#bca98c;
+            transform:translateY(-2px);
+            box-shadow:0 8px 20px rgba(60,50,35,.20);
           }}
           .progress-line {{
             display:none;
@@ -823,8 +852,8 @@ def css():
               transform:scale(.98);
               transform-origin:top left;
             }}
-            [data-testid="stHorizontalBlock"] {{ flex-wrap:nowrap !important; gap:4px !important; }}
-            [data-testid="column"] {{ min-width:0 !important; flex:1 1 0 !important; }}
+            .compact-action-row [data-testid="stHorizontalBlock"] {{ flex-wrap:nowrap !important; gap:4px !important; }}
+            .compact-action-row [data-testid="column"] {{ min-width:0 !important; flex:1 1 0 !important; }}
             .html-btn {{ min-height:32px; font-size:11px; padding:0 3px; }}
             .compact-action-row [data-testid="stHorizontalBlock"] {{ gap:4px !important; }}
             .simple-topbar {{ min-height:24px; gap:6px; }}
@@ -937,7 +966,7 @@ def css():
             }}
             .slot {{ grid-template-columns:190px 1fr; gap:12px; }}
             .schedule-time-cell {{ font-size:inherit; padding:14px 8px 0 10px; }}
-            .schedule-title {{ font-size:18px; margin:14px 0 8px; }}
+            .schedule-title {{ font-size:15px; margin:10px 0 6px; }}
             .matrix-html-grid {{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }}
             .matrix-html-box {{ min-height:156px; padding:12px; }}
             .matrix-task {{ font-size:15px; padding:8px 9px; gap:8px; }}
@@ -1038,9 +1067,6 @@ def css():
               transform:none !important;
               box-sizing:border-box !important;
             }}
-            .block-container:has(.day-head) [data-testid="stHorizontalBlock"] {{
-              flex-wrap:nowrap !important;
-            }}
             .block-container:has(.day-head) .simple-topbar {{
               min-height:26px !important;
               gap:6px !important;
@@ -1092,24 +1118,41 @@ def css():
             .block-container:has(.day-head) .day-actions {{
               margin-top:12px !important;
             }}
+            .block-container:has(.day-head) .action-link-grid {{
+              gap:5px !important;
+              margin-top:12px !important;
+            }}
+            .block-container:has(.day-head) .day-action-link {{
+              min-height:26px !important;
+              font-size:10px !important;
+              padding:0 2px !important;
+            }}
             .block-container:has(.day-head) .st-key-notes-btn button,
             .block-container:has(.day-head) .st-key-meal-btn button,
             .block-container:has(.day-head) .st-key-monthly-matrix button {{
-              min-height:30px !important;
+              min-height:26px !important;
               max-width:none !important;
-              font-size:11px !important;
-              padding:0 4px !important;
-            }}
-            .block-container:has(.day-head) .slot {{
-              grid-template-columns:92px minmax(0, 1fr) !important;
-              gap:6px !important;
+              font-size:10px !important;
+              padding:0 2px !important;
             }}
             .block-container:has(.day-head) .schedule-time-cell {{
-              font-size:11px !important;
-              padding:12px 4px 0 6px !important;
-              min-height:62px !important;
+              font-size:10px !important;
+              padding:10px 3px 0 4px !important;
+              min-height:54px !important;
+              line-height:1.15 !important;
+              overflow-wrap:anywhere !important;
+            }}
+            .block-container:has(.day-head) .schedule-title {{
+              font-size:15px !important;
+              margin:10px 0 5px !important;
+              line-height:1.1 !important;
             }}
             .block-container:has(.day-head) textarea {{
+              min-width:0 !important;
+              height:52px !important;
+              min-height:52px !important;
+            }}
+            .block-container:has(.day-head) [data-testid="stTextArea"] {{
               min-width:0 !important;
             }}
           }}
@@ -1215,19 +1258,17 @@ def render_month():
     else:
         next_y, next_m = year, month + 1
 
-    st.markdown('<div class="month-wrap">', unsafe_allow_html=True)
-    st.markdown(
+    html = [
         f"""
+        <div class="month-wrap">
         <div class="month-nav">
           <a class="month-arrow" href="?month={prev_y:04d}-{prev_m:02d}">&lsaquo;</a>
           <div class="month-title">{calendar.month_name[month]} {year}</div>
           <a class="month-arrow" href="?month={next_y:04d}-{next_m:02d}">&rsaquo;</a>
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    html = ['<div class="calendar-grid">']
+        <div class="calendar-grid">
+        """
+    ]
     for label in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]:
         html.append(f'<div class="week-label">{label}</div>')
     for week in calendar.monthcalendar(year, month):
@@ -1254,8 +1295,8 @@ def render_month():
                 f'<span class="calendar-date">{day_num}</span>{content_mark}{today_label}</a>'
             )
     html.append("</div>")
+    html.append("</div>")
     st.markdown("".join(html), unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_day_header(selected: date):
@@ -1528,19 +1569,16 @@ def render_day():
         else:
             st.success(message)
 
-    st.markdown('<div class="day-actions">', unsafe_allow_html=True)
-    cols = st.columns([1, 1, 1])
-    if cols[0].button("Monthly Matrix", key="monthly-matrix", use_container_width=True):
-        st.session_state.matrix_open = True
-        add_token(st.session_state.click_token)
-        st.rerun()
-    if cols[1].button("Today's Notes", key="notes-btn", use_container_width=True):
-        set_panel("note")
-        st.rerun()
-    if cols[2].button("Meal Plan", key="meal-btn", use_container_width=True):
-        set_panel("diet")
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <div class="action-link-grid">
+          <a class="day-action-link" href="/?day={selected.isoformat()}&matrix=open" target="_self">Matrix</a>
+          <a class="day-action-link" href="/?day={selected.isoformat()}&panel=note" target="_self">Notes</a>
+          <a class="day-action-link" href="/?day={selected.isoformat()}&panel=diet" target="_self">Meal</a>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     if st.session_state.matrix_open:
         render_quadrant_dialog(selected)
@@ -1560,6 +1598,7 @@ def main():
 
     if st.session_state.view == "month":
         render_month()
+        st.stop()
     else:
         render_day()
 
