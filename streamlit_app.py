@@ -206,14 +206,14 @@ def css():
           .stApp, .stApp *, [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] * {{
             color:#000;
           }}
-          .block-container {{ max-width:1220px; padding:8px 18px 12px; }}
+          .block-container {{ max-width:1220px; padding:10px 18px 14px; }}
           .simple-topbar {{
             display:flex; align-items:center; justify-content:space-between;
             gap:10px; min-height:26px;
           }}
           .month-link {{
-            display:inline-flex; align-items:center; justify-content:center; min-height:28px;
-            padding:0 10px; border:1px solid #fff; background:#fff;
+            display:inline-flex; align-items:center; justify-content:center; min-height:30px;
+            padding:0 12px; border:1px solid #d8cbb6; background:#fffdf8;
             color:#000; text-decoration:none; font-weight:800; box-shadow:0 1px 3px rgba(60,50,35,.18);
             font-size:13px; border-radius:2px;
           }}
@@ -253,9 +253,10 @@ def css():
           }}
           .week-label {{ color:#000; font-weight:800; text-align:center; padding-bottom:20px; font-size:20px; }}
           div.stButton > button {{
-            border-radius:2px !important; border:1px solid #fff !important; background:#fff !important;
-            color:#000 !important; min-height:42px; transition:background .12s ease, transform .08s ease, border-color .12s ease;
+            border-radius:2px !important; border:1px solid #d8cbb6 !important; background:#fffdf8 !important;
+            color:#000 !important; min-height:34px; transition:background .12s ease, transform .08s ease, border-color .12s ease;
             font-weight:700; box-shadow:0 1px 3px rgba(60,50,35,.18); font-family:Arial, sans-serif;
+            font-size:15px !important;
           }}
           div.stButton > button p, div.stButton > button span {{
             color:#000 !important;
@@ -316,8 +317,8 @@ def css():
           }}
           .battery-label {{ min-width:36px; font-size:11px; font-weight:800; }}
           .tool-row {{ display:flex; gap:14px; margin:20px 0 14px; flex-wrap:wrap; }}
-          .schedule-title {{ font-size:19px; font-weight:900; margin:6px 0 2px; color:#000; }}
-          [data-testid="stVerticalBlock"] {{ gap:.28rem !important; }}
+          .schedule-title {{ font-size:19px; font-weight:900; margin:14px 0 8px; color:#000; }}
+          [data-testid="stVerticalBlock"] {{ gap:.55rem !important; }}
           [data-testid="stTextArea"] {{ margin:0 !important; }}
           .day-head {{
             position:sticky; top:0; z-index:1000; background:var(--paper);
@@ -329,10 +330,19 @@ def css():
             overscroll-behavior:contain; scroll-behavior:smooth;
           }}
           .st-key-now-btn button {{ background:#e8f6ea !important; font-size:20px; min-height:58px; border-color:#f8fff9 !important; }}
+          .st-key-notes-btn button,
+          .st-key-meal-btn button,
+          .st-key-monthly-matrix button {{
+            min-height:36px !important;
+            max-width:220px !important;
+            margin:0 auto !important;
+            background:#fffdf8 !important;
+            border-color:#d8cbb6 !important;
+          }}
           .action-btn {{ display:flex; align-items:center; justify-content:center; min-height:58px; border:1px solid #fff; background:#fff; color:#000; text-decoration:none; font-weight:800; font-size:20px; box-shadow:0 1px 3px rgba(60,50,35,.18); }}
           .action-btn:hover {{ background:#f8fff9; transform:translateY(-1px); }}
           .action-btn:active {{ border-style:inset; box-shadow:none; transform:translateY(1px); }}
-          .st-key-monthly-matrix button {{ font-size:16px; }}
+          .st-key-monthly-matrix button {{ font-size:15px !important; }}
           .panel-box {{
             border:1px solid #fff; background:var(--softbox); border-radius:2px;
             padding:12px; margin:8px 0 12px;
@@ -393,8 +403,8 @@ def css():
           }}
           .matrix-dialog {{
             width:min(900px, 100%); overflow:auto; background:#fff;
-            border:1px solid #fff; box-shadow:0 8px 20px rgba(80,70,48,.10); padding:12px;
-            margin:8px auto 12px; color:#000; border-radius:2px;
+            border:1px solid #eadfce; box-shadow:0 8px 20px rgba(80,70,48,.10); padding:12px;
+            margin:14px auto 12px; color:#000; border-radius:2px;
           }}
           .matrix-head {{ display:flex; align-items:center; justify-content:space-between; gap:12px; }}
           .matrix-title {{ font-size:22px; font-weight:900; color:#000; margin:0 0 8px; }}
@@ -413,7 +423,11 @@ def css():
             border-radius:4px !important;
             color:#000 !important;
             background:#fff !important;
-            border-color:#fff !important;
+            border-color:#d8cbb6 !important;
+          }}
+          input::placeholder, textarea::placeholder {{
+            color:#787878 !important;
+            opacity:1 !important;
           }}
           [data-baseweb="textarea"] textarea,
           [data-baseweb="input"] input,
@@ -434,10 +448,20 @@ def css():
             color:#000 !important;
             background:#fff !important;
           }}
+          [data-testid="stFormSubmitButton"] button {{
+            background:#fffdf8 !important;
+            color:#000 !important;
+            border:1px solid #d8cbb6 !important;
+            box-shadow:0 1px 3px rgba(60,50,35,.18) !important;
+          }}
+          [data-testid="stFormSubmitButton"] button p,
+          [data-testid="stFormSubmitButton"] button span {{
+            color:#000 !important;
+          }}
           [data-testid="stForm"] {{
             background:#fff !important;
-            border:1px solid #fff !important;
-            padding:8px !important;
+            border:1px solid #eadfce !important;
+            padding:10px !important;
             border-radius:2px !important;
           }}
           @media (max-width: 760px) {{
@@ -872,12 +896,21 @@ def render_quadrant_dialog(selected: date):
             st.session_state.matrix_open = False
             st.rerun()
     with st.form(f"quadrant-dialog-form-{selected}", clear_on_submit=True):
-        task_text = st.text_input("Task", placeholder="Write one task")
-        col_a, col_b, col_c = st.columns([1, 1, 1])
-        important = col_a.toggle("Important")
-        urgent = col_b.toggle("Urgent")
-        submitted = col_c.form_submit_button("Add Task", use_container_width=True)
+        col_task, col_kind, col_add = st.columns([2.2, 1.25, 0.8])
+        task_text = col_task.text_input("Task", placeholder="Write one task")
+        quadrant_choice = col_kind.selectbox(
+            "Quadrant",
+            [
+                "Important and Urgent",
+                "Important, Not Urgent",
+                "Urgent, Not Important",
+                "Not Important or Urgent",
+            ],
+        )
+        submitted = col_add.form_submit_button("Add Task", use_container_width=True)
     if submitted and task_text.strip():
+        important = quadrant_choice in {"Important and Urgent", "Important, Not Urgent"}
+        urgent = quadrant_choice in {"Important and Urgent", "Urgent, Not Important"}
         tasks.append({"text": task_text.strip(), "important": important, "urgent": urgent})
         add_token(st.session_state.important_token)
         ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
