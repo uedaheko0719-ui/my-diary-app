@@ -217,6 +217,9 @@ def css():
             font-size:13px; border-radius:2px;
           }}
           .month-link:hover {{ background:#fff8eb; transform:translateY(-1px); }}
+          .month-link, .calendar-cell, div.stButton > button, [data-testid="stCheckbox"], textarea, input, .battery {{
+            transition:background .14s ease, transform .12s ease, box-shadow .14s ease, border-color .14s ease, filter .14s ease;
+          }}
           .topbar-right {{ display:flex; align-items:center; gap:14px; }}
           .compact-action-row [data-testid="stHorizontalBlock"],
           [data-testid="stHorizontalBlock"] {{
@@ -261,7 +264,8 @@ def css():
             color:#000 !important;
           }}
           div.stButton > button:hover {{
-            background:#fff8eb !important; border-color:#fff !important; transform:translateY(-1px);
+            background:#fff8eb !important; border-color:#c9bda6 !important; transform:translateY(-1px);
+            box-shadow:0 3px 8px rgba(60,50,35,.18) !important;
           }}
           div.stButton > button:active {{
             border-style:inset !important; transform:translateY(1px); box-shadow:none;
@@ -299,6 +303,11 @@ def css():
           .battery {{
             width:132px; height:16px; border:2px solid #25372e; border-radius:0;
             background:#fffefa; padding:2px; position:relative; box-shadow:none;
+          }}
+          .battery:hover {{
+            transform:translateY(-1px);
+            box-shadow:0 3px 8px rgba(53,168,104,.22);
+            filter:brightness(1.02);
           }}
           .battery:after {{
             content:""; position:absolute; right:-8px; top:3px; width:6px; height:8px;
@@ -350,6 +359,14 @@ def css():
           .day-progress {{
             position:relative; height:54px; margin:0; overflow:visible;
           }}
+          .timeline-sticky {{
+            position:sticky; top:0; z-index:999; background:var(--paper);
+            padding:6px 0 8px; border-bottom:1px solid rgba(216,203,182,.45);
+            box-shadow:0 5px 10px rgba(80,70,48,.05);
+          }}
+          .day-actions {{
+            margin-top:30px;
+          }}
           .progress-line {{
             position:absolute; left:0; right:0; top:33px; height:6px; background:#d8d8d8;
           }}
@@ -367,6 +384,9 @@ def css():
             position:absolute; top:16px; height:34px;
           }}
           .hour-zone:hover .timeline-pop {{ display:block; }}
+          .hour-zone:hover {{
+            background:rgba(53,168,104,.06);
+          }}
           .timeline-pop {{
             display:none; position:absolute; top:36px; left:50%; transform:translateX(-50%);
             width:190px; min-height:76px; background:#fffdf7; border:1px solid #c8bda7;
@@ -381,6 +401,10 @@ def css():
           .schedule-time-cell {{
             font-weight:800; padding:14px 8px 0 10px; min-height:74px; position:relative;
             background:transparent; color:#000;
+          }}
+          .schedule-time-cell:hover {{
+            background:#fff8eb;
+            transform:translateX(2px);
           }}
           .schedule-time-cell.now {{
             border-left:7px solid var(--red); background:#fffefa;
@@ -446,6 +470,12 @@ def css():
             padding:6px 8px !important;
             margin:4px 0 !important;
           }}
+          [data-testid="stCheckbox"]:hover {{
+            background:#fff8eb !important;
+            border-color:#c9bda6 !important;
+            box-shadow:0 2px 6px rgba(60,50,35,.10);
+            transform:translateY(-1px);
+          }}
           [data-testid="stCheckbox"] svg {{
             color:#000 !important;
             fill:#000 !important;
@@ -456,6 +486,11 @@ def css():
           .stTextArea textarea, .stTextInput input {{
             color:#000 !important;
             background:#fff !important;
+          }}
+          .stTextArea textarea:hover, .stTextInput input:hover,
+          [data-baseweb="input"]:hover, [data-baseweb="textarea"]:hover {{
+            border-color:#c9bda6 !important;
+            box-shadow:0 2px 8px rgba(60,50,35,.10) !important;
           }}
           [data-testid="stFormSubmitButton"] button {{
             background:#fffdf8 !important;
@@ -491,6 +526,8 @@ def css():
             .week-label {{ font-size:11px; }}
             .month-title {{ font-size:21px; }}
             .day-progress {{ height:48px; }}
+            .timeline-sticky {{ padding:4px 0 6px; }}
+            .day-actions {{ margin-top:22px; }}
             .tick-label {{ font-size:12px; }}
             .timeline-pop {{ width:150px; font-size:13px; }}
             .slot {{ grid-template-columns:86px minmax(0, 1fr); gap:6px; }}
@@ -885,7 +922,9 @@ def render_day():
     render_day_header_clean(selected)
     st.session_state.flash_battery = False
 
+    st.markdown('<div class="timeline-sticky">', unsafe_allow_html=True)
     render_day_progress(selected)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     if st.session_state.get("last_saved"):
         message = st.session_state.last_saved
@@ -894,6 +933,7 @@ def render_day():
         else:
             st.success(message)
 
+    st.markdown('<div class="day-actions">', unsafe_allow_html=True)
     cols = st.columns([1, 1, 1])
     if cols[0].button("Today's Notes", key="notes-btn", use_container_width=True):
         set_panel("note")
@@ -905,6 +945,7 @@ def render_day():
         st.session_state.matrix_open = True
         add_token(st.session_state.click_token)
         st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
     if st.session_state.matrix_open:
         render_quadrant_dialog(selected)
