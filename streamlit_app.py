@@ -408,9 +408,16 @@ def css():
           [data-testid="stVerticalBlock"] {{ gap:.55rem !important; }}
           [data-testid="stTextArea"] {{ margin:0 !important; }}
           .day-head {{
-            position:sticky; top:0; z-index:1000; background:var(--paper);
+            position:relative; background:var(--paper);
             padding:2px 0 8px; border-bottom:1px solid rgba(238,231,218,.9);
             box-shadow:0 6px 14px rgba(80,70,48,.07);
+          }}
+          [data-testid="stElementContainer"]:has(.day-head),
+          [data-testid="stMarkdown"]:has(.day-head) {{
+            position:sticky !important;
+            top:0 !important;
+            z-index:1000 !important;
+            background:var(--paper) !important;
           }}
           .schedule-scroll {{
             height:calc(100vh - 190px); min-height:430px; overflow-y:auto; padding-right:12px;
@@ -936,17 +943,15 @@ def simple_topbar_html(selected: date) -> str:
         start = index * 25
         fill = max(0.0, min(25.0, token_pct - start)) / 25 * 100
         cells.append(f'<div class="battery-cell" style="--fill:{fill:.2f}%"></div>')
-    return f"""
-        <div class="simple-topbar">
-          <a class="month-link" href="?month={selected.year:04d}-{selected.month:02d}">&larr; Month</a>
-          <div class="topbar-right">
-            <div class="{battery_class}">
-              <div class="battery">{"".join(cells)}</div>
-              <div class="battery-label">{pct}%</div>
-            </div>
-          </div>
-        </div>
-        """
+    return (
+        f'<div class="simple-topbar">'
+        f'<a class="month-link" href="?month={selected.year:04d}-{selected.month:02d}">&larr; Month</a>'
+        f'<div class="topbar-right">'
+        f'<div class="{battery_class}">'
+        f'<div class="battery">{"".join(cells)}</div>'
+        f'<div class="battery-label">{pct}%</div>'
+        f'</div></div></div>'
+    )
 
 
 def render_simple_topbar(selected: date):
@@ -1152,17 +1157,17 @@ def render_schedule(selected: date):
 
 def render_day():
     selected = st.session_state.selected_day
-    sticky_html = f"""
-    <div class="day-head">
-      {simple_topbar_html(selected)}
-      <div class="day-top">
-        <div class="day-title">{selected:%Y-%m-%d} {selected.strftime('%A')}</div>
-      </div>
-      <div class="timeline-sticky">
-        {day_progress_html(selected)}
-      </div>
-    </div>
-    """
+    sticky_html = (
+        '<div class="day-head">'
+        f'{simple_topbar_html(selected)}'
+        '<div class="day-top">'
+        f'<div class="day-title">{selected:%Y-%m-%d} {selected.strftime("%A")}</div>'
+        '</div>'
+        '<div class="timeline-sticky">'
+        f'{day_progress_html(selected)}'
+        '</div>'
+        '</div>'
+    )
     st.markdown(sticky_html, unsafe_allow_html=True)
     st.session_state.flash_battery = False
 
