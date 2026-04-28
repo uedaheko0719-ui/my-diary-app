@@ -732,30 +732,42 @@ def css():
             border-radius:2px !important;
           }}
           @media (max-width: 760px) {{
-            .block-container {{ padding:8px 7px 12px; }}
+            .block-container {{ padding:6px 6px 10px; }}
             [data-testid="stHorizontalBlock"] {{ flex-wrap:nowrap !important; gap:4px !important; }}
             [data-testid="column"] {{ min-width:0 !important; flex:1 1 0 !important; }}
             .html-btn {{ min-height:32px; font-size:11px; padding:0 3px; }}
             .compact-action-row [data-testid="stHorizontalBlock"] {{ gap:4px !important; }}
-            .day-head {{ top:0; padding-top:2px; }}
+            .simple-topbar {{ min-height:24px; gap:6px; }}
+            .day-head {{ top:0; padding:1px 0 5px; }}
             .schedule-scroll {{ height:calc(100vh - 172px); min-height:360px; }}
             .topbar-right {{ gap:8px; }}
-            .battery {{ width:104px; height:17px; gap:2px; padding:2px; }}
+            .battery {{ width:104px; height:16px; gap:2px; padding:2px; }}
+            .battery:after {{ right:-6px; top:4px; width:4px; height:8px; }}
             .battery-label {{ font-size:9px; min-width:28px; }}
-            .month-link {{ min-height:26px; padding:0 6px; font-size:10px; }}
+            .month-link {{ min-height:24px; padding:0 6px; font-size:10px; }}
             .calendar-grid {{ gap:4px; }}
             .calendar-cell {{ min-height:54px; padding:4px; font-size:14px; }}
             .content-mark {{ width:9px; height:13px; box-shadow:1px 1px 0 #c8bda7; }}
             .week-label {{ font-size:11px; }}
             .month-title {{ font-size:21px; }}
-            .day-progress {{ height:48px; }}
-            .timeline-sticky {{ padding:4px 0 6px; }}
-            .day-actions {{ margin-top:22px; }}
-            .tick-label {{ font-size:12px; }}
+            .day-progress {{ height:42px; }}
+            .timeline-sticky {{ padding:2px 0 3px; }}
+            .time-battery {{ top:22px; height:16px; gap:1px; padding:2px; }}
+            .tick.major {{ top:17px; height:26px; opacity:.22; }}
+            .tick-label {{ top:0; font-size:10px; }}
+            .day-actions {{ margin-top:12px; }}
+            .st-key-notes-btn button,
+            .st-key-meal-btn button,
+            .st-key-monthly-matrix button {{
+              min-height:30px !important;
+              max-width:none !important;
+              font-size:11px !important;
+              padding:0 4px !important;
+            }}
             .timeline-pop {{ width:150px; font-size:13px; }}
             .slot {{ grid-template-columns:86px minmax(0, 1fr); gap:6px; }}
             .slot-time {{ font-size:11px; }}
-            .day-title {{ font-size:18px; margin:6px 0 8px; }}
+            .day-title {{ font-size:16px; margin:3px 0 3px; line-height:1.15; }}
             .day-top {{ align-items:center; flex-direction:row; }}
             .quadrant-grid {{ grid-template-columns:repeat(2, minmax(0, 1fr)) !important; gap:6px; aspect-ratio:1 / 1.08; }}
             .matrix-html-grid {{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px; }}
@@ -766,6 +778,34 @@ def css():
             .quadrant-box {{ padding:7px; font-size:11px; }}
             .quadrant-title {{ font-size:12px; }}
             .task-pill {{ padding:5px; font-size:11px; }}
+          }}
+          @media (max-width: 430px) {{
+            .block-container {{ padding:4px 4px 8px; }}
+            .simple-topbar {{ min-height:22px; }}
+            .month-link {{ min-height:22px; font-size:9px; padding:0 5px; }}
+            .battery {{ width:82px; height:14px; gap:1px; padding:2px; }}
+            .battery-label {{ font-size:8px; min-width:22px; }}
+            .day-title {{ font-size:13px; margin:2px 0; }}
+            .day-progress {{ height:34px; }}
+            .time-battery {{ top:18px; height:13px; gap:1px; padding:1px; }}
+            .tick.major {{ top:14px; height:20px; width:1px; }}
+            .tick-label {{ font-size:8px; }}
+            .day-actions {{ margin-top:8px; }}
+            .st-key-notes-btn button,
+            .st-key-meal-btn button,
+            .st-key-monthly-matrix button {{
+              min-height:26px !important;
+              font-size:9px !important;
+              padding:0 2px !important;
+            }}
+            .slot {{ grid-template-columns:70px minmax(0, 1fr); gap:4px; }}
+            .schedule-time-cell {{ font-size:9px; padding:11px 3px 0 5px; }}
+            .schedule-title {{ font-size:14px; margin:9px 0 5px; }}
+            .matrix-title {{ font-size:12px; }}
+            .quadrant-title-bar {{ font-size:11px; padding-bottom:5px; margin-bottom:5px; }}
+            .matrix-html-box {{ min-height:104px; padding:6px; }}
+            .matrix-task {{ font-size:9px; padding:5px; gap:5px; }}
+            .matrix-task-check {{ width:11px; min-width:11px; height:11px; }}
           }}
         </style>
         """,
