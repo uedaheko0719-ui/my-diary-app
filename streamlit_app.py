@@ -1525,9 +1525,10 @@ def render_quadrant_dialog(selected: date):
                     if not items:
                         st.markdown('<div class="matrix-empty">No tasks yet</div>', unsafe_allow_html=True)
                     for index, task in items:
-                        if st.checkbox(
-                            str(task["text"]),
+                        if st.button(
+                            f"□ {task['text']}",
                             key=f"matrix-done-{selected}-{index}-{task['text']}",
+                            use_container_width=True,
                         ):
                             tasks.pop(index)
                             add_token(st.session_state.important_token)
@@ -1592,16 +1593,17 @@ def render_day():
         else:
             st.success(message)
 
-    st.markdown(
-        f"""
-        <div class="action-link-grid">
-          <a class="day-action-link" href="/?day={selected.isoformat()}&matrix=open" target="_self">Matrix</a>
-          <a class="day-action-link" href="/?day={selected.isoformat()}&panel=note" target="_self">Notes</a>
-          <a class="day-action-link" href="/?day={selected.isoformat()}&panel=diet" target="_self">Meal</a>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    action_cols = st.columns(3, gap="small")
+    if action_cols[0].button("Matrix", key=f"open-matrix-{selected}", use_container_width=True):
+        st.session_state.matrix_open = not st.session_state.matrix_open
+        st.session_state.panel = ""
+        st.rerun()
+    if action_cols[1].button("Notes", key=f"open-notes-{selected}", use_container_width=True):
+        st.session_state.panel = "" if st.session_state.panel == "note" else "note"
+        st.rerun()
+    if action_cols[2].button("Meal", key=f"open-meal-{selected}", use_container_width=True):
+        st.session_state.panel = "" if st.session_state.panel == "diet" else "diet"
+        st.rerun()
 
     if st.session_state.matrix_open:
         render_quadrant_dialog(selected)
