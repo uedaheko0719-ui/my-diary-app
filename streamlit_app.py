@@ -157,6 +157,25 @@ def init_state():
         st.session_state.setdefault(key, value)
 
     params = st.query_params
+    if params.get("toggle") and params.get("day"):
+        try:
+            picked = date.fromisoformat(params["day"])
+            target = params.get("toggle")
+            st.session_state.selected_day = picked
+            st.session_state.view_year = picked.year
+            st.session_state.view_month = picked.month
+            st.session_state.view = "day"
+            if target == "matrix":
+                st.session_state.matrix_open = not st.session_state.matrix_open
+                st.session_state.panel = ""
+            elif target in {"note", "diet"}:
+                st.session_state.matrix_open = False
+                st.session_state.panel = "" if st.session_state.panel == target else target
+            st.query_params.clear()
+            st.rerun()
+        except ValueError:
+            st.query_params.clear()
+
     if params.get("matrix_close") and params.get("day"):
         try:
             picked = date.fromisoformat(params["day"])
@@ -164,6 +183,20 @@ def init_state():
             st.session_state.view_year = picked.year
             st.session_state.view_month = picked.month
             st.session_state.view = "day"
+            st.session_state.matrix_open = False
+            st.query_params.clear()
+            st.rerun()
+        except ValueError:
+            st.query_params.clear()
+
+    if params.get("panel_close") and params.get("day"):
+        try:
+            picked = date.fromisoformat(params["day"])
+            st.session_state.selected_day = picked
+            st.session_state.view_year = picked.year
+            st.session_state.view_month = picked.month
+            st.session_state.view = "day"
+            st.session_state.panel = ""
             st.session_state.matrix_open = False
             st.query_params.clear()
             st.rerun()
@@ -235,7 +268,7 @@ def init_state():
             st.session_state.view = "day"
             panel = params.get("panel")
             if panel in {"note", "diet"}:
-                st.session_state.panel = "" if st.session_state.panel == panel else panel
+                st.session_state.panel = panel
                 st.session_state.matrix_open = False
             if params.get("matrix") == "open":
                 st.session_state.matrix_open = True
@@ -568,7 +601,7 @@ def css():
           .day-action-link:hover {{
             background:#fff;
             border-color:#bca98c;
-            transform:translateY(-2px);
+            transform:none !important;
             box-shadow:0 8px 20px rgba(60,50,35,.20);
           }}
           .progress-line {{
@@ -678,7 +711,7 @@ def css():
           }}
           .schedule-input-wrap {{
             width:100%;
-            margin:0 0 10px;
+            margin:0 0 8px;
           }}
           .schedule-input-wrap [data-testid="stTextArea"],
           .schedule-input-wrap [data-baseweb="textarea"],
@@ -692,6 +725,12 @@ def css():
             min-height:68px !important;
             height:68px !important;
             box-sizing:border-box !important;
+          }}
+          .schedule-input-wrap [data-testid="stTextArea"] {{
+            margin:0 !important;
+          }}
+          .schedule-input-wrap [data-testid="stTextArea"] > div {{
+            margin:0 !important;
           }}
           .schedule-input-wrap [data-baseweb="textarea"] > div,
           .schedule-input-wrap [data-testid="stTextArea"] > div {{
@@ -1530,9 +1569,7 @@ def css():
             padding:4px 0 0 !important;
           }}
           .matrix-head {{
-            display:grid;
-            grid-template-columns:1fr 40px;
-            gap:8px;
+            display:block;
             align-items:center;
             margin-bottom:12px;
           }}
@@ -1575,6 +1612,13 @@ def css():
             font-weight:700;
             white-space:nowrap;
             cursor:pointer;
+          }}
+          .matrix-toggle-label:hover,
+          .matrix-add-button:hover,
+          .matrix-close-button:hover {{
+            background:#fff8eb !important;
+            transform:none !important;
+            filter:none !important;
           }}
           .matrix-close-button {{
             width:40px;
@@ -1625,6 +1669,7 @@ def css():
           }}
           .matrix-done-button:hover {{
             background:#fff8eb;
+            transform:none !important;
           }}
           .matrix-fake-check {{
             width:14px;
@@ -1739,14 +1784,21 @@ def css():
               overflow:hidden !important;
               text-overflow:ellipsis !important;
             }}
+            .day-action-link:hover {{
+              background:#fff8eb !important;
+              transform:none !important;
+              filter:none !important;
+              box-shadow:none !important;
+            }}
             .schedule-title {{
               font-size:18px !important;
-              margin:12px 0 4px !important;
+              margin:10px 0 2px !important;
             }}
             .schedule-time-cell {{
               font-size:12px !important;
-              padding:8px 4px 4px !important;
+              padding:6px 4px 2px !important;
               min-height:0 !important;
+              line-height:1.15 !important;
             }}
             .schedule-input-wrap,
             .schedule-input-wrap [data-testid="stTextArea"],
@@ -1758,13 +1810,14 @@ def css():
               width:100% !important;
               min-width:100% !important;
               max-width:100% !important;
-              height:58px !important;
-              min-height:58px !important;
+              height:42px !important;
+              min-height:42px !important;
             }}
             .schedule-input-wrap textarea {{
               background:#fffefa !important;
               border:1px solid #111 !important;
               color:#000 !important;
+              padding:5px 7px !important;
             }}
             .matrix-dialog {{
               width:100% !important;
@@ -1808,10 +1861,120 @@ def css():
               font-size:11px !important;
             }}
             .schedule-input-wrap {{
-              margin-bottom:5px !important;
+              margin-bottom:3px !important;
             }}
             .schedule-time-cell {{
-              padding-top:5px !important;
+              padding-top:4px !important;
+            }}
+            .schedule-title {{
+              margin:12px 0 6px !important;
+              font-size:17px !important;
+              line-height:1.1 !important;
+            }}
+            .schedule-time-cell {{
+              font-size:11px !important;
+              line-height:1.05 !important;
+              padding:5px 4px 2px !important;
+              margin:0 !important;
+              min-height:0 !important;
+            }}
+            .schedule-time-cell.now {{
+              border-left-width:5px !important;
+              padding-left:8px !important;
+            }}
+            [class*="st-key-slot-"] {{
+              width:100% !important;
+              max-width:100% !important;
+              margin:0 0 10px !important;
+              padding:0 !important;
+              display:block !important;
+              box-sizing:border-box !important;
+              overflow:visible !important;
+            }}
+            [class*="st-key-slot-"] [data-testid="stTextArea"] {{
+              width:100% !important;
+              max-width:100% !important;
+              margin:0 !important;
+              padding:0 !important;
+              display:block !important;
+            }}
+            [class*="st-key-slot-"] [data-testid="stTextArea"] > div,
+            [class*="st-key-slot-"] [data-baseweb="textarea"],
+            [class*="st-key-slot-"] [data-baseweb="textarea"] > div {{
+              width:100% !important;
+              max-width:100% !important;
+              min-height:42px !important;
+              height:42px !important;
+              margin:0 !important;
+              padding:0 !important;
+              box-sizing:border-box !important;
+            }}
+            [class*="st-key-slot-"] textarea {{
+              width:100% !important;
+              max-width:100% !important;
+              min-height:42px !important;
+              height:42px !important;
+              margin:0 !important;
+              padding:6px 7px !important;
+              box-sizing:border-box !important;
+              background:#fffefa !important;
+              color:#000 !important;
+              border:1px solid #111 !important;
+              border-radius:0 !important;
+              font-size:12px !important;
+              line-height:1.2 !important;
+              resize:vertical !important;
+            }}
+          }}
+          [class*="st-key-slot-"] {{
+            margin:0 0 14px !important;
+            padding:0 !important;
+          }}
+          [class*="st-key-slot-"] label,
+          [class*="st-key-slot-"] label p {{
+            color:#000 !important;
+            font-weight:800 !important;
+            line-height:1.05 !important;
+            margin:0 0 6px !important;
+          }}
+          [class*="st-key-slot-"] [data-testid="stTextArea"] {{
+            margin:0 !important;
+            padding:0 !important;
+          }}
+          [class*="st-key-slot-"] textarea {{
+            background:#fffefa !important;
+            color:#000 !important;
+            border:1px solid #111 !important;
+            border-radius:0 !important;
+            min-height:58px !important;
+            height:58px !important;
+            padding:7px 8px !important;
+          }}
+          @media (max-width: 760px) {{
+            [class*="st-key-slot-"] {{
+              margin:0 0 9px !important;
+            }}
+            [class*="st-key-slot-"] label,
+            [class*="st-key-slot-"] label p {{
+              font-size:11px !important;
+              margin:0 0 3px !important;
+              line-height:1 !important;
+            }}
+            [class*="st-key-slot-"] [data-testid="stTextArea"],
+            [class*="st-key-slot-"] [data-testid="stTextArea"] > div,
+            [class*="st-key-slot-"] [data-baseweb="textarea"],
+            [class*="st-key-slot-"] [data-baseweb="textarea"] > div {{
+              min-height:44px !important;
+              height:44px !important;
+              margin:0 !important;
+              padding:0 !important;
+            }}
+            [class*="st-key-slot-"] textarea {{
+              min-height:44px !important;
+              height:44px !important;
+              padding:5px 6px !important;
+              font-size:12px !important;
+              line-height:1.15 !important;
             }}
           }}
         </style>
@@ -2137,13 +2300,6 @@ def render_quadrant_dialog(selected: date):
         '<div class="matrix-dialog">',
         '<div class="matrix-head">',
         '<div class="matrix-title">Monthly Eisenhower Matrix</div>',
-        (
-            '<form class="matrix-close-form" method="get" action="/" target="_self">'
-            f'<input type="hidden" name="day" value="{selected.isoformat()}">'
-            '<input type="hidden" name="matrix_close" value="1">'
-            '<button class="matrix-close-button" type="submit">X</button>'
-            '</form>'
-        ),
         '</div>',
         '<form class="matrix-add-form" method="get" action="/" target="_self">',
         f'<input type="hidden" name="day" value="{selected.isoformat()}">',
@@ -2182,24 +2338,15 @@ def render_schedule(selected: date):
     filled = 0
 
     for slot in slots:
-        task_hint = time_map.get(slot, "").strip() or "No task in this time block."
-        marker = " now" if slot == active_slot else ""
-        slot_id = ' id="now-slot"' if slot == active_slot else ""
-        st.markdown(
-            f'<div class="schedule-time-cell{marker}"{slot_id} title="{escape(task_hint)}">{escape(slot)}</div>',
-            unsafe_allow_html=True,
-        )
-        st.markdown('<div class="schedule-input-wrap">', unsafe_allow_html=True)
         value = st.text_area(
-            f"{slot} plan",
+            slot,
             value=time_map.get(slot, ""),
             key=f"slot-{selected}-{slot}",
-            height=68,
-            label_visibility="collapsed",
+            height=58,
+            label_visibility="visible",
             on_change=save_schedule_from_state,
             args=(selected,),
         )
-        st.markdown("</div>", unsafe_allow_html=True)
         changed[slot] = value
         if value.strip():
             filled += 1
@@ -2228,22 +2375,37 @@ def render_day():
         else:
             st.success(message)
 
+    matrix_hidden = (
+        '<input type="hidden" name="matrix_close" value="1">'
+        if st.session_state.matrix_open
+        else '<input type="hidden" name="matrix" value="open">'
+    )
+    note_hidden = (
+        '<input type="hidden" name="panel_close" value="1">'
+        if st.session_state.panel == "note"
+        else '<input type="hidden" name="panel" value="note">'
+    )
+    meal_hidden = (
+        '<input type="hidden" name="panel_close" value="1">'
+        if st.session_state.panel == "diet"
+        else '<input type="hidden" name="panel" value="diet">'
+    )
     st.markdown(
         f"""
         <div class="action-link-grid">
           <form method="get" action="/" target="_self">
             <input type="hidden" name="day" value="{selected.isoformat()}">
-            <input type="hidden" name="matrix" value="open">
+            {matrix_hidden}
             <button class="day-action-link" type="submit">Matrix</button>
           </form>
           <form method="get" action="/" target="_self">
             <input type="hidden" name="day" value="{selected.isoformat()}">
-            <input type="hidden" name="panel" value="note">
+            {note_hidden}
             <button class="day-action-link" type="submit">Notes</button>
           </form>
           <form method="get" action="/" target="_self">
             <input type="hidden" name="day" value="{selected.isoformat()}">
-            <input type="hidden" name="panel" value="diet">
+            {meal_hidden}
             <button class="day-action-link" type="submit">Meal</button>
           </form>
         </div>
