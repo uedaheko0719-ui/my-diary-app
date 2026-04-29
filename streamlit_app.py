@@ -157,9 +157,6 @@ def init_state():
         st.session_state.setdefault(key, value)
 
     params = st.query_params
-    if not params.get("day") and not params.get("month") and not params.get("matrix_done"):
-        st.session_state.view = "month"
-
     if params.get("matrix_done") and params.get("day"):
         try:
             picked = date.fromisoformat(params["day"])
@@ -177,6 +174,7 @@ def init_state():
             st.session_state.view = "day"
             st.session_state.matrix_open = True
             st.query_params.clear()
+            st.rerun()
         except (ValueError, TypeError):
             st.query_params.clear()
 
@@ -186,7 +184,6 @@ def init_state():
             st.session_state.view_year = int(year_text)
             st.session_state.view_month = int(month_text)
             st.session_state.view = "month"
-            st.query_params.clear()
         except ValueError:
             st.query_params.clear()
     if params.get("day"):
@@ -201,7 +198,6 @@ def init_state():
                 st.session_state.panel = "" if st.session_state.panel == panel else panel
             if params.get("matrix") == "open":
                 st.session_state.matrix_open = True
-            st.query_params.clear()
         except ValueError:
             st.query_params.clear()
 
@@ -645,24 +641,50 @@ def css():
             border:1px solid var(--line); border-radius:7px; background:var(--panel); font-size:22px;
           }}
           .matrix-dialog {{
-            width:min(900px, 100%); overflow:auto; background:rgba(255,253,248,.42);
-            border:1px solid rgba(216,203,182,.65); box-shadow:0 6px 16px rgba(60,50,35,.06);
-            padding:12px; margin:14px auto 12px; color:#000; border-radius:2px;
+            width:min(900px, 100%); overflow:auto; background:#fff9ed;
+            border:2px solid #2a261e; box-shadow:0 12px 28px rgba(60,50,35,.12);
+            padding:14px; margin:14px auto 12px; color:#000; border-radius:2px;
           }}
           .matrix-header {{
             display:flex; align-items:center; justify-content:space-between;
             gap:10px; margin-bottom:8px;
           }}
           .matrix-title {{
-            font-size:16px; font-weight:800; color:#000; margin:0;
-            text-transform:lowercase; letter-spacing:0;
+            font-size:22px; font-weight:800; color:#000; margin:0;
+            text-transform:none; letter-spacing:0;
           }}
           .matrix-dialog [data-testid="stForm"] {{
-            background:#fffefa !important;
-            border:1px solid rgba(216,203,182,.72) !important;
-            padding:8px 10px !important;
+            background:transparent !important;
+            border:0 !important;
+            padding:0 !important;
             border-radius:2px !important;
             margin-bottom:12px !important;
+          }}
+          .matrix-dialog [data-testid="stFormSubmitButton"] button,
+          .st-key-close-matrix button {{
+            min-height:34px !important;
+            background:#f4ead5 !important;
+            border:1px solid #9d8d73 !important;
+            color:#000 !important;
+            border-radius:2px !important;
+            box-shadow:none !important;
+            font-size:14px !important;
+            font-weight:650 !important;
+          }}
+          .matrix-dialog [data-testid="stFormSubmitButton"] button:hover,
+          .st-key-close-matrix button:hover {{
+            background:#fff5df !important;
+            border-color:#6f614d !important;
+            box-shadow:0 6px 14px rgba(60,50,35,.12) !important;
+            transform:translateY(-1px) !important;
+          }}
+          .matrix-dialog [data-testid="stCheckbox"] {{
+            background:#f4ead5 !important;
+            border:1px solid #d8cbb6 !important;
+            margin:0 !important;
+            min-height:34px !important;
+            display:flex !important;
+            align-items:center !important;
           }}
           .matrix-dialog [data-testid="stVerticalBlockBorderWrapper"] {{
             background:#fff !important;
@@ -689,11 +711,7 @@ def css():
             margin:0;
             background:transparent;
           }}
-          .matrix-flags {{
-            display:flex;
-            gap:8px;
-            margin:2px 0 8px;
-          }}
+          .matrix-flags {{ margin:2px 0 8px; }}
           [data-testid="stVerticalBlockBorderWrapper"] {{
             background:#fff !important;
             border:1px solid #d8cbb6 !important;
@@ -719,10 +737,10 @@ def css():
           }}
           .matrix-html-box {{
             background:#fff;
-            border:1px solid #d8cbb6;
-            min-height:132px;
+            border:1px solid #a79b88;
+            min-height:190px;
             padding:12px;
-            box-shadow:0 3px 10px rgba(60,50,35,.06);
+            box-shadow:none;
             border-radius:2px;
           }}
           .matrix-html-box:hover {{
@@ -1467,29 +1485,23 @@ def render_quadrant_dialog(selected: date):
     note, diet, quadrant, time_map, ui, extras = read_day(selected)
     tasks = load_quadrant_tasks(quadrant)
     st.markdown('<div class="matrix-dialog">', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="matrix-header"><div class="matrix-title">monthly eisenhower matrix</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="matrix-title">Monthly Eisenhower Matrix</div>', unsafe_allow_html=True)
 
     with st.form(f"quadrant-dialog-form-{selected}", clear_on_submit=True):
-        st.markdown('<div class="matrix-form-panel">', unsafe_allow_html=True)
-        task_text = st.text_input("Task", placeholder="Write one task")
-        st.markdown('<div class="matrix-flags">', unsafe_allow_html=True)
-        important = st.checkbox("Important")
-        urgent = st.checkbox("Urgent")
-        st.markdown('</div>', unsafe_allow_html=True)
-        submitted = st.form_submit_button("Add Task", use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    if st.button("Close matrix", key="close-matrix", use_container_width=True):
-        st.session_state.matrix_open = False
-        st.rerun()
+        form_cols = st.columns([4.8, 1.15, 1.0, 1.15])
+        task_text = form_cols[0].text_input("Task", placeholder="Write one task", label_visibility="collapsed")
+        important = form_cols[1].checkbox("Important", key=f"matrix-important-{selected}")
+        urgent = form_cols[2].checkbox("Urgent", key=f"matrix-urgent-{selected}")
+        submitted = form_cols[3].form_submit_button("Add Task", use_container_width=True)
     if submitted and task_text.strip():
         tasks.append({"text": task_text.strip(), "important": important, "urgent": urgent})
         add_token(st.session_state.important_token)
         ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
         write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
+        st.session_state.matrix_open = True
+        st.rerun()
+    if st.button("Close matrix", key="close-matrix"):
+        st.session_state.matrix_open = False
         st.rerun()
 
     groups = {
@@ -1501,20 +1513,28 @@ def render_quadrant_dialog(selected: date):
     for index, task in enumerate(tasks):
         groups[quadrant_name(task)].append((index, task))
 
-    grid_html = ['<div class="matrix-html-grid">']
-    for title, items in groups.items():
-        grid_html.append('<div class="matrix-html-box">')
-        grid_html.append(f'<div class="quadrant-title-bar">{escape(title)}</div>')
-        if not items:
-            grid_html.append('<div class="matrix-empty">No tasks yet</div>')
-        for index, task in items:
-            grid_html.append(
-                f'<a class="matrix-task" href="?day={selected.isoformat()}&matrix_done={index}">'
-                f'<span class="matrix-task-check"></span><span>{escape(task["text"])}</span></a>'
-            )
-        grid_html.append("</div>")
-    grid_html.append("</div>")
-    st.markdown("".join(grid_html), unsafe_allow_html=True)
+    st.markdown('<div class="matrix-control-note">Check a task to finish it.</div>', unsafe_allow_html=True)
+    titles = list(groups.keys())
+    for row_start in range(0, len(titles), 2):
+        cols = st.columns(2, gap="small")
+        for offset, title in enumerate(titles[row_start:row_start + 2]):
+            with cols[offset]:
+                with st.container(border=True):
+                    st.markdown(f'<div class="quadrant-title-bar">{escape(title)}</div>', unsafe_allow_html=True)
+                    items = groups[title]
+                    if not items:
+                        st.markdown('<div class="matrix-empty">No tasks yet</div>', unsafe_allow_html=True)
+                    for index, task in items:
+                        if st.checkbox(
+                            str(task["text"]),
+                            key=f"matrix-done-{selected}-{index}-{task['text']}",
+                        ):
+                            tasks.pop(index)
+                            add_token(st.session_state.important_token)
+                            ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+                            write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
+                            st.session_state.matrix_open = True
+                            st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
 def render_schedule(selected: date):
