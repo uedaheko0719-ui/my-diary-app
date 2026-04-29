@@ -645,24 +645,24 @@ def css():
             border:1px solid var(--line); border-radius:7px; background:var(--panel); font-size:22px;
           }}
           .matrix-dialog {{
-            width:min(900px, 100%); overflow:auto; background:transparent;
-            border:0; box-shadow:none; padding:8px 0 0;
-            margin:14px auto 12px; color:#000; border-radius:0;
+            width:min(900px, 100%); overflow:auto; background:rgba(255,253,248,.42);
+            border:1px solid rgba(216,203,182,.65); box-shadow:0 6px 16px rgba(60,50,35,.06);
+            padding:12px; margin:14px auto 12px; color:#000; border-radius:2px;
           }}
-          .matrix-head {{ display:flex; align-items:center; justify-content:space-between; gap:12px; }}
+          .matrix-header {{
+            display:flex; align-items:center; justify-content:space-between;
+            gap:10px; margin-bottom:8px;
+          }}
           .matrix-title {{
-            font-size:15px; font-weight:800; color:#000; margin:0 0 6px;
+            font-size:16px; font-weight:800; color:#000; margin:0;
             text-transform:lowercase; letter-spacing:0;
           }}
-          .matrix-close-row {{
-            display:flex; justify-content:flex-end; margin:-28px 0 6px;
-          }}
           .matrix-dialog [data-testid="stForm"] {{
-            background:transparent !important;
-            border:1px solid rgba(216,203,182,.55) !important;
-            padding:10px !important;
+            background:#fffefa !important;
+            border:1px solid rgba(216,203,182,.72) !important;
+            padding:8px 10px !important;
             border-radius:2px !important;
-            margin-bottom:10px !important;
+            margin-bottom:12px !important;
           }}
           .matrix-dialog [data-testid="stVerticalBlockBorderWrapper"] {{
             background:#fff !important;
@@ -685,16 +685,14 @@ def css():
             color:#6f6a60 !important;
           }}
           .matrix-form-panel {{
-            border:1px solid rgba(216,203,182,.55);
-            padding:10px;
-            margin:8px 0 10px;
+            padding:0;
+            margin:0;
             background:transparent;
           }}
           .matrix-flags {{
-            display:grid;
-            grid-template-columns:1fr 1fr;
+            display:flex;
             gap:8px;
-            margin:4px 0 8px;
+            margin:2px 0 8px;
           }}
           [data-testid="stVerticalBlockBorderWrapper"] {{
             background:#fff !important;
@@ -717,14 +715,14 @@ def css():
           }}
           .matrix-html-grid {{
             display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px;
-            margin-top:10px;
+            margin-top:8px;
           }}
           .matrix-html-box {{
             background:#fff;
             border:1px solid #d8cbb6;
-            min-height:156px;
+            min-height:132px;
             padding:12px;
-            box-shadow:0 4px 14px rgba(60,50,35,.08);
+            box-shadow:0 3px 10px rgba(60,50,35,.06);
             border-radius:2px;
           }}
           .matrix-html-box:hover {{
@@ -734,7 +732,7 @@ def css():
           }}
           .matrix-empty {{
             color:#6f6a60;
-            font-size:14px;
+            font-size:13px;
             padding-top:2px;
           }}
           .matrix-task {{
@@ -937,8 +935,11 @@ def css():
             .schedule-time-cell {{ font-size:9px; padding:11px 3px 0 5px; }}
             .schedule-title {{ font-size:14px; margin:9px 0 5px; }}
             .matrix-title {{ font-size:12px; }}
+            .matrix-dialog {{ padding:8px; }}
+            .matrix-header {{ margin-bottom:6px; }}
+            .matrix-flags {{ gap:5px; }}
             .quadrant-title-bar {{ font-size:11px; padding-bottom:5px; margin-bottom:5px; }}
-            .matrix-html-box {{ min-height:104px; padding:6px; }}
+            .matrix-html-box {{ min-height:96px; padding:6px; }}
             .matrix-task {{ font-size:9px; padding:5px; gap:5px; }}
             .matrix-task-check {{ width:11px; min-width:11px; height:11px; }}
           }}
@@ -968,7 +969,7 @@ def css():
             .schedule-time-cell {{ font-size:inherit; padding:14px 8px 0 10px; }}
             .schedule-title {{ font-size:15px; margin:10px 0 6px; }}
             .matrix-html-grid {{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }}
-            .matrix-html-box {{ min-height:156px; padding:12px; }}
+            .matrix-html-box {{ min-height:132px; padding:12px; }}
             .matrix-task {{ font-size:15px; padding:8px 9px; gap:8px; }}
             .matrix-task-check {{ width:14px; min-width:14px; height:14px; }}
           }}
@@ -1466,11 +1467,10 @@ def render_quadrant_dialog(selected: date):
     note, diet, quadrant, time_map, ui, extras = read_day(selected)
     tasks = load_quadrant_tasks(quadrant)
     st.markdown('<div class="matrix-dialog">', unsafe_allow_html=True)
-    st.markdown('<div class="matrix-title">monthly eisenhower matrix</div>', unsafe_allow_html=True)
-    st.markdown('<div class="matrix-close-row">', unsafe_allow_html=True)
-    if st.button("x", key="close-matrix"):
-        st.session_state.matrix_open = False
-        st.rerun()
+    st.markdown(
+        '<div class="matrix-header"><div class="matrix-title">monthly eisenhower matrix</div>',
+        unsafe_allow_html=True,
+    )
     st.markdown('</div>', unsafe_allow_html=True)
 
     with st.form(f"quadrant-dialog-form-{selected}", clear_on_submit=True):
@@ -1482,6 +1482,9 @@ def render_quadrant_dialog(selected: date):
         st.markdown('</div>', unsafe_allow_html=True)
         submitted = st.form_submit_button("Add Task", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
+    if st.button("Close matrix", key="close-matrix", use_container_width=True):
+        st.session_state.matrix_open = False
+        st.rerun()
     if submitted and task_text.strip():
         tasks.append({"text": task_text.strip(), "important": important, "urgent": urgent})
         add_token(st.session_state.important_token)
