@@ -614,7 +614,7 @@ def css():
             padding:6px 0; border-bottom:1px solid rgba(255,255,255,.95);
           }}
           .schedule-time-cell {{
-            font-weight:800; padding:14px 8px 0 10px; min-height:74px; position:relative;
+            font-weight:800; padding:10px 8px 4px 10px; min-height:0; position:relative;
             background:transparent; color:#000;
           }}
           .schedule-time-cell:hover {{
@@ -623,7 +623,40 @@ def css():
             box-shadow:0 5px 12px rgba(60,50,35,.12);
           }}
           .schedule-time-cell.now {{
-            border-left:7px solid var(--red); background:#fffefa;
+            border-left:7px solid var(--red); background:#fffefa; padding-left:12px;
+          }}
+          .schedule-input-wrap {{
+            width:100%;
+            margin:0 0 10px;
+          }}
+          .schedule-input-wrap [data-testid="stTextArea"],
+          .schedule-input-wrap [data-baseweb="textarea"],
+          .schedule-input-wrap textarea {{
+            display:block !important;
+            visibility:visible !important;
+            opacity:1 !important;
+            width:100% !important;
+            min-width:100% !important;
+            max-width:100% !important;
+            min-height:68px !important;
+            height:68px !important;
+            box-sizing:border-box !important;
+          }}
+          .schedule-input-wrap [data-baseweb="textarea"] > div,
+          .schedule-input-wrap [data-testid="stTextArea"] > div {{
+            width:100% !important;
+            min-width:100% !important;
+            min-height:68px !important;
+            height:68px !important;
+            display:block !important;
+          }}
+          .schedule-input-wrap textarea {{
+            background:#fffefa !important;
+            color:#000 !important;
+            border:1px solid #111 !important;
+            border-radius:0 !important;
+            padding:8px !important;
+            resize:vertical !important;
           }}
           .slot.now {{ border-left:7px solid var(--red); padding-left:10px; background:#fffdf8; }}
           .slot-time {{
@@ -1175,6 +1208,420 @@ def css():
               min-width:0 !important;
             }}
           }}
+          @media (max-width: 760px) {{
+            html, body, .stApp {{
+              overflow-x:hidden !important;
+            }}
+            .block-container {{
+              width:760px !important;
+              min-width:760px !important;
+              max-width:760px !important;
+              padding:8px 14px 12px !important;
+              transform:scale(.98) !important;
+              transform-origin:top left !important;
+              box-sizing:border-box !important;
+            }}
+            .block-container:has(.day-head) {{
+              width:760px !important;
+              min-width:760px !important;
+              max-width:760px !important;
+              padding:8px 14px 12px !important;
+              transform:scale(.98) !important;
+              transform-origin:top left !important;
+            }}
+            [data-testid="stHorizontalBlock"] {{
+              flex-direction:row !important;
+              flex-wrap:nowrap !important;
+              gap:8px !important;
+            }}
+            [data-testid="column"] {{
+              flex:1 1 0 !important;
+              min-width:0 !important;
+            }}
+            .month-wrap {{
+              width:720px !important;
+              max-width:720px !important;
+              margin:0 auto !important;
+            }}
+            .month-nav {{
+              grid-template-columns:54px 1fr 54px !important;
+              gap:10px !important;
+              margin:18px 0 14px !important;
+            }}
+            .month-title {{
+              font-size:28px !important;
+            }}
+            .calendar-grid {{
+              grid-template-columns:repeat(7, minmax(0, 1fr)) !important;
+              gap:7px !important;
+            }}
+            .calendar-cell {{
+              min-height:74px !important;
+              aspect-ratio:auto !important;
+              padding:8px !important;
+              font-size:18px !important;
+            }}
+            .week-label {{
+              font-size:14px !important;
+              padding-bottom:8px !important;
+            }}
+            .day-title {{
+              font-size:30px !important;
+            }}
+            .day-progress {{
+              height:76px !important;
+            }}
+            .time-battery {{
+              top:34px !important;
+              height:22px !important;
+              gap:3px !important;
+              padding:3px !important;
+            }}
+            .tick-label {{
+              font-size:14px !important;
+            }}
+            .schedule-time-cell {{
+              font-size:15px !important;
+              padding:8px 8px 4px 10px !important;
+              min-height:0 !important;
+            }}
+            textarea {{
+              height:68px !important;
+              min-height:68px !important;
+            }}
+            .schedule-title {{
+              font-size:22px !important;
+            }}
+          }}
+          @media (max-width: 680px) {{
+            .block-container,
+            .block-container:has(.day-head) {{
+              transform:scale(.89) !important;
+            }}
+          }}
+          @media (max-width: 600px) {{
+            .block-container,
+            .block-container:has(.day-head) {{
+              transform:scale(.79) !important;
+            }}
+          }}
+          @media (max-width: 520px) {{
+            .block-container,
+            .block-container:has(.day-head) {{
+              transform:scale(.68) !important;
+            }}
+          }}
+          @media (max-width: 430px) {{
+            .block-container,
+            .block-container:has(.day-head) {{
+              transform:scale(.52) !important;
+            }}
+          }}
+          @media (max-width: 760px) {{
+            .block-container,
+            .block-container:has(.day-head) {{
+              margin-left:0 !important;
+              margin-right:0 !important;
+              left:0 !important;
+              right:auto !important;
+              width:760px !important;
+              min-width:760px !important;
+              max-width:760px !important;
+              transform-origin:0 0 !important;
+            }}
+          }}
+          @media (max-width: 400px) {{
+            .block-container,
+            .block-container:has(.day-head) {{
+              transform:scale(.50) !important;
+            }}
+          }}
+          @media (max-width: 360px) {{
+            .block-container,
+            .block-container:has(.day-head) {{
+              transform:scale(.42) !important;
+            }}
+          }}
+          @media (max-width: 330px) {{
+            .block-container,
+            .block-container:has(.day-head) {{
+              transform:scale(.405) !important;
+            }}
+          }}
+          @media (max-width: 760px) {{
+            .block-container,
+            .block-container:has(.day-head) {{
+              transform:none !important;
+              zoom:.98 !important;
+              width:760px !important;
+              min-width:760px !important;
+              max-width:760px !important;
+              margin:0 !important;
+              padding:8px 14px 12px !important;
+            }}
+          }}
+          @media (max-width: 680px) {{
+            .block-container,
+            .block-container:has(.day-head) {{
+              zoom:.89 !important;
+            }}
+          }}
+          @media (max-width: 600px) {{
+            .block-container,
+            .block-container:has(.day-head) {{
+              zoom:.79 !important;
+            }}
+          }}
+          @media (max-width: 520px) {{
+            .block-container,
+            .block-container:has(.day-head) {{
+              zoom:.68 !important;
+            }}
+          }}
+          @media (max-width: 430px) {{
+            .block-container,
+            .block-container:has(.day-head) {{
+              zoom:.52 !important;
+            }}
+          }}
+          @media (max-width: 360px) {{
+            .block-container,
+            .block-container:has(.day-head) {{
+              zoom:.42 !important;
+            }}
+          }}
+          @media (max-width: 330px) {{
+            .block-container,
+            .block-container:has(.day-head) {{
+              zoom:.405 !important;
+            }}
+          }}
+          .matrix-dialog {{
+            background:var(--paper);
+            border:2px solid #111;
+            border-radius:0;
+            padding:14px;
+            margin:14px auto;
+            max-width:860px;
+            box-shadow:0 12px 32px rgba(40,34,24,.20);
+          }}
+          .matrix-window-head {{
+            display:grid;
+            grid-template-columns:1fr 44px;
+            align-items:center;
+            gap:10px;
+            margin-bottom:12px;
+          }}
+          .matrix-title {{
+            font-size:24px;
+            font-weight:800;
+            color:#000;
+          }}
+          .matrix-dialog [data-testid="stForm"] {{
+            border:0 !important;
+            padding:0 !important;
+            margin:0 0 12px !important;
+          }}
+          .matrix-dialog [data-testid="stForm"] [data-testid="stHorizontalBlock"] {{
+            gap:10px !important;
+            align-items:center !important;
+          }}
+          .matrix-dialog [data-testid="stTextInput"] input {{
+            height:34px !important;
+            border-radius:0 !important;
+            border:1px solid #b6b0a3 !important;
+            background:#fff !important;
+            font-size:18px !important;
+          }}
+          .matrix-dialog [data-testid="stCheckbox"] {{
+            background:#efe5cf !important;
+            border:1px outset #fff8e8 !important;
+            min-height:34px !important;
+            padding:4px 8px !important;
+            margin:0 !important;
+            box-shadow:1px 1px 0 #6e6659 !important;
+          }}
+          .matrix-dialog [data-testid="stFormSubmitButton"] button,
+          .matrix-dialog [data-testid="stButton"] button {{
+            background:#efe5cf !important;
+            border:1px outset #fff8e8 !important;
+            border-radius:0 !important;
+            color:#000 !important;
+            min-height:34px !important;
+            box-shadow:1px 1px 0 #6e6659 !important;
+            font-weight:700 !important;
+          }}
+          .matrix-dialog [data-testid="stVerticalBlockBorderWrapper"] {{
+            border:1px solid #9f9a8e !important;
+            border-radius:0 !important;
+            min-height:210px !important;
+            background:#fffaf0 !important;
+            box-shadow:none !important;
+            padding:10px !important;
+          }}
+          .matrix-dialog [data-testid="stVerticalBlockBorderWrapper"]:hover {{
+            transform:none !important;
+            box-shadow:none !important;
+            border-color:#111 !important;
+          }}
+          .quadrant-title-bar {{
+            font-size:17px !important;
+            font-weight:800 !important;
+            border:0 !important;
+            margin:-6px 0 10px !important;
+            padding:0 4px !important;
+            display:inline-block;
+            background:#fffaf0 !important;
+          }}
+          .matrix-empty {{
+            color:#777 !important;
+            font-size:15px !important;
+            padding:4px 0 0 !important;
+          }}
+          @media (max-width: 760px) {{
+            html, body, .stApp {{
+              width:100% !important;
+              max-width:100% !important;
+              overflow-x:hidden !important;
+            }}
+            .block-container,
+            .block-container:has(.day-head) {{
+              width:100% !important;
+              min-width:0 !important;
+              max-width:100% !important;
+              margin:0 !important;
+              padding:8px 10px 12px !important;
+              transform:none !important;
+              zoom:1 !important;
+              box-sizing:border-box !important;
+            }}
+            [data-testid="stHorizontalBlock"] {{
+              flex-direction:row !important;
+              flex-wrap:nowrap !important;
+              width:100% !important;
+              max-width:100% !important;
+              gap:6px !important;
+            }}
+            [data-testid="column"] {{
+              flex:1 1 0 !important;
+              min-width:0 !important;
+              max-width:100% !important;
+            }}
+            .simple-topbar {{
+              width:100% !important;
+            }}
+            .day-head {{
+              width:100% !important;
+              max-width:100% !important;
+              overflow:hidden !important;
+            }}
+            [data-testid="stElementContainer"]:has(.day-head),
+            [data-testid="stMarkdown"]:has(.day-head),
+            [data-testid="stMarkdownContainer"]:has(.day-head) {{
+              width:100% !important;
+              max-width:100% !important;
+              overflow:hidden !important;
+              left:0 !important;
+              right:0 !important;
+            }}
+            .day-title {{
+              font-size:18px !important;
+              margin:5px 0 !important;
+              white-space:nowrap !important;
+              text-align:center !important;
+              width:100% !important;
+              overflow:hidden !important;
+              text-overflow:ellipsis !important;
+            }}
+            .day-progress {{
+              width:100% !important;
+              height:48px !important;
+              overflow:visible !important;
+            }}
+            .time-battery {{
+              left:0 !important;
+              right:0 !important;
+              width:100% !important;
+              top:24px !important;
+              height:16px !important;
+              gap:1px !important;
+              padding:2px !important;
+            }}
+            .tick-label {{
+              font-size:10px !important;
+            }}
+            .battery {{
+              width:120px !important;
+              height:16px !important;
+            }}
+            .battery-label {{
+              font-size:9px !important;
+            }}
+            div.stButton > button {{
+              min-height:30px !important;
+              font-size:12px !important;
+              padding:0 4px !important;
+              width:100% !important;
+            }}
+            .action-link-grid {{
+              width:100% !important;
+              max-width:100% !important;
+              display:grid !important;
+              grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
+              gap:6px !important;
+              margin:10px 0 12px !important;
+              box-sizing:border-box !important;
+              overflow:hidden !important;
+            }}
+            .day-action-link {{
+              min-width:0 !important;
+              width:100% !important;
+              max-width:100% !important;
+              min-height:30px !important;
+              font-size:12px !important;
+              padding:0 2px !important;
+              box-sizing:border-box !important;
+              overflow:hidden !important;
+              text-overflow:ellipsis !important;
+            }}
+            .schedule-title {{
+              font-size:18px !important;
+              margin:12px 0 4px !important;
+            }}
+            .schedule-time-cell {{
+              font-size:12px !important;
+              padding:8px 4px 4px !important;
+              min-height:0 !important;
+            }}
+            .schedule-input-wrap,
+            .schedule-input-wrap [data-testid="stTextArea"],
+            .schedule-input-wrap [data-baseweb="textarea"],
+            .schedule-input-wrap textarea {{
+              display:block !important;
+              visibility:visible !important;
+              opacity:1 !important;
+              width:100% !important;
+              min-width:100% !important;
+              max-width:100% !important;
+              height:58px !important;
+              min-height:58px !important;
+            }}
+            .schedule-input-wrap textarea {{
+              background:#fffefa !important;
+              border:1px solid #111 !important;
+              color:#000 !important;
+            }}
+            .matrix-dialog {{
+              width:100% !important;
+              max-width:100% !important;
+              padding:8px !important;
+              margin:10px 0 !important;
+              box-sizing:border-box !important;
+            }}
+            .matrix-title {{
+              font-size:17px !important;
+            }}
+          }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -1485,10 +1932,16 @@ def render_quadrant_dialog(selected: date):
     note, diet, quadrant, time_map, ui, extras = read_day(selected)
     tasks = load_quadrant_tasks(quadrant)
     st.markdown('<div class="matrix-dialog">', unsafe_allow_html=True)
-    st.markdown('<div class="matrix-title">Monthly Eisenhower Matrix</div>', unsafe_allow_html=True)
+    head_cols = st.columns([0.92, 0.08], gap="small")
+    with head_cols[0]:
+        st.markdown('<div class="matrix-title">Monthly Eisenhower Matrix</div>', unsafe_allow_html=True)
+    with head_cols[1]:
+        if st.button("X", key="close-matrix", use_container_width=True):
+            st.session_state.matrix_open = False
+            st.rerun()
 
     with st.form(f"quadrant-dialog-form-{selected}", clear_on_submit=True):
-        form_cols = st.columns([4.8, 1.15, 1.0, 1.15])
+        form_cols = st.columns([5.5, 1.1, 1.0, 1.05], gap="small")
         task_text = form_cols[0].text_input("Task", placeholder="Write one task", label_visibility="collapsed")
         important = form_cols[1].checkbox("Important", key=f"matrix-important-{selected}")
         urgent = form_cols[2].checkbox("Urgent", key=f"matrix-urgent-{selected}")
@@ -1500,9 +1953,6 @@ def render_quadrant_dialog(selected: date):
         write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
         st.session_state.matrix_open = True
         st.rerun()
-    if st.button("Close matrix", key="close-matrix"):
-        st.session_state.matrix_open = False
-        st.rerun()
 
     groups = {
         "Important and Urgent": [],
@@ -1513,7 +1963,6 @@ def render_quadrant_dialog(selected: date):
     for index, task in enumerate(tasks):
         groups[quadrant_name(task)].append((index, task))
 
-    st.markdown('<div class="matrix-control-note">Check a task to finish it.</div>', unsafe_allow_html=True)
     titles = list(groups.keys())
     for row_start in range(0, len(titles), 2):
         cols = st.columns(2, gap="small")
@@ -1525,10 +1974,9 @@ def render_quadrant_dialog(selected: date):
                     if not items:
                         st.markdown('<div class="matrix-empty">No tasks yet</div>', unsafe_allow_html=True)
                     for index, task in items:
-                        if st.button(
-                            f"□ {task['text']}",
+                        if st.checkbox(
+                            str(task["text"]),
                             key=f"matrix-done-{selected}-{index}-{task['text']}",
-                            use_container_width=True,
                         ):
                             tasks.pop(index)
                             add_token(st.session_state.important_token)
@@ -1549,22 +1997,21 @@ def render_schedule(selected: date):
         task_hint = time_map.get(slot, "").strip() or "No task in this time block."
         marker = " now" if slot == active_slot else ""
         slot_id = ' id="now-slot"' if slot == active_slot else ""
-        row = st.columns([0.22, 0.78], gap="small")
-        with row[0]:
-            st.markdown(
-                f'<div class="schedule-time-cell{marker}"{slot_id} title="{escape(task_hint)}">{escape(slot)}</div>',
-                unsafe_allow_html=True,
-            )
-        with row[1]:
-            value = st.text_area(
-                f"{slot} plan",
-                value=time_map.get(slot, ""),
-                key=f"slot-{selected}-{slot}",
-                height=68,
-                label_visibility="collapsed",
-                on_change=save_schedule_from_state,
-                args=(selected,),
-            )
+        st.markdown(
+            f'<div class="schedule-time-cell{marker}"{slot_id} title="{escape(task_hint)}">{escape(slot)}</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown('<div class="schedule-input-wrap">', unsafe_allow_html=True)
+        value = st.text_area(
+            f"{slot} plan",
+            value=time_map.get(slot, ""),
+            key=f"slot-{selected}-{slot}",
+            height=68,
+            label_visibility="collapsed",
+            on_change=save_schedule_from_state,
+            args=(selected,),
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
         changed[slot] = value
         if value.strip():
             filled += 1
@@ -1593,17 +2040,16 @@ def render_day():
         else:
             st.success(message)
 
-    action_cols = st.columns(3, gap="small")
-    if action_cols[0].button("Matrix", key=f"open-matrix-{selected}", use_container_width=True):
-        st.session_state.matrix_open = not st.session_state.matrix_open
-        st.session_state.panel = ""
-        st.rerun()
-    if action_cols[1].button("Notes", key=f"open-notes-{selected}", use_container_width=True):
-        st.session_state.panel = "" if st.session_state.panel == "note" else "note"
-        st.rerun()
-    if action_cols[2].button("Meal", key=f"open-meal-{selected}", use_container_width=True):
-        st.session_state.panel = "" if st.session_state.panel == "diet" else "diet"
-        st.rerun()
+    st.markdown(
+        f"""
+        <div class="action-link-grid">
+          <a class="day-action-link" href="/?day={selected.isoformat()}&matrix=open" target="_self">Matrix</a>
+          <a class="day-action-link" href="/?day={selected.isoformat()}&panel=note" target="_self">Notes</a>
+          <a class="day-action-link" href="/?day={selected.isoformat()}&panel=diet" target="_self">Meal</a>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     if st.session_state.matrix_open:
         render_quadrant_dialog(selected)
@@ -1612,8 +2058,7 @@ def render_day():
         render_text_panel(selected, st.session_state.panel)
 
     st.markdown('<div class="schedule-title">Daily Schedule (0:00 - 24:00)</div>', unsafe_allow_html=True)
-    with st.container(height=610, border=False):
-        render_schedule(selected)
+    render_schedule(selected)
 
 
 def main():
