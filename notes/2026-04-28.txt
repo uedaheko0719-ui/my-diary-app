@@ -15,4 +15,10 @@ PLAN_FULL_CHARGE::8.0
 【时间表】
 
 【四象限】
-[]
+[
+  {
+    "text": "nnn",
+    "important": true,
+    "urgent": true
+  }
+]

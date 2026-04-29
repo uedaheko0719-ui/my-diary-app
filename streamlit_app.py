@@ -157,6 +157,46 @@ def init_state():
         st.session_state.setdefault(key, value)
 
     params = st.query_params
+    if params.get("matrix_close") and params.get("day"):
+        try:
+            picked = date.fromisoformat(params["day"])
+            st.session_state.selected_day = picked
+            st.session_state.view_year = picked.year
+            st.session_state.view_month = picked.month
+            st.session_state.view = "day"
+            st.session_state.matrix_open = False
+            st.query_params.clear()
+            st.rerun()
+        except ValueError:
+            st.query_params.clear()
+
+    if params.get("matrix_add") and params.get("day"):
+        try:
+            picked = date.fromisoformat(params["day"])
+            task_text = str(params.get("matrix_add", "")).strip()
+            note, diet, quadrant, time_map, ui, extras = read_day(picked)
+            tasks = load_quadrant_tasks(quadrant)
+            if task_text:
+                tasks.append(
+                    {
+                        "text": task_text,
+                        "important": params.get("important") == "on",
+                        "urgent": params.get("urgent") == "on",
+                    }
+                )
+                add_token(st.session_state.important_token)
+                ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+                write_day(picked, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
+            st.session_state.selected_day = picked
+            st.session_state.view_year = picked.year
+            st.session_state.view_month = picked.month
+            st.session_state.view = "day"
+            st.session_state.matrix_open = True
+            st.query_params.clear()
+            st.rerun()
+        except ValueError:
+            st.query_params.clear()
+
     if params.get("matrix_done") and params.get("day"):
         try:
             picked = date.fromisoformat(params["day"])
@@ -196,8 +236,10 @@ def init_state():
             panel = params.get("panel")
             if panel in {"note", "diet"}:
                 st.session_state.panel = "" if st.session_state.panel == panel else panel
+                st.session_state.matrix_open = False
             if params.get("matrix") == "open":
                 st.session_state.matrix_open = True
+                st.session_state.panel = ""
         except ValueError:
             st.query_params.clear()
 
@@ -500,10 +542,15 @@ def css():
             gap:10px;
             margin-top:30px;
           }}
+          .action-link-grid form {{
+            min-width:0;
+            margin:0;
+          }}
           .day-action-link {{
             display:flex;
             align-items:center;
             justify-content:center;
+            width:100%;
             min-height:36px;
             border:1px solid #e3d8c5;
             background:#fffdf8;
@@ -513,6 +560,10 @@ def css():
             font-weight:650;
             box-sizing:border-box;
             white-space:nowrap;
+          }}
+          button.day-action-link {{
+            font-family:Arial, sans-serif;
+            cursor:pointer;
           }}
           .day-action-link:hover {{
             background:#fff;
@@ -1478,6 +1529,110 @@ def css():
             font-size:15px !important;
             padding:4px 0 0 !important;
           }}
+          .matrix-head {{
+            display:grid;
+            grid-template-columns:1fr 40px;
+            gap:8px;
+            align-items:center;
+            margin-bottom:12px;
+          }}
+          .matrix-close-form,
+          .matrix-add-form,
+          .matrix-done-form {{
+            margin:0;
+          }}
+          .matrix-add-form {{
+            display:grid;
+            grid-template-columns:minmax(0, 1fr) auto auto auto;
+            gap:10px;
+            align-items:center;
+            margin-bottom:16px;
+          }}
+          .matrix-add-form input[type="text"] {{
+            width:100%;
+            min-width:0;
+            height:34px;
+            border:1px solid #b6b0a3;
+            background:#fff;
+            border-radius:0;
+            font-size:18px;
+            padding:3px 6px;
+            box-sizing:border-box;
+          }}
+          .matrix-toggle-label,
+          .matrix-add-button,
+          .matrix-close-button {{
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            min-height:34px;
+            padding:0 12px;
+            background:#efe5cf;
+            border:1px outset #fff8e8;
+            box-shadow:1px 1px 0 #6e6659;
+            color:#000;
+            font-size:15px;
+            font-weight:700;
+            white-space:nowrap;
+            cursor:pointer;
+          }}
+          .matrix-close-button {{
+            width:40px;
+            padding:0;
+          }}
+          .matrix-grid-fixed {{
+            display:grid;
+            grid-template-columns:repeat(2, minmax(0, 1fr));
+            gap:14px;
+            width:100%;
+            box-sizing:border-box;
+          }}
+          .matrix-cell-fixed {{
+            min-width:0;
+            min-height:210px;
+            border:1px solid #9f9a8e;
+            background:#fffaf0;
+            padding:10px 12px;
+            box-sizing:border-box;
+            overflow:hidden;
+          }}
+          .matrix-cell-title {{
+            display:inline-block;
+            background:#fffaf0;
+            font-size:17px;
+            font-weight:800;
+            margin:-4px 0 10px;
+            padding:0 4px;
+          }}
+          .matrix-empty-fixed {{
+            color:#777;
+            font-size:15px;
+            padding:4px 0;
+          }}
+          .matrix-done-button {{
+            display:flex;
+            align-items:center;
+            gap:9px;
+            width:100%;
+            min-height:28px;
+            border:0;
+            background:transparent;
+            color:#000;
+            font-size:16px;
+            text-align:left;
+            cursor:pointer;
+            padding:4px 2px;
+          }}
+          .matrix-done-button:hover {{
+            background:#fff8eb;
+          }}
+          .matrix-fake-check {{
+            width:14px;
+            height:14px;
+            border:1px solid #111;
+            background:#fff;
+            flex:0 0 auto;
+          }}
           @media (max-width: 760px) {{
             html, body, .stApp {{
               width:100% !important;
@@ -1620,6 +1775,43 @@ def css():
             }}
             .matrix-title {{
               font-size:17px !important;
+            }}
+            .matrix-add-form {{
+              grid-template-columns:minmax(0, 1fr) auto auto auto !important;
+              gap:4px !important;
+            }}
+            .matrix-add-form input[type="text"] {{
+              height:28px !important;
+              font-size:12px !important;
+            }}
+            .matrix-toggle-label,
+            .matrix-add-button,
+            .matrix-close-button {{
+              min-height:28px !important;
+              padding:0 5px !important;
+              font-size:11px !important;
+            }}
+            .matrix-grid-fixed {{
+              grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+              gap:7px !important;
+            }}
+            .matrix-cell-fixed {{
+              min-height:130px !important;
+              padding:7px !important;
+            }}
+            .matrix-cell-title {{
+              font-size:12px !important;
+              line-height:1.1 !important;
+            }}
+            .matrix-done-button,
+            .matrix-empty-fixed {{
+              font-size:11px !important;
+            }}
+            .schedule-input-wrap {{
+              margin-bottom:5px !important;
+            }}
+            .schedule-time-cell {{
+              padding-top:5px !important;
             }}
           }}
         </style>
@@ -1931,28 +2123,6 @@ def render_text_panel(selected: date, panel: str):
 def render_quadrant_dialog(selected: date):
     note, diet, quadrant, time_map, ui, extras = read_day(selected)
     tasks = load_quadrant_tasks(quadrant)
-    st.markdown('<div class="matrix-dialog">', unsafe_allow_html=True)
-    head_cols = st.columns([0.92, 0.08], gap="small")
-    with head_cols[0]:
-        st.markdown('<div class="matrix-title">Monthly Eisenhower Matrix</div>', unsafe_allow_html=True)
-    with head_cols[1]:
-        if st.button("X", key="close-matrix", use_container_width=True):
-            st.session_state.matrix_open = False
-            st.rerun()
-
-    with st.form(f"quadrant-dialog-form-{selected}", clear_on_submit=True):
-        form_cols = st.columns([5.5, 1.1, 1.0, 1.05], gap="small")
-        task_text = form_cols[0].text_input("Task", placeholder="Write one task", label_visibility="collapsed")
-        important = form_cols[1].checkbox("Important", key=f"matrix-important-{selected}")
-        urgent = form_cols[2].checkbox("Urgent", key=f"matrix-urgent-{selected}")
-        submitted = form_cols[3].form_submit_button("Add Task", use_container_width=True)
-    if submitted and task_text.strip():
-        tasks.append({"text": task_text.strip(), "important": important, "urgent": urgent})
-        add_token(st.session_state.important_token)
-        ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
-        write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
-        st.session_state.matrix_open = True
-        st.rerun()
 
     groups = {
         "Important and Urgent": [],
@@ -1963,28 +2133,46 @@ def render_quadrant_dialog(selected: date):
     for index, task in enumerate(tasks):
         groups[quadrant_name(task)].append((index, task))
 
-    titles = list(groups.keys())
-    for row_start in range(0, len(titles), 2):
-        cols = st.columns(2, gap="small")
-        for offset, title in enumerate(titles[row_start:row_start + 2]):
-            with cols[offset]:
-                with st.container(border=True):
-                    st.markdown(f'<div class="quadrant-title-bar">{escape(title)}</div>', unsafe_allow_html=True)
-                    items = groups[title]
-                    if not items:
-                        st.markdown('<div class="matrix-empty">No tasks yet</div>', unsafe_allow_html=True)
-                    for index, task in items:
-                        if st.checkbox(
-                            str(task["text"]),
-                            key=f"matrix-done-{selected}-{index}-{task['text']}",
-                        ):
-                            tasks.pop(index)
-                            add_token(st.session_state.important_token)
-                            ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
-                            write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
-                            st.session_state.matrix_open = True
-                            st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
+    parts = [
+        '<div class="matrix-dialog">',
+        '<div class="matrix-head">',
+        '<div class="matrix-title">Monthly Eisenhower Matrix</div>',
+        (
+            '<form class="matrix-close-form" method="get" action="/" target="_self">'
+            f'<input type="hidden" name="day" value="{selected.isoformat()}">'
+            '<input type="hidden" name="matrix_close" value="1">'
+            '<button class="matrix-close-button" type="submit">X</button>'
+            '</form>'
+        ),
+        '</div>',
+        '<form class="matrix-add-form" method="get" action="/" target="_self">',
+        f'<input type="hidden" name="day" value="{selected.isoformat()}">',
+        '<input type="hidden" name="matrix" value="open">',
+        '<input type="text" name="matrix_add" placeholder="Write one task" autocomplete="off">',
+        '<label class="matrix-toggle-label"><input type="checkbox" name="important"> Important</label>',
+        '<label class="matrix-toggle-label"><input type="checkbox" name="urgent"> Urgent</label>',
+        '<button class="matrix-add-button" type="submit">Add Task</button>',
+        '</form>',
+        '<div class="matrix-grid-fixed">',
+    ]
+    for title, items in groups.items():
+        parts.append('<div class="matrix-cell-fixed">')
+        parts.append(f'<div class="matrix-cell-title">{escape(title)}</div>')
+        if not items:
+            parts.append('<div class="matrix-empty-fixed">No tasks yet</div>')
+        for index, task in items:
+            parts.append(
+                '<form class="matrix-done-form" method="get" action="/" target="_self">'
+                f'<input type="hidden" name="day" value="{selected.isoformat()}">'
+                '<input type="hidden" name="matrix" value="open">'
+                f'<input type="hidden" name="matrix_done" value="{index}">'
+                '<button class="matrix-done-button" type="submit">'
+                f'<span class="matrix-fake-check"></span><span>{escape(str(task["text"]))}</span>'
+                '</button></form>'
+            )
+        parts.append("</div>")
+    parts.append("</div></div>")
+    st.markdown("".join(parts), unsafe_allow_html=True)
 
 def render_schedule(selected: date):
     note, diet, quadrant, time_map, ui, extras = read_day(selected)
@@ -2043,9 +2231,21 @@ def render_day():
     st.markdown(
         f"""
         <div class="action-link-grid">
-          <a class="day-action-link" href="/?day={selected.isoformat()}&matrix=open" target="_self">Matrix</a>
-          <a class="day-action-link" href="/?day={selected.isoformat()}&panel=note" target="_self">Notes</a>
-          <a class="day-action-link" href="/?day={selected.isoformat()}&panel=diet" target="_self">Meal</a>
+          <form method="get" action="/" target="_self">
+            <input type="hidden" name="day" value="{selected.isoformat()}">
+            <input type="hidden" name="matrix" value="open">
+            <button class="day-action-link" type="submit">Matrix</button>
+          </form>
+          <form method="get" action="/" target="_self">
+            <input type="hidden" name="day" value="{selected.isoformat()}">
+            <input type="hidden" name="panel" value="note">
+            <button class="day-action-link" type="submit">Notes</button>
+          </form>
+          <form method="get" action="/" target="_self">
+            <input type="hidden" name="day" value="{selected.isoformat()}">
+            <input type="hidden" name="panel" value="diet">
+            <button class="day-action-link" type="submit">Meal</button>
+          </form>
         </div>
         """,
         unsafe_allow_html=True,
