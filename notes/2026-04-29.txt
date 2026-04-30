@@ -5,7 +5,7 @@
 
 
 【界面设置】
-TOKEN_LEVEL::1.6000
+TOKEN_LEVEL::1
 
 【时间表】
 

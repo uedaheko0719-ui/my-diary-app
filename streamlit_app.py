@@ -8,10 +8,16 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 
 NOTES_DIR = Path("notes")
 NOTES_DIR.mkdir(exist_ok=True)
+
+TOKEN_CAPACITY = 2000
+CLICK_TOKEN = 1
+TYPE_TOKEN = 10
+TASK_TOKEN = 100
 
 SECTION_NOTE = "文字笔记"
 SECTION_DIET = "饮食规划"
@@ -116,7 +122,8 @@ def natural_time(hour: int) -> str:
 
 
 def time_slots() -> list[str]:
-    return [f"{natural_time(i)} - {natural_time(i + 1)}" for i in range(24)]
+    hours = list(range(7, 24)) + list(range(0, 7))
+    return [f"{natural_time(i)} - {natural_time(i + 1)}" for i in hours]
 
 
 def current_slot() -> str:
@@ -134,7 +141,7 @@ def open_day(day: date):
 def add_token(amount: float):
     if amount == 0:
         return
-    st.session_state.token = min(1.0, max(0.0, st.session_state.token + amount))
+    st.session_state.token = min(float(TOKEN_CAPACITY), max(0.0, st.session_state.token + amount))
     st.session_state.flash_battery = True
 
 
@@ -149,14 +156,25 @@ def init_state():
         "matrix_open": False,
         "token": 0.0,
         "flash_battery": False,
-        "click_token": 0.01,
-        "type_token": 0.001,
-        "important_token": 0.1,
+        "click_token": CLICK_TOKEN,
+        "type_token": TYPE_TOKEN,
+        "important_token": TASK_TOKEN,
     }
     for key, value in defaults.items():
         st.session_state.setdefault(key, value)
+    st.session_state.click_token = CLICK_TOKEN
+    st.session_state.type_token = TYPE_TOKEN
+    st.session_state.important_token = TASK_TOKEN
+    if st.session_state.token <= 1 and st.session_state.token > 0:
+        st.session_state.token = st.session_state.token * TOKEN_CAPACITY
 
     params = st.query_params
+    if params.get("scroll_token"):
+        add_token(st.session_state.click_token)
+        save_token(st.session_state.selected_day)
+        st.query_params.clear()
+        st.rerun()
+
     if params.get("toggle") and params.get("day"):
         try:
             picked = date.fromisoformat(params["day"])
@@ -171,6 +189,8 @@ def init_state():
             elif target in {"note", "diet"}:
                 st.session_state.matrix_open = False
                 st.session_state.panel = "" if st.session_state.panel == target else target
+            add_token(st.session_state.click_token)
+            save_token(picked)
             st.query_params.clear()
             st.rerun()
         except ValueError:
@@ -184,6 +204,8 @@ def init_state():
             st.session_state.view_month = picked.month
             st.session_state.view = "day"
             st.session_state.matrix_open = False
+            add_token(st.session_state.click_token)
+            save_token(picked)
             st.query_params.clear()
             st.rerun()
         except ValueError:
@@ -198,6 +220,8 @@ def init_state():
             st.session_state.view = "day"
             st.session_state.panel = ""
             st.session_state.matrix_open = False
+            add_token(st.session_state.click_token)
+            save_token(picked)
             st.query_params.clear()
             st.rerun()
         except ValueError:
@@ -210,6 +234,7 @@ def init_state():
             note, diet, quadrant, time_map, ui, extras = read_day(picked)
             tasks = load_quadrant_tasks(quadrant)
             if task_text:
+                add_token(st.session_state.click_token)
                 tasks.append(
                     {
                         "text": task_text,
@@ -217,8 +242,7 @@ def init_state():
                         "urgent": params.get("urgent") == "on",
                     }
                 )
-                add_token(st.session_state.important_token)
-                ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+                ui["TOKEN_LEVEL"] = f"{st.session_state.token:.0f}"
                 write_day(picked, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
             st.session_state.selected_day = picked
             st.session_state.view_year = picked.year
@@ -238,8 +262,9 @@ def init_state():
             tasks = load_quadrant_tasks(quadrant)
             if 0 <= task_index < len(tasks):
                 tasks.pop(task_index)
+                add_token(st.session_state.click_token)
                 add_token(st.session_state.important_token)
-                ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+                ui["TOKEN_LEVEL"] = f"{st.session_state.token:.0f}"
                 write_day(picked, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
             st.session_state.selected_day = picked
             st.session_state.view_year = picked.year
@@ -257,27 +282,45 @@ def init_state():
             st.session_state.view_year = int(year_text)
             st.session_state.view_month = int(month_text)
             st.session_state.view = "month"
+            add_token(st.session_state.click_token)
+            save_token(st.session_state.selected_day)
         except ValueError:
             st.query_params.clear()
     if params.get("day"):
         try:
             picked = date.fromisoformat(params["day"])
+            previous_day = st.session_state.get("selected_day")
             st.session_state.selected_day = picked
             st.session_state.view_year = picked.year
             st.session_state.view_month = picked.month
             st.session_state.view = "day"
+            if previous_day != picked:
+                add_token(st.session_state.click_token)
+                save_token(picked)
             panel = params.get("panel")
             if panel in {"note", "diet"}:
                 st.session_state.panel = panel
                 st.session_state.matrix_open = False
             if params.get("matrix") == "open":
+                if not st.session_state.matrix_open:
+                    add_token(st.session_state.click_token)
+                    save_token(picked)
                 st.session_state.matrix_open = True
                 st.session_state.panel = ""
         except ValueError:
             st.query_params.clear()
 
     if "loaded_token" not in st.session_state:
-        st.session_state.token = 0.0
+        if st.session_state.token <= 0:
+            _note, _diet, _quadrant, _time_map, ui, _extras = read_day(st.session_state.selected_day)
+            raw_token = ui.get("TOKEN_LEVEL", "0")
+            try:
+                saved_token = float(raw_token)
+            except ValueError:
+                saved_token = 0.0
+            if 0 < saved_token <= 16:
+                saved_token = saved_token / 16 * TOKEN_CAPACITY
+            st.session_state.token = min(float(TOKEN_CAPACITY), max(0.0, saved_token))
         st.session_state.loaded_token = True
 
 
@@ -478,41 +521,55 @@ def css():
           .right-tools {{ display:flex; align-items:center; gap:12px; }}
           .battery-wrap {{ display:flex; align-items:center; gap:8px; }}
           .battery {{
-            width:168px; height:22px; border:1px solid #25372e; border-radius:0;
-            background:#fffefa; padding:3px; position:relative; box-shadow:none;
-            display:grid; grid-template-columns:repeat(4, 1fr); gap:3px;
+            width:190px; height:28px; border:2px solid #21362b; border-radius:3px;
+            background:#fffefa; padding:4px; position:relative;
+            display:grid; grid-template-columns:repeat(4, 1fr); gap:4px;
+            box-shadow:inset 0 0 0 1px rgba(255,255,255,.9), 0 2px 0 rgba(33,54,43,.16);
           }}
           .battery:hover {{
-            box-shadow:0 0 0 2px rgba(53,168,104,.16), 0 8px 18px rgba(53,168,104,.18);
-            filter:brightness(1.05);
-            transform:translateY(-2px);
+            box-shadow:0 0 0 2px rgba(53,168,104,.16), 0 10px 22px rgba(53,168,104,.20);
+            filter:brightness(1.04);
+            transform:none;
           }}
           .battery:after {{
-            content:""; position:absolute; right:-7px; top:6px; width:5px; height:9px;
-            border:1px solid #25372e; border-left:0; border-radius:0; background:#fffefa;
+            content:""; position:absolute; right:-9px; top:8px; width:6px; height:12px;
+            border:2px solid #21362b; border-left:0; border-radius:0 2px 2px 0; background:#fffefa;
           }}
           .battery-cell {{
-            height:100%; background:linear-gradient(90deg, var(--green) 0 var(--fill, 0%), #fffefa var(--fill, 0%) 100%);
-            border:1px solid rgba(37,55,46,.14);
-            transition:background .16s ease, filter .14s ease;
+            position:relative;
+            height:100%;
+            overflow:hidden;
+            background:#f7fbf5;
+            border:1px solid rgba(33,54,43,.18);
+            box-shadow:inset 0 0 0 1px rgba(255,255,255,.7);
+          }}
+          .battery-cell span {{
+            position:absolute;
+            inset:0 auto 0 0;
+            width:var(--fill, 0%);
+            background:linear-gradient(90deg, #2fa35f 0%, #45c477 100%);
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.30);
+            transition:width .22s ease, filter .14s ease, opacity .14s ease;
           }}
           .flash .battery {{
-            animation:batteryShellFlash .42s ease-out;
+            animation:batteryShellFlash .62s ease-out;
           }}
-          .flash .battery-cell {{
-            animation:batteryWhite .42s ease-out;
+          .flash .battery-cell span {{
+            animation:batteryChargeFlash .62s ease-out;
           }}
           @keyframes batteryShellFlash {{
-            0% {{ box-shadow:0 0 0 0 rgba(53,168,104,.0); filter:brightness(1); }}
-            35% {{ box-shadow:0 0 0 4px rgba(53,168,104,.35), 0 0 22px rgba(53,168,104,.42); filter:brightness(1.2); }}
-            100% {{ box-shadow:none; filter:brightness(1); }}
+            0% {{ box-shadow:inset 0 0 0 1px rgba(255,255,255,.9), 0 2px 0 rgba(33,54,43,.16); filter:brightness(1); }}
+            28% {{ box-shadow:0 0 0 3px rgba(53,168,104,.28), 0 0 26px rgba(53,168,104,.45); filter:brightness(1.22); }}
+            100% {{ box-shadow:inset 0 0 0 1px rgba(255,255,255,.9), 0 2px 0 rgba(33,54,43,.16); filter:brightness(1); }}
           }}
-          @keyframes batteryWhite {{
-            0% {{ filter:brightness(1); }}
-            35% {{ filter:brightness(1.65); }}
-            100% {{ filter:brightness(1); }}
+          @keyframes batteryChargeFlash {{
+            0% {{ filter:brightness(1); opacity:1; }}
+            18% {{ filter:brightness(2.45) saturate(1.45); opacity:.98; }}
+            30% {{ filter:brightness(1.35) saturate(1.15); opacity:1; }}
+            44% {{ filter:brightness(2.05) saturate(1.35); opacity:.98; }}
+            100% {{ filter:brightness(1); opacity:1; }}
           }}
-          .battery-label {{ min-width:32px; font-size:11px; font-weight:700; }}
+          .battery-label {{ min-width:58px; font-size:11px; font-weight:800; color:#21362b; }}
           .tool-row {{ display:flex; gap:14px; margin:20px 0 14px; flex-wrap:wrap; }}
           .schedule-title {{ font-size:18px; font-weight:800; margin:14px 0 8px; color:#000; }}
           [data-testid="stVerticalBlock"] {{ gap:.55rem !important; }}
@@ -1950,7 +2007,114 @@ def css():
             height:58px !important;
             padding:7px 8px !important;
           }}
+          .action-link-grid-one {{
+            grid-template-columns:minmax(0, 220px) !important;
+            justify-content:start !important;
+          }}
+          [data-testid="stExpander"] {{
+            background:#fffaf0 !important;
+            border:1px solid #e3d8c5 !important;
+            border-radius:0 !important;
+            box-shadow:none !important;
+            margin:8px 0 !important;
+          }}
+          [data-testid="stExpander"] details {{
+            background:#fffaf0 !important;
+          }}
+          [data-testid="stExpander"] summary {{
+            min-height:38px !important;
+            color:#000 !important;
+            font-weight:800 !important;
+            transition:background .12s ease, border-color .12s ease !important;
+          }}
+          [data-testid="stExpander"] summary:hover {{
+            background:#fff8eb !important;
+            border-color:#d4c5ad !important;
+          }}
+          [data-testid="stExpander"] textarea {{
+            background:#fffefa !important;
+            color:#000 !important;
+            border:1px solid #111 !important;
+            border-radius:0 !important;
+          }}
+          .matrix-trigger-top {{
+            position:sticky !important;
+            top:0 !important;
+            z-index:1200 !important;
+            margin:0 0 8px !important;
+            padding:6px 0 !important;
+            background:var(--paper) !important;
+            box-shadow:0 8px 18px rgba(40,34,24,.08) !important;
+          }}
+          .matrix-trigger-top .day-action-link {{
+            min-height:32px !important;
+          }}
+          .matrix-dialog {{
+            position:sticky !important;
+            top:44px !important;
+            z-index:1150 !important;
+            max-height:58vh !important;
+            overflow:auto !important;
+            margin-top:0 !important;
+            margin-bottom:12px !important;
+          }}
+          .battery {{
+            width:190px !important;
+            height:28px !important;
+            border:2px solid #21362b !important;
+            border-radius:3px !important;
+            padding:4px !important;
+            gap:4px !important;
+            background:#fffefa !important;
+          }}
+          .battery:after {{
+            right:-9px !important;
+            top:8px !important;
+            width:6px !important;
+            height:12px !important;
+            border-width:2px !important;
+          }}
+          .battery-label {{
+            min-width:58px !important;
+            font-size:11px !important;
+          }}
           @media (max-width: 760px) {{
+            .action-link-grid-one {{
+              grid-template-columns:minmax(0, 1fr) !important;
+            }}
+            .matrix-trigger-top {{
+              top:0 !important;
+              padding:4px 0 !important;
+              margin:0 0 6px !important;
+            }}
+            .matrix-dialog {{
+              top:36px !important;
+              max-height:52vh !important;
+              margin-bottom:10px !important;
+            }}
+            [data-testid="stExpander"] {{
+              margin:6px 0 !important;
+            }}
+            [data-testid="stExpander"] summary {{
+              min-height:30px !important;
+              font-size:12px !important;
+            }}
+            .battery {{
+              width:138px !important;
+              height:22px !important;
+              padding:3px !important;
+              gap:3px !important;
+            }}
+            .battery:after {{
+              right:-8px !important;
+              top:6px !important;
+              width:5px !important;
+              height:10px !important;
+            }}
+            .battery-label {{
+              min-width:48px !important;
+              font-size:9px !important;
+            }}
             [class*="st-key-slot-"] {{
               margin:0 0 9px !important;
             }}
@@ -1977,6 +2141,161 @@ def css():
               line-height:1.15 !important;
             }}
           }}
+          /* Final interaction and battery polish overrides */
+          a:hover, button:hover, [role="button"]:hover,
+          .month-link:hover, .month-arrow:hover, .calendar-cell:hover,
+          .html-btn:hover, .action-btn:hover, .day-action-link:hover,
+          div.stButton > button:hover,
+          [data-testid="stButton"] button:hover,
+          [data-testid="baseButton-secondary"]:hover,
+          [data-testid="baseButton-primary"]:hover,
+          [data-testid="stLinkButton"] a:hover,
+          [data-testid="stFormSubmitButton"] button:hover,
+          [data-testid="stCheckbox"] label:hover,
+          [data-testid="stExpander"] summary:hover,
+          .matrix-toggle-label:hover,
+          .matrix-add-button:hover,
+          .matrix-close-button:hover,
+          .matrix-done-button:hover {{
+            transform:none !important;
+            box-shadow:none !important;
+            filter:none !important;
+            background:#fff8eb !important;
+            border-color:#bca98c !important;
+          }}
+          input:hover, textarea:hover,
+          [data-baseweb="input"]:hover, [data-baseweb="textarea"]:hover,
+          [data-testid="stTextInput"]:hover, [data-testid="stTextArea"]:hover {{
+            transform:none !important;
+            box-shadow:none !important;
+            filter:none !important;
+            border-color:#bca98c !important;
+            background:#fffefa !important;
+          }}
+          .battery-wrap {{
+            gap:0 !important;
+          }}
+          .battery {{
+            width:220px !important;
+            height:24px !important;
+            border:2px solid #222 !important;
+            border-radius:0 !important;
+            padding:3px !important;
+            gap:0 !important;
+            background:#fffefa !important;
+            box-shadow:none !important;
+            display:grid !important;
+            grid-template-columns:repeat(4, 1fr) !important;
+          }}
+          .battery:hover {{
+            transform:none !important;
+            box-shadow:none !important;
+            filter:none !important;
+            background:#fffefa !important;
+          }}
+          .battery:after {{
+            right:-10px !important;
+            top:6px !important;
+            width:7px !important;
+            height:10px !important;
+            border:2px solid #222 !important;
+            border-left:0 !important;
+            background:#fffefa !important;
+          }}
+          .battery-cell {{
+            border:0 !important;
+            border-right:2px solid #222 !important;
+            background:#fffefa !important;
+            box-shadow:none !important;
+          }}
+          .battery-cell:last-child {{
+            border-right:0 !important;
+          }}
+          .battery-cell span {{
+            background:#35c864 !important;
+            box-shadow:none !important;
+          }}
+          .battery-cell.charged span {{
+            min-width:4px !important;
+          }}
+          .flash .battery {{
+            animation:none !important;
+            box-shadow:none !important;
+          }}
+          .flash .battery-cell.charged span,
+          .instant-flash .battery-cell.charged span {{
+            animation:batteryWhiteBlink .1s linear !important;
+          }}
+          @keyframes batteryWhiteBlink {{
+            0% {{ background:#fff !important; filter:none; }}
+            100% {{ background:#35c864 !important; filter:none; }}
+          }}
+          .battery-label {{
+            display:none !important;
+          }}
+          .time-cell {{
+            background:linear-gradient(90deg, #3f8ee8 0 var(--fill, 0%), rgba(63,142,232,.12) var(--fill, 0%) 100%) !important;
+            border-color:rgba(63,142,232,.16) !important;
+            transform:none !important;
+            box-shadow:none !important;
+          }}
+          .time-cell:hover {{
+            background:linear-gradient(90deg, #317ed5 0 var(--fill, 0%), rgba(63,142,232,.18) var(--fill, 0%) 100%) !important;
+            border-color:rgba(63,142,232,.32) !important;
+            transform:none !important;
+            box-shadow:none !important;
+            filter:none !important;
+          }}
+          .time-cell.yesterday {{
+            background:linear-gradient(90deg, var(--red) 0 var(--fill, 0%), rgba(201,74,58,.10) var(--fill, 0%) 100%) !important;
+          }}
+          .time-cell.tomorrow {{
+            background:#fffefa !important;
+          }}
+          [data-testid="stElementContainer"]:has(.matrix-trigger-top),
+          [data-testid="stMarkdown"]:has(.matrix-trigger-top) {{
+            position:sticky !important;
+            top:0 !important;
+            z-index:5000 !important;
+            background:var(--paper) !important;
+          }}
+          .matrix-trigger-top {{
+            top:0 !important;
+            z-index:5000 !important;
+            box-shadow:none !important;
+            border-bottom:1px solid #e3d8c5 !important;
+          }}
+          [data-testid="stElementContainer"]:has(.matrix-dialog),
+          [data-testid="stMarkdown"]:has(.matrix-dialog) {{
+            position:sticky !important;
+            top:0 !important;
+            z-index:4900 !important;
+            background:var(--paper) !important;
+          }}
+          .matrix-dialog {{
+            top:0 !important;
+            z-index:4900 !important;
+            box-shadow:none !important;
+            max-height:70vh !important;
+          }}
+          @media (max-width:760px) {{
+            .battery {{
+              width:130px !important;
+              height:18px !important;
+              padding:2px !important;
+            }}
+            .battery:after {{
+              right:-8px !important;
+              top:5px !important;
+              width:5px !important;
+              height:7px !important;
+            }}
+            [data-testid="stElementContainer"]:has(.matrix-dialog),
+            [data-testid="stMarkdown"]:has(.matrix-dialog),
+            .matrix-dialog {{
+              top:0 !important;
+            }}
+          }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -1985,7 +2304,7 @@ def css():
 
 def save_token(day: date):
     note, diet, quadrant, time_map, ui, extras = read_day(day)
-    ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+    ui["TOKEN_LEVEL"] = f"{st.session_state.token:.0f}"
     write_day(day, note, diet, quadrant, time_map, ui, extras)
 
 
@@ -1994,8 +2313,8 @@ def save_note_from_state(day: date):
     key = f"note-text-{day.isoformat()}"
     value = st.session_state.get(key, note)
     delta = len(str(value)) - len(note)
-    add_token(delta * st.session_state.type_token)
-    ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+    add_token(st.session_state.click_token + max(0, delta) * st.session_state.type_token)
+    ui["TOKEN_LEVEL"] = f"{st.session_state.token:.0f}"
     write_day(day, value, diet, quadrant, time_map, ui, extras)
     st.session_state.last_saved = f"Auto-saved notes for {day:%Y-%m-%d}"
 
@@ -2005,8 +2324,8 @@ def save_diet_from_state(day: date):
     key = f"diet-text-{day.isoformat()}"
     value = st.session_state.get(key, diet)
     delta = len(str(value)) - len(diet)
-    add_token(delta * st.session_state.type_token)
-    ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+    add_token(st.session_state.click_token + max(0, delta) * st.session_state.type_token)
+    ui["TOKEN_LEVEL"] = f"{st.session_state.token:.0f}"
     write_day(day, note, value, quadrant, time_map, ui, extras)
     st.session_state.last_saved = f"Auto-saved meal plan for {day:%Y-%m-%d}"
 
@@ -2019,8 +2338,8 @@ def save_schedule_from_state(day: date):
         new_time_map[slot] = st.session_state.get(key, time_map.get(slot, ""))
     old_chars = sum(len(str(value)) for value in time_map.values())
     new_chars = sum(len(str(value)) for value in new_time_map.values())
-    add_token((new_chars - old_chars) * st.session_state.type_token)
-    ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+    add_token(st.session_state.click_token + max(0, new_chars - old_chars) * st.session_state.type_token)
+    ui["TOKEN_LEVEL"] = f"{st.session_state.token:.0f}"
     write_day(day, note, diet, quadrant, new_time_map, ui, extras)
     st.session_state.last_saved = f"Auto-saved schedule for {day:%Y-%m-%d}"
 
@@ -2143,27 +2462,82 @@ def render_day_header_clean(selected: date):
 
 
 def simple_topbar_html(selected: date) -> str:
-    pct = int(st.session_state.token * 100)
+    token_value = max(0.0, min(float(TOKEN_CAPACITY), float(st.session_state.token)))
+    pct = int(round(token_value / TOKEN_CAPACITY * 100))
     battery_class = "battery-wrap flash" if st.session_state.flash_battery else "battery-wrap"
-    token_pct = max(0.0, min(100.0, st.session_state.token * 100))
+    token_pct = max(0.0, min(100.0, token_value / TOKEN_CAPACITY * 100))
     cells = []
     for index in range(4):
         start = index * 25
         fill = max(0.0, min(25.0, token_pct - start)) / 25 * 100
-        cells.append(f'<div class="battery-cell" style="--fill:{fill:.2f}%"></div>')
+        charged = " charged" if fill > 0 else ""
+        cells.append(f'<div class="battery-cell{charged}"><span style="--fill:{fill:.2f}%"></span></div>')
     return (
         f'<div class="simple-topbar">'
         f'<a class="month-link" href="?month={selected.year:04d}-{selected.month:02d}">&larr; Month</a>'
         f'<div class="topbar-right">'
         f'<div class="{battery_class}">'
         f'<div class="battery">{"".join(cells)}</div>'
-        f'<div class="battery-label">{pct}%</div>'
         f'</div></div></div>'
     )
 
 
 def render_simple_topbar(selected: date):
     st.markdown(simple_topbar_html(selected), unsafe_allow_html=True)
+
+
+def render_token_scroll_listener():
+    components.html(
+        """
+        <script>
+        (() => {
+          const parentWindow = window.parent || window;
+          const key = "my_diary_last_scroll_token";
+          const trigger = () => {
+            const now = Date.now();
+            const last = Number(parentWindow.localStorage.getItem(key) || 0);
+            if (now - last < 6000) return;
+            parentWindow.localStorage.setItem(key, String(now));
+            const url = new URL(parentWindow.location.href);
+            url.searchParams.set("scroll_token", "1");
+            parentWindow.location.replace(url.toString());
+          };
+          parentWindow.removeEventListener("wheel", parentWindow.__diaryTokenScroll);
+          parentWindow.removeEventListener("touchmove", parentWindow.__diaryTokenScroll);
+          parentWindow.__diaryTokenScroll = trigger;
+          parentWindow.addEventListener("wheel", trigger, { passive: true });
+          parentWindow.addEventListener("touchmove", trigger, { passive: true });
+          const flashBattery = () => {
+            const battery = parentWindow.document.querySelector(".battery-wrap");
+            if (!battery) return;
+            battery.classList.remove("instant-flash");
+            void battery.offsetWidth;
+            battery.classList.add("instant-flash");
+            parentWindow.setTimeout(() => battery.classList.remove("instant-flash"), 140);
+          };
+          parentWindow.removeEventListener("pointerdown", parentWindow.__diaryTokenClickFlash, true);
+          parentWindow.__diaryTokenClickFlash = (event) => {
+            const target = event.target;
+            if (!target || !target.closest) return;
+            if (target.closest("a, button, summary, [role='button'], input[type='checkbox']")) {
+              flashBattery();
+            }
+          };
+          parentWindow.addEventListener("pointerdown", parentWindow.__diaryTokenClickFlash, true);
+          parentWindow.removeEventListener("input", parentWindow.__diaryTokenInputFlash, true);
+          parentWindow.__diaryTokenInputFlash = (event) => {
+            const target = event.target;
+            if (!target || !target.matches) return;
+            if (target.matches("textarea, input[type='text']")) {
+              flashBattery();
+            }
+          };
+          parentWindow.addEventListener("input", parentWindow.__diaryTokenInputFlash, true);
+        })();
+        </script>
+        """,
+        height=0,
+    )
 
 
 def day_progress_html(selected: date) -> str:
@@ -2251,8 +2625,8 @@ def render_text_panel(selected: date, panel: str):
             submitted = st.form_submit_button("Add Task", use_container_width=True)
         if submitted and task_text.strip():
             tasks.append({"text": task_text.strip(), "important": important, "urgent": urgent})
-            add_token(st.session_state.important_token)
-            ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+            add_token(st.session_state.click_token)
+            ui["TOKEN_LEVEL"] = f"{st.session_state.token:.0f}"
             write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
             st.rerun()
 
@@ -2274,13 +2648,42 @@ def render_text_panel(selected: date, panel: str):
                 st.markdown(f'<div class="task-pill">{escape(task["text"])}</div>', unsafe_allow_html=True)
                 if st.button("Done", key=f"done-{selected}-{index}", use_container_width=True):
                     tasks.pop(index)
+                    add_token(st.session_state.click_token)
                     add_token(st.session_state.important_token)
-                    ui["TOKEN_LEVEL"] = f"{st.session_state.token * 16:.4f}"
+                    ui["TOKEN_LEVEL"] = f"{st.session_state.token:.0f}"
                     write_day(selected, note, diet, dump_quadrant_tasks(tasks), time_map, ui, extras)
                     st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
+
+
+def render_note_meal_expanders(selected: date):
+    note, diet, _quadrant, _time_map, _ui, _extras = read_day(selected)
+    if not diet:
+        diet = "First meal:\n\nSecond meal:\n\nThird meal:"
+
+    with st.expander("Today's Notes", expanded=False):
+        st.text_area(
+            "Today's Notes",
+            value=note,
+            height=180,
+            key=f"note-text-{selected.isoformat()}",
+            label_visibility="collapsed",
+            on_change=save_note_from_state,
+            args=(selected,),
+        )
+
+    with st.expander("Meal Plan", expanded=False):
+        st.text_area(
+            "Meal Plan",
+            value=diet,
+            height=150,
+            key=f"diet-text-{selected.isoformat()}",
+            label_visibility="collapsed",
+            on_change=save_diet_from_state,
+            args=(selected,),
+        )
 
 
 def render_quadrant_dialog(selected: date):
@@ -2354,6 +2757,24 @@ def render_schedule(selected: date):
 
 def render_day():
     selected = st.session_state.selected_day
+    matrix_hidden = (
+        '<input type="hidden" name="matrix_close" value="1">'
+        if st.session_state.matrix_open
+        else '<input type="hidden" name="matrix" value="open">'
+    )
+    st.markdown(
+        f"""
+        <div class="action-link-grid action-link-grid-one matrix-trigger-top">
+          <form method="get" action="/" target="_self">
+            <input type="hidden" name="day" value="{selected.isoformat()}">
+            {matrix_hidden}
+            <button class="day-action-link" type="submit">Matrix</button>
+          </form>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     sticky_html = (
         '<div class="day-head">'
         f'{simple_topbar_html(selected)}'
@@ -2375,51 +2796,12 @@ def render_day():
         else:
             st.success(message)
 
-    matrix_hidden = (
-        '<input type="hidden" name="matrix_close" value="1">'
-        if st.session_state.matrix_open
-        else '<input type="hidden" name="matrix" value="open">'
-    )
-    note_hidden = (
-        '<input type="hidden" name="panel_close" value="1">'
-        if st.session_state.panel == "note"
-        else '<input type="hidden" name="panel" value="note">'
-    )
-    meal_hidden = (
-        '<input type="hidden" name="panel_close" value="1">'
-        if st.session_state.panel == "diet"
-        else '<input type="hidden" name="panel" value="diet">'
-    )
-    st.markdown(
-        f"""
-        <div class="action-link-grid">
-          <form method="get" action="/" target="_self">
-            <input type="hidden" name="day" value="{selected.isoformat()}">
-            {matrix_hidden}
-            <button class="day-action-link" type="submit">Matrix</button>
-          </form>
-          <form method="get" action="/" target="_self">
-            <input type="hidden" name="day" value="{selected.isoformat()}">
-            {note_hidden}
-            <button class="day-action-link" type="submit">Notes</button>
-          </form>
-          <form method="get" action="/" target="_self">
-            <input type="hidden" name="day" value="{selected.isoformat()}">
-            {meal_hidden}
-            <button class="day-action-link" type="submit">Meal</button>
-          </form>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     if st.session_state.matrix_open:
         render_quadrant_dialog(selected)
 
-    if st.session_state.panel:
-        render_text_panel(selected, st.session_state.panel)
+    render_note_meal_expanders(selected)
 
-    st.markdown('<div class="schedule-title">Daily Schedule (0:00 - 24:00)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="schedule-title">Daily Schedule (7:00 AM - next day 7:00 AM)</div>', unsafe_allow_html=True)
     render_schedule(selected)
 
 
@@ -2427,6 +2809,7 @@ def main():
     st.set_page_config(page_title="My Diary", layout="wide")
     init_state()
     css()
+    render_token_scroll_listener()
 
     if st.session_state.view == "month":
         render_month()
