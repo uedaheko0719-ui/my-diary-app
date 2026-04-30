@@ -169,12 +169,6 @@ def init_state():
         st.session_state.token = st.session_state.token * TOKEN_CAPACITY
 
     params = st.query_params
-    if params.get("scroll_token"):
-        add_token(st.session_state.click_token)
-        save_token(st.session_state.selected_day)
-        st.query_params.clear()
-        st.rerun()
-
     if params.get("toggle") and params.get("day"):
         try:
             picked = date.fromisoformat(params["day"])
@@ -2176,11 +2170,11 @@ def css():
             gap:0 !important;
           }}
           .battery {{
-            width:220px !important;
-            height:24px !important;
+            width:230px !important;
+            height:26px !important;
             border:2px solid #222 !important;
             border-radius:0 !important;
-            padding:3px !important;
+            padding:4px !important;
             gap:0 !important;
             background:#fffefa !important;
             box-shadow:none !important;
@@ -2207,6 +2201,7 @@ def css():
             border-right:2px solid #222 !important;
             background:#fffefa !important;
             box-shadow:none !important;
+            overflow:hidden !important;
           }}
           .battery-cell:last-child {{
             border-right:0 !important;
@@ -2214,6 +2209,7 @@ def css():
           .battery-cell span {{
             background:#35c864 !important;
             box-shadow:none !important;
+            height:100% !important;
           }}
           .battery-cell.charged span {{
             min-width:4px !important;
@@ -2224,10 +2220,21 @@ def css():
           }}
           .flash .battery-cell.charged span,
           .instant-flash .battery-cell.charged span {{
-            animation:batteryWhiteBlink .1s linear !important;
+            animation:batteryWhiteBlink .16s linear !important;
+          }}
+          .stApp:has(textarea:focus) .battery-cell.charged span,
+          .stApp:has(input[type="text"]:focus) .battery-cell.charged span {{
+            animation:batteryWhiteBlink .42s linear infinite !important;
+          }}
+          .stApp:has(button:active) .battery-cell.charged span,
+          .stApp:has(a:active) .battery-cell.charged span,
+          .stApp:has(summary:active) .battery-cell.charged span,
+          .stApp:has(input[type="checkbox"]:active) .battery-cell.charged span {{
+            animation:batteryWhiteBlink .18s linear !important;
           }}
           @keyframes batteryWhiteBlink {{
-            0% {{ background:#fff !important; filter:none; }}
+            0% {{ background:#35c864 !important; filter:none; }}
+            55% {{ background:#fff !important; filter:none; }}
             100% {{ background:#35c864 !important; filter:none; }}
           }}
           .battery-label {{
@@ -2280,8 +2287,8 @@ def css():
           }}
           @media (max-width:760px) {{
             .battery {{
-              width:130px !important;
-              height:18px !important;
+              width:138px !important;
+              height:20px !important;
               padding:2px !important;
             }}
             .battery:after {{
@@ -2492,28 +2499,17 @@ def render_token_scroll_listener():
         <script>
         (() => {
           const parentWindow = window.parent || window;
-          const key = "my_diary_last_scroll_token";
-          const trigger = () => {
-            const now = Date.now();
-            const last = Number(parentWindow.localStorage.getItem(key) || 0);
-            if (now - last < 6000) return;
-            parentWindow.localStorage.setItem(key, String(now));
-            const url = new URL(parentWindow.location.href);
-            url.searchParams.set("scroll_token", "1");
-            parentWindow.location.replace(url.toString());
-          };
-          parentWindow.removeEventListener("wheel", parentWindow.__diaryTokenScroll);
-          parentWindow.removeEventListener("touchmove", parentWindow.__diaryTokenScroll);
-          parentWindow.__diaryTokenScroll = trigger;
-          parentWindow.addEventListener("wheel", trigger, { passive: true });
-          parentWindow.addEventListener("touchmove", trigger, { passive: true });
+          let lastFlash = 0;
           const flashBattery = () => {
+            const now = performance.now();
+            if (now - lastFlash < 55) return;
+            lastFlash = now;
             const battery = parentWindow.document.querySelector(".battery-wrap");
             if (!battery) return;
             battery.classList.remove("instant-flash");
             void battery.offsetWidth;
             battery.classList.add("instant-flash");
-            parentWindow.setTimeout(() => battery.classList.remove("instant-flash"), 140);
+            parentWindow.setTimeout(() => battery.classList.remove("instant-flash"), 180);
           };
           parentWindow.removeEventListener("pointerdown", parentWindow.__diaryTokenClickFlash, true);
           parentWindow.__diaryTokenClickFlash = (event) => {
@@ -2533,6 +2529,24 @@ def render_token_scroll_listener():
             }
           };
           parentWindow.addEventListener("input", parentWindow.__diaryTokenInputFlash, true);
+          parentWindow.removeEventListener("keydown", parentWindow.__diaryTokenKeyFlash, true);
+          parentWindow.__diaryTokenKeyFlash = (event) => {
+            const target = event.target;
+            if (!target || !target.matches) return;
+            if (target.matches("textarea, input[type='text']")) {
+              flashBattery();
+            }
+          };
+          parentWindow.addEventListener("keydown", parentWindow.__diaryTokenKeyFlash, true);
+          parentWindow.removeEventListener("compositionupdate", parentWindow.__diaryTokenComposeFlash, true);
+          parentWindow.__diaryTokenComposeFlash = (event) => {
+            const target = event.target;
+            if (!target || !target.matches) return;
+            if (target.matches("textarea, input[type='text']")) {
+              flashBattery();
+            }
+          };
+          parentWindow.addEventListener("compositionupdate", parentWindow.__diaryTokenComposeFlash, true);
         })();
         </script>
         """,
