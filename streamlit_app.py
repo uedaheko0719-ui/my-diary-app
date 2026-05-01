@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import calendar
 import json
+import re
 from html import escape
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -129,6 +130,13 @@ def time_slots() -> list[str]:
 def current_slot() -> str:
     current = now()
     return f"{natural_time(current.hour)} - {natural_time(current.hour + 1)}"
+
+
+def current_diary_day() -> date:
+    current = now()
+    if current.hour < 7:
+        return current.date() - timedelta(days=1)
+    return current.date()
 
 
 def open_day(day: date):
@@ -2750,7 +2758,40 @@ def render_quadrant_dialog(selected: date):
 def render_schedule(selected: date):
     note, diet, quadrant, time_map, ui, extras = read_day(selected)
     slots = time_slots()
-    active_slot = current_slot() if selected == now().date() else ""
+    active_slot = current_slot() if selected == current_diary_day() else ""
+    if active_slot:
+        active_label = active_slot.replace("\\", "\\\\").replace('"', '\\"')
+        st.markdown(
+            f"""
+            <style>
+              [data-testid="stTextArea"]:has(textarea[aria-label="{active_label}"]) {{
+                position:relative !important;
+                overflow:visible !important;
+              }}
+              [data-testid="stTextArea"]:has(textarea[aria-label="{active_label}"]) [data-baseweb="textarea"] {{
+                position:relative !important;
+                overflow:visible !important;
+                border-left:6px solid var(--red) !important;
+              }}
+              [data-testid="stTextArea"]:has(textarea[aria-label="{active_label}"]) [data-baseweb="textarea"]:before {{
+                content:"" !important;
+                display:none !important;
+              }}
+              @media (max-width:760px) {{
+                [data-testid="stTextArea"]:has(textarea[aria-label="{active_label}"]) {{
+                  overflow:visible !important;
+                }}
+                [data-testid="stTextArea"]:has(textarea[aria-label="{active_label}"]) [data-baseweb="textarea"]:before {{
+                  display:none !important;
+                }}
+                [data-testid="stTextArea"]:has(textarea[aria-label="{active_label}"]) [data-baseweb="textarea"] {{
+                  border-left-width:5px !important;
+                }}
+              }}
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
     changed: dict[str, str] = {}
     filled = 0
 
