@@ -2415,6 +2415,31 @@ def css():
               inset:2px !important;
             }}
           }}
+          /* Final sticky override: keep the approved battery/timeline header visible while scrolling. */
+          [data-testid="stElementContainer"]:has(.day-head),
+          [data-testid="stMarkdown"]:has(.day-head),
+          [data-testid="stMarkdownContainer"]:has(.day-head) {{
+            position:sticky !important;
+            top:42px !important;
+            z-index:4800 !important;
+            overflow:visible !important;
+            background:var(--paper) !important;
+          }}
+          .day-head {{
+            position:sticky !important;
+            top:42px !important;
+            z-index:4800 !important;
+            overflow:visible !important;
+            background:var(--paper) !important;
+          }}
+          @media (max-width:760px) {{
+            [data-testid="stElementContainer"]:has(.day-head),
+            [data-testid="stMarkdown"]:has(.day-head),
+            [data-testid="stMarkdownContainer"]:has(.day-head),
+            .day-head {{
+              top:34px !important;
+            }}
+          }}
         </style>
         """,
         unsafe_allow_html=True,
