@@ -2311,6 +2311,110 @@ def css():
               top:0 !important;
             }}
           }}
+          /* Battery v3: light continuous charge with subtle guides */
+          .battery-wrap {{
+            display:flex !important;
+            align-items:center !important;
+            gap:0 !important;
+          }}
+          .battery {{
+            position:relative !important;
+            width:206px !important;
+            height:22px !important;
+            border:1px solid #26382f !important;
+            border-radius:2px !important;
+            background:#fbfff9 !important;
+            padding:3px !important;
+            display:block !important;
+            box-shadow:none !important;
+            overflow:visible !important;
+          }}
+          .battery:after {{
+            content:"" !important;
+            position:absolute !important;
+            right:-7px !important;
+            top:7px !important;
+            width:5px !important;
+            height:8px !important;
+            border:1px solid #26382f !important;
+            border-left:0 !important;
+            border-radius:0 2px 2px 0 !important;
+            background:#fbfff9 !important;
+          }}
+          .battery-fill {{
+            position:absolute !important;
+            left:3px !important;
+            top:3px !important;
+            bottom:3px !important;
+            width:var(--battery-fill, 0%) !important;
+            min-width:0 !important;
+            max-width:calc(100% - 6px) !important;
+            background:linear-gradient(90deg, #2fbf66 0%, #53d982 100%) !important;
+            border-radius:1px !important;
+            transition:width .18s ease, background .1s linear, filter .1s linear !important;
+          }}
+          .battery[style*="--battery-fill:0.00"] .battery-fill {{
+            width:0 !important;
+          }}
+          .battery-grid {{
+            position:absolute !important;
+            inset:3px !important;
+            pointer-events:none !important;
+            display:grid !important;
+            grid-template-columns:repeat(4, 1fr) !important;
+          }}
+          .battery-grid span {{
+            border-right:1px solid rgba(38,56,47,.22) !important;
+          }}
+          .battery-grid span:last-child {{
+            border-right:0 !important;
+          }}
+          .battery-cell,
+          .battery-cell span {{
+            display:none !important;
+          }}
+          .flash .battery,
+          .instant-flash .battery {{
+            animation:none !important;
+            box-shadow:none !important;
+          }}
+          .flash .battery-fill,
+          .instant-flash .battery-fill,
+          .stApp:has(textarea:focus) .battery-fill,
+          .stApp:has(input[type="text"]:focus) .battery-fill,
+          .stApp:has(button:active) .battery-fill,
+          .stApp:has(a:active) .battery-fill,
+          .stApp:has(summary:active) .battery-fill,
+          .stApp:has(input[type="checkbox"]:active) .battery-fill {{
+            animation:batteryFillWhite .16s linear !important;
+          }}
+          @keyframes batteryFillWhite {{
+            0% {{ background:linear-gradient(90deg, #2fbf66 0%, #53d982 100%) !important; }}
+            48% {{ background:#fff !important; filter:brightness(1.08); }}
+            100% {{ background:linear-gradient(90deg, #2fbf66 0%, #53d982 100%) !important; }}
+          }}
+          @media (max-width:760px) {{
+            .battery {{
+              width:136px !important;
+              height:17px !important;
+              padding:2px !important;
+            }}
+            .battery:after {{
+              right:-6px !important;
+              top:5px !important;
+              width:4px !important;
+              height:6px !important;
+            }}
+            .battery-fill {{
+              left:2px !important;
+              top:2px !important;
+              bottom:2px !important;
+              max-width:calc(100% - 4px) !important;
+            }}
+            .battery-grid {{
+              inset:2px !important;
+            }}
+          }}
         </style>
         """,
         unsafe_allow_html=True,
@@ -2478,21 +2582,17 @@ def render_day_header_clean(selected: date):
 
 def simple_topbar_html(selected: date) -> str:
     token_value = max(0.0, min(float(TOKEN_CAPACITY), float(st.session_state.token)))
-    pct = int(round(token_value / TOKEN_CAPACITY * 100))
     battery_class = "battery-wrap flash" if st.session_state.flash_battery else "battery-wrap"
     token_pct = max(0.0, min(100.0, token_value / TOKEN_CAPACITY * 100))
-    cells = []
-    for index in range(4):
-        start = index * 25
-        fill = max(0.0, min(25.0, token_pct - start)) / 25 * 100
-        charged = " charged" if fill > 0 else ""
-        cells.append(f'<div class="battery-cell{charged}"><span style="--fill:{fill:.2f}%"></span></div>')
     return (
         f'<div class="simple-topbar">'
         f'<a class="month-link" href="?month={selected.year:04d}-{selected.month:02d}">&larr; Month</a>'
         f'<div class="topbar-right">'
         f'<div class="{battery_class}">'
-        f'<div class="battery">{"".join(cells)}</div>'
+        f'<div class="battery" style="--battery-fill:{token_pct:.2f}%">'
+        f'<div class="battery-fill"></div>'
+        f'<div class="battery-grid"><span></span><span></span><span></span></div>'
+        f'</div>'
         f'</div></div></div>'
     )
 
