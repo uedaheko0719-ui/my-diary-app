@@ -757,8 +757,8 @@ def css():
             padding:6px 0; border-bottom:1px solid rgba(255,255,255,.95);
           }}
           .schedule-time-cell {{
-            font-weight:800; padding:10px 8px 4px 10px; min-height:0; position:relative;
-            background:transparent; color:#000;
+            font-weight:800; padding:13px 8px 4px 14px; min-height:68px; position:relative;
+            background:transparent; color:#000; display:flex; align-items:flex-start;
           }}
           .schedule-time-cell:hover {{
             background:#fff8eb;
@@ -766,7 +766,13 @@ def css():
             box-shadow:0 5px 12px rgba(60,50,35,.12);
           }}
           .schedule-time-cell.now {{
-            border-left:7px solid var(--red); background:#fffefa; padding-left:12px;
+            border-left:7px solid var(--red); background:#fffefa; padding-left:13px;
+            box-shadow:0 4px 14px rgba(201,74,58,.12);
+          }}
+          .schedule-time-cell.now::before {{
+            content:""; position:absolute; left:-11px; top:24px;
+            width:13px; height:13px; border-radius:50%; background:var(--red);
+            border:3px solid #fffefa; box-shadow:0 0 0 1px rgba(201,74,58,.32);
           }}
           .schedule-input-wrap {{
             width:100%;
@@ -2884,52 +2890,26 @@ def render_schedule(selected: date):
     note, diet, quadrant, time_map, ui, extras = read_day(selected)
     slots = time_slots()
     active_slot = current_slot() if selected == current_diary_day() else ""
-    if active_slot:
-        active_label = active_slot.replace("\\", "\\\\").replace('"', '\\"')
-        st.markdown(
-            f"""
-            <style>
-              [data-testid="stTextArea"]:has(textarea[aria-label="{active_label}"]) {{
-                position:relative !important;
-                overflow:visible !important;
-              }}
-              [data-testid="stTextArea"]:has(textarea[aria-label="{active_label}"]) [data-baseweb="textarea"] {{
-                position:relative !important;
-                overflow:visible !important;
-                border-left:6px solid var(--red) !important;
-              }}
-              [data-testid="stTextArea"]:has(textarea[aria-label="{active_label}"]) [data-baseweb="textarea"]:before {{
-                content:"" !important;
-                display:none !important;
-              }}
-              @media (max-width:760px) {{
-                [data-testid="stTextArea"]:has(textarea[aria-label="{active_label}"]) {{
-                  overflow:visible !important;
-                }}
-                [data-testid="stTextArea"]:has(textarea[aria-label="{active_label}"]) [data-baseweb="textarea"]:before {{
-                  display:none !important;
-                }}
-                [data-testid="stTextArea"]:has(textarea[aria-label="{active_label}"]) [data-baseweb="textarea"] {{
-                  border-left-width:5px !important;
-                }}
-              }}
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
     changed: dict[str, str] = {}
     filled = 0
 
     for slot in slots:
-        value = st.text_area(
-            slot,
-            value=time_map.get(slot, ""),
-            key=f"slot-{selected}-{slot}",
-            height=58,
-            label_visibility="visible",
-            on_change=save_schedule_from_state,
-            args=(selected,),
-        )
+        time_class = "schedule-time-cell now" if slot == active_slot else "schedule-time-cell"
+        time_col, input_col = st.columns([0.24, 0.76])
+        with time_col:
+            st.markdown(f'<div class="{time_class}">{escape(slot)}</div>', unsafe_allow_html=True)
+        with input_col:
+            st.markdown('<div class="schedule-input-wrap">', unsafe_allow_html=True)
+            value = st.text_area(
+                slot,
+                value=time_map.get(slot, ""),
+                key=f"slot-{selected}-{slot}",
+                height=58,
+                label_visibility="collapsed",
+                on_change=save_schedule_from_state,
+                args=(selected,),
+            )
+            st.markdown("</div>", unsafe_allow_html=True)
         changed[slot] = value
         if value.strip():
             filled += 1
